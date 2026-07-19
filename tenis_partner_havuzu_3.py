@@ -54,7 +54,7 @@ def send_email(to_address, subject, message):
     except Exception as e:
         pass # Arka planda kullanıcıyı rahatsız etmemek için hatayı yutuyoruz
 
-# --- VERİTABANI İŞLEMLERİ ---
+# --- VERİTABANI İŞLEMLERİ (OTOMATİK KAYIT BURADA YAPILIR) ---
 @st.cache_resource
 def get_github_repo():
     if GITHUB_TOKEN != "GITHUB_TOKEN_BURAYA":
@@ -114,6 +114,8 @@ def check_expired_invites(invites):
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.current_user = ""
+if 'is_admin' not in st.session_state:
+    st.session_state.is_admin = False
 
 def login_page():
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 İzmir Tenis Partner Havuzu</h1>", unsafe_allow_html=True)
@@ -179,23 +181,33 @@ def main_app():
         st.write(f"👤 **{isim}** (⭐ {puan:.1f})")
         if st.button("🚪 Çıkış Yap"):
             st.session_state.logged_in = False
+            st.session_state.is_admin = False
             st.rerun()
 
-    # Yönetici Doğrulama (Gizli Expander)
-    is_admin = False
-    with st.expander("Yönetici Yetkisi"):
-        if st.text_input("Yönetici Kodu", type="password") == ADMIN_PASS:
-            is_admin = True
-            st.success("Yönetici yetkisi aktif.")
+    # YÖNETİCİ GİRİŞİ (Butonlu hale getirildi)
+    with st.expander("👑 Yönetici Yetkisi"):
+        if not st.session_state.is_admin:
+            admin_pw = st.text_input("Yönetici Kodu", type="password", key="admin_pw")
+            if st.button("Yönetici Girişi Yap"):
+                if admin_pw == ADMIN_PASS:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Hatalı kod!")
+        else:
+            st.success("Yönetici yetkisi aktif durumda.")
+            if st.button("Yönetici Yetkisinden Çık"):
+                st.session_state.is_admin = False
+                st.rerun()
 
-    # --- SEKMELER (TABS) OLUŞTURMA ---
-    tab_names = ["🏆 Havuz", "➕ Davet Oluştur", "👥 Üyeler", "⚖️ Geçmiş", "⚙️ Profil"]
-    if is_admin:
-        tab_names.append("👑 Yönetici Paneli")
+    # --- SEKMELER (TABS) ---
+    tab_names = ["🏆 Havuz", "➕ Davet Oluştur", "👥 Üyeler", "⚖️ Geçmiş & Puanlama", "⚙️ Profil"]
+    if st.session_state.is_admin:
+        tab_names.append("🛠️ Yönetici Paneli")
     
     tabs = st.tabs(tab_names)
 
-    # 1. HAVUZ SEKME (Aktif İlanlar)
+    # 1. HAVUZ SEKME
     with tabs[0]:
         st.subheader("Güncel Eşleşme Havuzu")
         active_invites = [i for i in invites if i.get('status', 'active') == 'active']
@@ -223,7 +235,7 @@ def main_app():
                                 send_email(creator_mail, "İlanınıza Teklif Var!", f"{isim} adlı kullanıcı davetinize katılmak istiyor! İletişime geçin: {st.session_state.current_user}")
                                 st.success("Teklif gönderildi ve kullanıcıya mail atıldı.")
 
-    # 2. DAVET OLUŞTUR SEKME (Bildirim Tetikleyici İçerir)
+    # 2. DAVET OLUŞTUR
     with tabs[1]:
         st.subheader("Yeni Partner Daveti")
         with st.form("create_invite"):
@@ -243,7 +255,7 @@ def main_app():
                     "status": "active"
                 }
                 invites.append(new_invite)
-                save_data(INVITES_FILE_PATH, invites)
+                save_data(INVITES_FILE_PATH, invites) # OTOMATİK KAYIT İŞLEMİ
                 st.success("İlan oluşturuldu!")
                 
                 # UYGUN KULLANICILARA BİLDİRİM GÖNDERME
@@ -271,7 +283,7 @@ def main_app():
             st.markdown(f"🎾 **{u_isim}** | Seviye: {u_sev} | ⭐ Puan: {u_puan:.1f}")
             st.divider()
 
-    # 4. GEÇMİŞ SEKME (Tarihi Geçenler ve Eşleşenler)
+    # 4. GEÇMİŞ VE PUANLAMA SEKME
     with tabs[3]:
         st.subheader("Geçmiş / Pasif İlanlar")
         past_invites = [i for i in invites if i.get('status') in ['expired', 'matched']]
@@ -279,8 +291,25 @@ def main_app():
             st.info("Geçmiş kayıt bulunmuyor.")
         for inv in past_invites:
             st.markdown(f"[{inv.get('status').upper()}] - {inv.get('date', '')} | {inv.get('court', '')} | {inv.get('level', '')}")
+            
+        st.markdown("---")
+        
+        # PUANLAMA SİSTEMİ EKLENDİ
+        st.subheader("⭐ Birlikte Oynadığınız Kişiyi Puanlayın")
+        with st.form("rating_form"):
+            user_options = {u_email: users_db[u_email].get("ad_soyad", u_email) for u_email in users_db if u_email != st.session_state.current_user}
+            selected_user_email = st.selectbox("Puanlanacak Üye", options=list(user_options.keys()), format_func=lambda x: user_options[x])
+            score = st.slider("Performans ve Sportmenlik Puanınız (1-5)", 1, 5, 5)
+            
+            if st.form_submit_button("Puanı Kaydet", type="primary"):
+                if selected_user_email:
+                    users_db[selected_user_email]["ratings"].append(score)
+                    save_data(USERS_FILE_PATH, users_db) # OTOMATİK KAYIT İŞLEMİ
+                    st.success(f"{user_options[selected_user_email]} adlı üyeye {score} puan verdiniz!")
+                else:
+                    st.error("Puanlanacak üye bulunamadı.")
 
-    # 5. PROFİL SEKME (Çoklu Bildirim Seçimi)
+    # 5. PROFİL SEKME
     with tabs[4]:
         st.subheader("Profil ve Bildirim Ayarları")
         with st.form("profile_form"):
@@ -298,15 +327,39 @@ def main_app():
                 users_db[st.session_state.current_user]["ad_soyad"] = new_isim
                 users_db[st.session_state.current_user]["seviye"] = new_sev
                 users_db[st.session_state.current_user]["notif_prefs"] = {"courts": pref_c, "levels": pref_l}
-                save_data(USERS_FILE_PATH, users_db)
+                save_data(USERS_FILE_PATH, users_db) # OTOMATİK KAYIT İŞLEMİ
                 st.success("Profiliniz güncellendi!")
                 st.rerun()
 
     # 6. YÖNETİCİ PANELİ SEKME
-    if is_admin:
+    if st.session_state.is_admin:
         with tabs[5]:
-            st.subheader("Sistem Yönetimi")
-            st.download_button("JSON Veritabanını İndir", json.dumps({"users": users_db, "invites": invites}), "yedek.json")
+            st.subheader("🛠️ Sistem Yönetimi")
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown("**Veritabanını Yedekle**")
+                st.download_button("Tüm Veriyi (JSON) İndir", json.dumps({"users": users_db, "invites": invites}, indent=4), "yedek.json")
+            
+            with c2:
+                # GERİ YÜKLEME BUTONU VE İŞLEMİ EKLENDİ
+                st.markdown("**Yedekten Geri Yükle**")
+                uploaded_file = st.file_uploader("yedek.json dosyanızı seçin", type=["json"])
+                if uploaded_file is not None:
+                    if st.button("Sisteme Geri Yükle", type="primary"):
+                        try:
+                            backup_data = json.load(uploaded_file)
+                            if "users" in backup_data and "invites" in backup_data:
+                                save_data(USERS_FILE_PATH, backup_data["users"])
+                                save_data(INVITES_FILE_PATH, backup_data["invites"])
+                                st.success("Veritabanı başarıyla eski yedeğe döndürüldü!")
+                                st.rerun()
+                            else:
+                                st.error("Dosya yapısı bozuk. Doğru yedeği yüklediğinizden emin olun.")
+                        except Exception as e:
+                            st.error(f"Geri yükleme hatası: {e}")
+            
+            st.divider()
             
             st.markdown("### İlan Yönetimi (Tüm İlanlar)")
             for i, inv in enumerate(invites):
@@ -318,8 +371,8 @@ def main_app():
                         e_court = st.selectbox("Kort", IZMIR_KORTLARI + ["Belirtilmemiş"], index=(IZMIR_KORTLARI+["Belirtilmemiş"]).index(inv.get('court', 'Belirtilmemiş')) if inv.get('court', 'Belirtilmemiş') in IZMIR_KORTLARI+["Belirtilmemiş"] else 0)
                         e_status = st.selectbox("Durum", ["active", "expired", "matched"], index=["active", "expired", "matched"].index(durum))
                         
-                        c1, c2 = st.columns(2)
-                        with c1:
+                        btn_c1, btn_c2 = st.columns(2)
+                        with btn_c1:
                             if st.form_submit_button("Güncelle", type="primary"):
                                 invites[i]['date'] = e_date
                                 invites[i]['time'] = e_time
@@ -328,7 +381,7 @@ def main_app():
                                 save_data(INVITES_FILE_PATH, invites)
                                 st.success("İlan güncellendi.")
                                 st.rerun()
-                        with c2:
+                        with btn_c2:
                             if st.form_submit_button("İlanı Tamamen Sil"):
                                 invites.pop(i)
                                 save_data(INVITES_FILE_PATH, invites)
