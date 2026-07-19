@@ -63,9 +63,18 @@ def send_email(to_address, subject, message):
         return False
 
 def generate_ics(invite_id, invite_data):
-    # Basit bir .ics dosyası üreteci
-    start_time = datetime.datetime.strptime(f"{invite_data['tarih']} {invite_data['saat']}", "%Y-%m-%d %H:%M")
-    end_time = start_time + datetime.timedelta(hours=1, minutes=30) # Ortalama 1.5 saat
+    # Eski verilerde hata almamak için .get() ile güvenli çekim
+    tarih_str = invite_data.get('tarih', str(datetime.date.today()))
+    saat_str = invite_data.get('saat', '12:00')
+    kort_str = invite_data.get('kort', 'Belirtilmedi')
+    
+    try:
+        start_time = datetime.datetime.strptime(f"{tarih_str} {saat_str}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        # Format hatalıysa takvim çökmesin diye şimdiki zamanı al
+        start_time = datetime.datetime.now() 
+        
+    end_time = start_time + datetime.timedelta(hours=1, minutes=30)
     
     dtstart = start_time.strftime("%Y%m%dT%H%M%S")
     dtend = end_time.strftime("%Y%m%dT%H%M%S")
@@ -73,10 +82,10 @@ def generate_ics(invite_id, invite_data):
     ics_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
-SUMMARY:Tenis Maçı - {invite_data['kort']}
+SUMMARY:Tenis Maçı - {kort_str}
 DTSTART:{dtstart}
 DTEND:{dtend}
-LOCATION:{invite_data['kort']}
+LOCATION:{kort_str}
 DESCRIPTION:İzmir Tenis Ağı üzerinden ayarlandı.
 END:VEVENT
 END:VCALENDAR"""
@@ -197,26 +206,28 @@ def main_app():
     # --- 1. HAVUZ (AÇIK İLANLAR) ---
     if menu == "🏆 Havuz (Açık İlanlar)":
         st.header("🏆 Açık Maç İlanları")
-        aktif_ilanlar = [inv for inv in invites_db if inv["durum"] == "Açık"]
+        
+        # HATA DÜZELTİLDİ: inv.get("durum", "Açık") kullanılarak eski verilerin çökmesi engellendi
+        aktif_ilanlar = [inv for inv in invites_db if inv.get("durum", "Açık") == "Açık"]
         
         if not aktif_ilanlar:
             st.info("Şu an açık ilan bulunmuyor. Yeni bir davet oluşturabilirsiniz!")
             
         for idx, inv in enumerate(aktif_ilanlar):
             with st.container():
-                st.markdown(f"### {inv['tip']} Davet - {inv['bolge']}")
-                st.write(f"**Tarih:** {inv['tarih']} | **Saat:** {inv['saat']} | **Kort:** {inv['kort']}")
-                st.write(f"**Oluşturan:** {inv['olusturan_isim']} (NTRP: {inv['istenen_ntrp']})")
-                st.write(f"**Not:** {inv['notlar']}")
+                # Eski kayıtlarda anahtarlar eksik olabileceği için .get() metodu ile korumaya alındı
+                st.markdown(f"### {inv.get('tip', 'Bilinmiyor')} Davet - {inv.get('bolge', 'Belirtilmedi')}")
+                st.write(f"**Tarih:** {inv.get('tarih', '-')} | **Saat:** {inv.get('saat', '-')} | **Kort:** {inv.get('kort', '-')}")
+                st.write(f"**Oluşturan:** {inv.get('olusturan_isim', 'İsimsiz')} (NTRP: {inv.get('istenen_ntrp', '-')})")
+                st.write(f"**Not:** {inv.get('notlar', '-')}")
                 
-                if inv['olusturan_email'] != st.session_state.current_user:
+                if inv.get('olusturan_email') != st.session_state.current_user:
                     if st.button("Bu Maça Talip Ol", key=f"talip_{idx}"):
                         inv["durum"] = "Eşleşildi"
                         inv["rakip_email"] = st.session_state.current_user
                         inv["rakip_isim"] = isim_gosterim
                         save_data(INVITES_FILE, invites_db)
                         
-                        # .ics Takvim Dosyası İndirme Butonu
                         ics_data = generate_ics(idx, inv)
                         st.download_button(
                             label="📅 Takvime Ekle (.ics)",
@@ -273,14 +284,17 @@ def main_app():
         
         for email, details in users_db.items():
             user_puan = get_avg_rating(details)
-            st.markdown(f"**{details['ad_soyad']}** - NTRP: {details['ntrp']} - Bölge: {details['bolge']} - ⭐ {user_puan:.1f}")
+            st.markdown(f"**{details.get('ad_soyad', 'İsimsiz')}** - NTRP: {details.get('ntrp', '-')} - Bölge: {details.get('bolge', '-')} - ⭐ {user_puan:.1f}")
 
     # --- 4. PROFİL AYARLARI ---
     elif menu == "⚙️ Profil Ayarları":
         st.header("⚙️ Profil Ayarları")
         
         yeni_ad = st.text_input("Ad Soyad", value=current_user_profile.get("ad_soyad", ""))
-        yeni_ntrp = st.selectbox("NTRP Seviyesi", ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0+"], index=["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0+"].index(current_user_profile.get("ntrp", "1.0")))
+        mevcut_ntrp = current_user_profile.get("ntrp", "1.0")
+        ntrp_listesi = ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0+"]
+        ntrp_index = ntrp_listesi.index(mevcut_ntrp) if mevcut_ntrp in ntrp_listesi else 0
+        yeni_ntrp = st.selectbox("NTRP Seviyesi", ntrp_listesi, index=ntrp_index)
         
         # Şifre Değiştirme
         st.subheader("Şifre Değiştir")
