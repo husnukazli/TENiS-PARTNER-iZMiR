@@ -756,6 +756,21 @@ def main_app():
                             })
                             acc["chat_history"] = chat_history
                             save_data(MESSAGES_FILE_PATH, messages)
+                            
+                            # Karşı tarafa e-posta bildirimi gönder (Mesaj içeriği ve maç detaylarıyla)
+                            benim_adim = me.get('ad_soyad', st.session_state.current_user)
+                            mail_konu = f"💬 Yeni Mesaj: {m_date} / {m_court} Maçı"
+                            mail_icerik = f"""
+                            Merhaba,<br><br>
+                            <b>{m_date}</b> tarihli ve <b>{m_time}</b> saatli <b>{m_court}</b> maçınız için partneriniz <b>{benim_adim}</b> size bir mesaj gönderdi:<br><br>
+                            <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #2E7D32; font-style: italic; font-size: 14px;">
+                            "{new_msg}"
+                            </div>
+                            <br>
+                            Mesaja cevap vermek için uygulamaya giriş yapabilirsiniz.🎾
+                            """
+                            send_email(partner_e, mail_konu, mail_icerik)
+                            
                             st.rerun()
                     # 💬 CHAT BÖLÜMÜ BİTİŞİ
 
@@ -815,7 +830,7 @@ def main_app():
                             st.session_state[conf_edit_acc] = False
                             st.rerun()
 
-            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
+            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status'] == 'paused_by_cancellation']
             if paused_invites:
                 st.markdown("---")
                 st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak istersiniz?")
