@@ -800,7 +800,7 @@ def main_app():
                             st.rerun()
 
             if st.session_state.editing_invite:
-                e_inv = next((i for i in invites if i.get('id'] == st.session_state.editing_invite), None)
+                e_inv = next((i for i in invites if i.get('id') == st.session_state.editing_invite), None)
                 if e_inv:
                     st.markdown("---")
                     st.subheader("✏️ İlanı Güncelle ve Yeniden Yayınla")
