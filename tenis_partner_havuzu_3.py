@@ -320,20 +320,17 @@ def login_page():
                     reg_name = st.text_input("Ad Soyad (Zorunlu)")
                     reg_level = st.selectbox("Seviyeniz (NTRP)", NTRP_LEVELS, index=5)
                     reg_ilce = st.selectbox("Yaşadığınız Bölge / İlçe", IZMIR_ILCELER)
-                    reg_ilce_custom = st.text_input("Diğer İlçe / Bölgeyi Yazın:") if reg_ilce == "Diğer Merkez Dışı" else ""
                     
                     if st.form_submit_button("İleri (E-Posta Doğrulama)"):
                         reg_email = reg_email.strip().lower()
-                        final_ilce = reg_ilce_custom.strip() if reg_ilce == "Diğer Merkez Dışı" else reg_ilce
                         if reg_email in users_db: st.error("Bu e-posta zaten kayıtlı.")
                         elif not reg_email or not reg_pass or not reg_name.strip(): st.error("Lütfen tüm alanları eksiksiz doldurun.")
-                        elif reg_ilce == "Diğer Merkez Dışı" and not reg_ilce_custom.strip(): st.error("Lütfen ilçe/bölge adını yazın.")
                         else:
                             code = str(random.randint(100000, 999999))
                             st.session_state.reg_code = code
                             st.session_state.reg_data = {
                                 "email": reg_email, "pass": hash_password(reg_pass), 
-                                "name": reg_name.strip(), "level": reg_level, "ilce": final_ilce
+                                "name": reg_name.strip(), "level": reg_level, "ilce": reg_ilce
                             }
                             
                             mail_sent = send_email(reg_email, "Hesap Doğrulama Kodu", f"Sisteme kayıt için doğrulama kodunuz: <b>{code}</b>")
@@ -409,7 +406,7 @@ def main_app():
     c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {my_rating_display}")
     if c_head2.button("🚪 Çıkış Yap"): st.session_state.logged_in = False; st.rerun()
 
-    my_inbox_count = len([m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending'])
+    my_inbox_count = len([m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending'])
     kontrol_sekme_adi = f"🎾 Maç Kontrol Merkezi 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Maç Kontrol Merkezi"
 
     tabs = st.tabs(["🏆 İlan Havuzu", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar"])
@@ -443,7 +440,7 @@ def main_app():
         for inv in active_invites:
             with st.container(border=True):
                 c1, c2, c3 = st.columns([3, 3, 2])
-                k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' and inv.get('court_custom') else inv.get('court')
+                k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
                 
                 creator_user = users_db.get(inv.get('creator'), {})
                 if not isinstance(creator_user, dict): creator_user = {}
@@ -514,7 +511,7 @@ def main_app():
                     new_inv = {
                         "id": str(uuid.uuid4()), "creator": st.session_state.current_user,
                         "date": str(d), "time_details": f"{t_start.strftime('%H:%M')} - {t_end.strftime('%H:%M')}",
-                        "court": court, "court_custom": court_custom.strip() if court == "Diğer" else "", "court_status": court_status,
+                        "court": court, "court_custom": court_custom, "court_status": court_status,
                         "type": act_type, "levels": levels, "status": "active", "note": inv_note,
                         "created_at": str(datetime.datetime.now())
                     }
@@ -579,23 +576,20 @@ def main_app():
                 o_t1 = c_o1.time_input("Başlangıç", datetime.time(18, 0))
                 o_t2 = c_o2.time_input("Bitiş", datetime.time(19, 30))
                 o_court = st.selectbox("Kort Önerisi", IZMIR_KORTLARI)
-                o_custom = st.text_input("Diğer ise Kort Adını Yazın:") if o_court == "Diğer" else ""
+                o_custom = st.text_input("Diğer ise belirtin:") if o_court == "Diğer" else ""
                 
                 c_sub, c_can = st.columns(2)
                 if c_sub.form_submit_button("🚀 Teklifi Gönder"):
-                    if o_court == "Diğer" and not o_custom.strip():
-                        st.error("Lütfen Kort Adı alanını doldurun.")
-                    else:
-                        new_msg = {
-                            "id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user,
-                            "receiver": st.session_state.offer_to, "date": str(o_date),
-                            "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}",
-                            "court": o_court, "court_custom": o_custom.strip() if o_court == "Diğer" else "", "status": "pending"
-                        }
-                        messages.append(new_msg); save_data(MESSAGES_FILE_PATH, messages)
-                        st.session_state.offer_to = None
-                        st.toast("Özel teklifiniz başarıyla iletildi!", icon="✅")
-                        st.rerun()
+                    new_msg = {
+                        "id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user,
+                        "receiver": st.session_state.offer_to, "date": str(o_date),
+                        "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}",
+                        "court": o_court, "court_custom": o_custom, "status": "pending"
+                    }
+                    messages.append(new_msg); save_data(MESSAGES_FILE_PATH, messages)
+                    st.session_state.offer_to = None
+                    st.toast("Özel teklifiniz başarıyla iletildi!", icon="✅")
+                    st.rerun()
                 if c_can.form_submit_button("İptal"):
                     st.session_state.offer_to = None; st.rerun()
 
@@ -618,7 +612,7 @@ def main_app():
                 else:
                     colB.write("🔒 İletişim: Eşleşince Görünür")
                 
-                has_direct = any(m.get('sender') == st.session_state.current_user and m.get('receiver') == u_email and m.get('status'] == 'pending' for m in messages)
+                has_direct = any(m.get('sender') == st.session_state.current_user and m.get('receiver') == u_email and m.get('status') == 'pending' for m in messages)
                 
                 if has_direct:
                     colC.button("✅ Teklif Gönderildi", key=f"dir_sent_{u_email}", disabled=True)
@@ -646,8 +640,7 @@ def main_app():
                         inv_data = next((i for i in invites if i.get('id') == msg.get('invite_id')), {})
                         st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** (NTRP {s_user.get('level', '3.5')}) sizin **{inv_data.get('date')}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
                     else:
-                        d_court = f"{msg.get('court')} ({msg.get('court_custom')})" if msg.get('court') == 'Diğer' and msg.get('court_custom') else msg.get('court')
-                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{msg.get('date')}** | Kort: **{d_court}**")
+                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{msg.get('date')}** | Kort: **{msg.get('court')}**")
 
                     c_acc, c_rej = st.columns(2)
                     if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}"):
@@ -656,13 +649,11 @@ def main_app():
                             for i in invites:
                                 if i.get('id') == msg.get('invite_id'):
                                     i['status'] = 'matched'
-                                    c_name = f"{i.get('court')} ({i.get('court_custom')})" if i.get('court') == 'Diğer' and i.get('court_custom') else i.get('court')
-                                    msg['calendar_link'] = generate_gcal_link("Tenis Maçı", i.get('date'), i.get('time_details', '18:00'), c_name)
+                                    msg['calendar_link'] = generate_gcal_link("Tenis Maçı", i.get('date'), i.get('time_details', '18:00'), i.get('court'))
                                     break
                             save_data(INVITES_FILE_PATH, invites)
                         else:
-                            c_name = f"{msg.get('court')} ({msg.get('court_custom')})" if msg.get('court') == 'Diğer' and msg.get('court_custom') else msg.get('court')
-                            msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', ''), msg.get('time', '18:00'), c_name)
+                            msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', ''), msg.get('time', '18:00'), msg.get('court', ''))
                             
                         save_data(MESSAGES_FILE_PATH, messages)
                         send_email(msg['sender'], "Teklifiniz Kabul Edildi!", f"<b>{me.get('ad_soyad')}</b> tenis teklifinizi kabul etti!")
@@ -695,7 +686,7 @@ def main_app():
                     st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi"}
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
                     
-                    if msg.get('status'] == 'pending':
+                    if msg.get('status') == 'pending':
                         conf_with_key = f"conf_with_{msg['id']}"
                         if not st.session_state.get(conf_with_key, False):
                             if st.button("🗑️ Teklifi Geri Çek", key=f"btn_with_{msg['id']}"):
@@ -715,7 +706,7 @@ def main_app():
                                 st.rerun()
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
             
             for acc in reversed(my_acc):
@@ -727,11 +718,11 @@ def main_app():
                         inv_data = next((i for i in invites if i.get('id') == acc.get('invite_id')), {})
                         m_date = inv_data.get('date', 'Belirtilmedi')
                         m_time = inv_data.get('time_details', 'Belirtilmedi')
-                        m_court = f"{inv_data.get('court')} ({inv_data.get('court_custom')})" if inv_data.get('court') == 'Diğer' and inv_data.get('court_custom') else inv_data.get('court', 'Belirtilmedi')
+                        m_court = inv_data.get('court', 'Belirtilmedi')
                     else:
                         m_date = acc.get('date', 'Belirtilmedi')
                         m_time = acc.get('time', 'Belirtilmedi')
-                        m_court = f"{acc.get('court')} ({acc.get('court_custom')})" if acc.get('court') == 'Diğer' and acc.get('court_custom') else acc.get('court', 'Belirtilmedi')
+                        m_court = acc.get('court', 'Belirtilmedi')
 
                     st.markdown(f"🤝 **Partner:** {partner_u.get('ad_soyad', 'Partner')} *(NTRP {partner_u.get('level', '3.5')})*")
                     st.markdown(f"🗓️ **Tarih & Saat:** {m_date} | {m_time}")
@@ -837,15 +828,15 @@ def main_app():
                             st.session_state[conf_edit_acc] = False
                             st.rerun()
 
-            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status'] == 'paused_by_cancellation']
+            # TÜM PARANTEZ/KÖŞELİ PARANTEZ HATALARI GİDERİLDİ
+            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
             
             if paused_invites:
                 st.markdown("---")
                 st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak istersiniz?")
                 for pinv in paused_invites:
                     with st.container(border=True):
-                        c_text = f"{pinv.get('court')} ({pinv.get('court_custom')})" if pinv.get('court') == 'Diğer' and pinv.get('court_custom') else pinv.get('court')
-                        st.write(f"📍 {c_text} | 🗓️ {pinv.get('date')} tarihli ilanınızın eşleşmesi iptal oldu.")
+                        st.write(f"📍 {pinv.get('court')} | 🗓️ {pinv.get('date')} tarihli ilanınızın eşleşmesi iptal oldu.")
                         col_p1, col_p2 = st.columns(2)
                         if col_p1.button("📢 İlanı Yeniden Yayına Al", key=f"repub_{pinv.get('id')}"):
                             pinv['status'] = 'active'
@@ -866,12 +857,10 @@ def main_app():
                     with st.form("edit_inv_form"):
                         ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
                         ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
-                        ed_custom = st.text_input("Diğer ise Kort Adını Yazın:", value=e_inv.get('court_custom', '')) if ed_court == "Diğer" else ""
                         ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
                         if st.form_submit_button("Güncelle ve Havuza Gönder"):
                             e_inv['date'] = str(ed_d)
                             e_inv['court'] = ed_court
-                            e_inv['court_custom'] = ed_custom.strip() if ed_court == "Diğer" else ""
                             e_inv['note'] = ed_note
                             e_inv['status'] = 'active'
                             save_data(INVITES_FILE_PATH, invites)
@@ -880,14 +869,14 @@ def main_app():
                             st.rerun()
 
         with m_tab4:
-            past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] in ['cancelled', 'rejected']]
+            past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'rejected']]
             if not past_m: st.info("Geçmiş iptal kaydı bulunmuyor.")
             for pm in past_m: st.write(f"⚪ İptal/Reddedilen Kayıt | ID: {pm['id'][:8]} | Durum: **{pm['status']}**")
 
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
@@ -925,12 +914,7 @@ def main_app():
                 st.text_input("E-Posta Adresi (Değiştirilemez)", value=st.session_state.current_user, disabled=True)
                 ad = st.text_input("Ad Soyad", value=me.get("ad_soyad", ""))
                 phone = st.text_input("Telefon Numarası", value=me.get("phone", ""))
-                
-                current_ilce = me.get("ilce", "Belirtilmemiş")
-                ilce_in_list = current_ilce in IZMIR_ILCELER
-                ilce = st.selectbox("Bölge / İlçe (Sıralamalar İçin)", IZMIR_ILCELER, index=IZMIR_ILCELER.index(current_ilce) if ilce_in_list else IZMIR_ILCELER.index("Diğer Merkez Dışı"))
-                ilce_custom = st.text_input("Diğer İlçe / Bölgeyi Yazın:", value="" if ilce_in_list else current_ilce) if ilce == "Diğer Merkez Dışı" else ""
-                
+                ilce = st.selectbox("Bölge / İlçe (Sıralamalar İçin)", IZMIR_ILCELER, index=IZMIR_ILCELER.index(me.get("ilce", "Belirtilmemiş")) if me.get("ilce") in IZMIR_ILCELER else 0)
                 level = st.selectbox("NTRP Oyuncu Seviyeniz", NTRP_LEVELS, index=NTRP_LEVELS.index(me.get("level", "3.5")) if me.get("level") in NTRP_LEVELS else 5)
                 
                 me_style = me.get("style", "All-Rounder")
@@ -939,9 +923,7 @@ def main_app():
                 style_custom = st.text_input("Diğer ise Oyun Tarzınızı Yazın:", value=me_style if is_custom else "") if style_sel == "Diğer" else ""
 
                 if st.form_submit_button("💾 Profili Güncelle"):
-                    final_ilce = ilce_custom.strip() if ilce == "Diğer Merkez Dışı" else ilce
-                    final_style = style_custom.strip() if style_sel == "Diğer" else style_sel
-                    me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "ilce": final_ilce, "level": level, "style": final_style})
+                    me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "ilce": ilce, "level": level, "style": style_custom.strip() if style_sel == "Diğer" else style_sel})
                     users_db[st.session_state.current_user] = me
                     save_data(USERS_FILE_PATH, users_db)
                     st.toast("Profil bilgileriniz güncellendi! ✅", icon="👤")
