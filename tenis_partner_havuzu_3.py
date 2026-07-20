@@ -284,7 +284,7 @@ def login_page():
                         save_data(USERS_FILE_PATH, users_db)
                         send_email(reset_email, "Şifre Sıfırlama Talebi", f"Geçici şifreniz: <b>{new_pass}</b><br><br>Giriş yaptıktan sonra profilinizden şifrenizi değiştirmeyi unutmayın.")
                         st.success("Yeni şifreniz e-posta adresinize gönderildi!")
-                    else: st.error("Sistemde böyle her e-posta bulunamadı.")
+                    else: st.error("Sistemde böyle bir e-posta bulunamadı.")
                     
         with st.expander("👑 Yönetici Paneli"):
             admin_code = st.text_input("Yönetici Parolası", type="password")
@@ -522,7 +522,7 @@ def main_app():
         ])
 
         with m_tab1:
-            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
+            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
                 with st.container(border=True):
@@ -565,7 +565,7 @@ def main_app():
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
                 with st.container(border=True):
