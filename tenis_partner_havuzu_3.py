@@ -613,7 +613,7 @@ def main_app():
         ])
 
         with m_tab1:
-            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
+            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending')
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
                 with st.container(border=True):
