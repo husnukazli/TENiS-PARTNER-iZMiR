@@ -826,7 +826,7 @@ def main_app():
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
