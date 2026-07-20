@@ -14,6 +14,23 @@ import urllib.parse
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
+# MOBİL ARAYÜZ (UI) GÜVENLİ CSS KODLARI
+st.markdown("""
+<style>
+    /* Ekranın üst boşluğunu daraltarak mobil alanı maksimize et */
+    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+    
+    /* Tüm butonları modern, yuvarlak köşeli ve tam genişlikte (app tarzı) yap */
+    .stButton > button { width: 100%; border-radius: 12px; font-weight: 600; }
+    
+    /* Sekmeleri (Tab'ları) mobil ekrana daha iyi yay ve kaydırılabilir yap */
+    .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: space-evenly; overflow-x: auto; }
+    
+    /* Container (Kart) kenarlarını daha yumuşak yuvarlat */
+    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
+</style>
+""", unsafe_allow_html=True)
+
 # --- SABİT VERİLER ---
 NTRP_LEVELS = ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0"]
 IZMIR_KORTLARI = [
@@ -669,7 +686,6 @@ def main_app():
                     st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi"}
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
                     
-                    # 🚀 YENİ ÖZELLİK: Bekleyen teklifi (pending) kendi başına geri çekebilme
                     if msg.get('status') == 'pending':
                         conf_with_key = f"conf_with_{msg['id']}"
                         if not st.session_state.get(conf_with_key, False):
@@ -680,7 +696,6 @@ def main_app():
                             st.warning("Bu teklifi geri çekmek istediğinize emin misiniz?")
                             cw1, cw2 = st.columns(2)
                             if cw1.button("Evet, Geri Çek", key=f"yes_with_{msg['id']}"):
-                                # Eğer ilana yapılan bir teklifse ilanı etkilemez, mesajı tamamen siliyoruz
                                 messages = [m for m in messages if m['id'] != msg['id']]
                                 save_data(MESSAGES_FILE_PATH, messages)
                                 st.session_state[conf_with_key] = False
@@ -693,6 +708,7 @@ def main_app():
         with m_tab3:
             my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
+            
             for acc in reversed(my_acc):
                 with st.container(border=True):
                     partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
@@ -720,9 +736,32 @@ def main_app():
                     else: st.info("🔒 Kullanıcı iletişim bilgilerini gizlemeyi tercih etmiş.")
 
                     st.markdown("---")
+                    
+                    # 💬 CHAT (SOHBET) BÖLÜMÜ BAŞLANGICI
+                    with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
+                        chat_history = acc.get("chat_history", [])
+                        
+                        for chat in chat_history:
+                            is_me = chat["sender"] == st.session_state.current_user
+                            with st.chat_message("user" if is_me else "assistant"):
+                                st.write(chat["text"])
+                                st.caption(chat["timestamp"])
+                        
+                        new_msg = st.chat_input("Mesajınızı yazın...", key=f"chat_input_{acc['id']}")
+                        if new_msg:
+                            chat_history.append({
+                                "sender": st.session_state.current_user,
+                                "text": new_msg,
+                                "timestamp": datetime.datetime.now().strftime("%d-%m %H:%M")
+                            })
+                            acc["chat_history"] = chat_history
+                            save_data(MESSAGES_FILE_PATH, messages)
+                            st.rerun()
+                    # 💬 CHAT BÖLÜMÜ BİTİŞİ
+
+                    st.markdown("---")
                     c_opt1, c_opt2 = st.columns(2)
                     
-                    # 🚀 YENİ ÖZELLİK: İptal Durumunda Akıllı Seçenekler (İlan Sahibi veya Teklif Veren Ayrımı)
                     conf_del_acc = f"conf_del_acc_{acc['id']}"
                     if not st.session_state.get(conf_del_acc, False):
                         if c_opt1.button("🗑️ Maçı İptal Et", key=f"btn_del_acc_{acc['id']}"):
@@ -734,19 +773,16 @@ def main_app():
                             acc['status'] = 'cancelled'
                             save_data(MESSAGES_FILE_PATH, messages)
                             
-                            # Eğer bu ilan isteği ise ve maçı iptal eden taraf teklif gönderen (sender) ise, ilan sahibine seçenek sunmak üzere ilanı askıya/beklemeye alıyoruz
                             if acc.get('type') == 'invite_request':
                                 target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
                                 if target_inv:
                                     if st.session_state.current_user == target_inv.get('creator'):
-                                        # İlan sahibi iptal ettiyse ilan tamamen silinebilir veya pasife alınabilir
                                         invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
                                     else:
-                                        # Teklif veren kişi iptal ettiyse ilan sahibine bildirim gitsin diye ilanı 'paused_by_cancellation' yapalım
                                         target_inv['status'] = 'paused_by_cancellation'
                                     save_data(INVITES_FILE_PATH, invites)
 
-                            send_email(partner_e, "Maç İptali", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
+                            send_email(partner_e, "Maç İptali", f"<b>{me.get('ad_soyad', st.session_state.current_user)}</b> maçı iptal etti.")
                             st.session_state[conf_del_acc] = False
                             st.toast("Maç iptal edildi.", icon="🗑️")
                             st.rerun()
@@ -771,7 +807,7 @@ def main_app():
                                         st.session_state.editing_invite = i.get('id')
                                         break
                                 save_data(INVITES_FILE_PATH, invites)
-                            send_email(partner_e, "Maç İptal Edildi", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
+                            send_email(partner_e, "Maç İptal Edildi", f"<b>{me.get('ad_soyad', st.session_state.current_user)}</b> maçı iptal etti.")
                             st.session_state[conf_edit_acc] = False
                             st.toast("İlan yeniden düzenleme moduna alındı ve havuza döndü!", icon="✏️")
                             st.rerun()
@@ -779,11 +815,10 @@ def main_app():
                             st.session_state[conf_edit_acc] = False
                             st.rerun()
 
-            # İlan sahibi için iptal edilen veya askıya alınan ilanları yeniden yönetme alanı
             paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
             if paused_invites:
                 st.markdown("---")
-                st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak্সিsiniz?")
+                st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak istersiniz?")
                 for pinv in paused_invites:
                     with st.container(border=True):
                         st.write(f"📍 {pinv.get('court')} | 🗓️ {pinv.get('date')} tarihli ilanınızın eşleşmesi iptal oldu.")
