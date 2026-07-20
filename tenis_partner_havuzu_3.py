@@ -667,7 +667,7 @@ def main_app():
                             st.rerun()
 
         with m_tab2:
-            my_sent = [m for m in messages if m.get('sender'] == st.session_state.current_user]
+            my_sent = [m for m in messages if m.get('sender') == st.session_state.current_user]
             if not my_sent: st.info("Henüz kimseye teklif göndermediniz.")
             for msg in reversed(my_sent):
                 with st.container(border=True):
