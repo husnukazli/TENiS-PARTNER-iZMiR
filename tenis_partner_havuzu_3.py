@@ -819,7 +819,7 @@ def main_app():
                             st.rerun()
 
         with m_tab4:
-            past_m = [m for m in messages if (m.get('receiver'] == st.session_state.current_user or m.get('sender'] == st.session_state.current_user) and m.get('status'] in ['cancelled', 'rejected']]
+            past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] in ['cancelled', 'rejected']]
             if not past_m: st.info("Geçmiş iptal kaydı bulunmuyor.")
             for pm in past_m: st.write(f"⚪ İptal/Reddedilen Kayıt | ID: {pm['id'][:8]} | Durum: **{pm['status']}**")
 
