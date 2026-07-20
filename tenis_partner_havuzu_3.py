@@ -38,6 +38,7 @@ REPO_NAME = st.secrets.get("REPO_NAME", "kullaniciadi/repo_adi")
 SMTP_USER = st.secrets.get("SMTP_USER", "")
 SMTP_PASS = st.secrets.get("SMTP_PASS", "")
 ADMIN_PASS = st.secrets.get("ADMIN_PANEL_PASS", "izmir35")
+ADMIN_EMAIL = "husnukazli@gmail.com"  # Yönetici e-posta adresi
 
 INVITES_FILE_PATH = "invites.json"
 USERS_FILE_PATH = "users.json"
@@ -124,6 +125,20 @@ def calculate_rating(ratings_dict):
     all_scores = ratings_dict.get("zaman", []) + ratings_dict.get("seviye", []) + ratings_dict.get("davranis", [])
     return sum(all_scores) / len(all_scores) if all_scores else 5.0
 
+def sidebar_pwa_guide():
+    with st.sidebar.expander("📲 Ana Ekrana Kısayol Ekle", expanded=True):
+        st.markdown("""
+        **Mobil Uygulama Gibi Kullanın!**
+        
+        🍎 **iOS (iPhone/iPad):**
+        1. Safari alt menüsündeki **Paylaş** (kare ve yukarı ok) ikonuna dokunun.
+        2. **Ana Ekrana Ekle** seçeneğini seçin.
+        
+        🤖 **Android:**
+        1. Chrome sağ üstteki **Üç Nokta (⋮)** menüsüne dokunun.
+        2. **Ana Ekrana Ekle** seçeneğini seçin.
+        """)
+
 # --- OTURUM YÖNETİMİ ---
 for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite']:
     if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin'] else None
@@ -139,35 +154,82 @@ def admin_dashboard():
     invites = load_data(INVITES_FILE_PATH, default_type=list)
     messages = load_data(MESSAGES_FILE_PATH, default_type=list)
 
-    t1, t2, t3 = st.tabs(["👥 Üye Yönetimi", "📅 İlan Yönetimi", "💾 Yedekleme & Kurtarma"])
+    active_inv_count = len([i for i in invites if i.get('status') == 'active'])
+    inv_tab_label = f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi"
+    
+    # Silme talebi gönderen kullanıcı sayısı rozeti
+    del_requests_count = len([u for u, d in users_db.items() if isinstance(d, dict) and d.get('delete_requested')])
+    users_tab_label = f"👥 Üye Yönetimi 🚨 ({del_requests_count})" if del_requests_count > 0 else "👥 Üye Yönetimi"
+
+    t1, t2, t3 = st.tabs([users_tab_label, inv_tab_label, "💾 Yedekleme & Kurtarma"])
     
     with t1:
-        st.subheader("Kayıtlı Üyeler")
+        st.subheader("Kayıtlı Üyeler ve Silme Talepleri")
         for u_email, u_data in users_db.items():
             if not isinstance(u_data, dict): continue 
             with st.container(border=True):
                 c1, c2, c3 = st.columns([4, 2, 2])
-                status = "🔴 Askıda" if u_data.get("suspended") else "🟢 Aktif"
-                test_tag = " 🧪 (Test Hesabı)" if u_data.get("is_bot") else ""
+                status = "🔴 Askıda" if u_data.get("suspended") else ("⏸️ Dondurulmuş" if u_data.get("frozen") else "🟢 Aktif")
+                del_req_badge = " 🚨 [SİLME TALEBİ]" if u_data.get("delete_requested") else ""
+                test_tag = " 🧪 (Test)" if u_data.get("is_bot") else ""
                 
-                c1.write(f"**{u_data.get('ad_soyad')}{test_tag}** | {u_email} | NTRP: {u_data.get('level', 'Belirtilmedi')} | {status}")
-                if c2.button("Kaldır / Askıya Al", key=f"susp_{u_email}"):
-                    users_db[u_email]["suspended"] = not u_data.get("suspended", False)
-                    save_data(USERS_FILE_PATH, users_db)
-                    st.toast("Üye durumu güncellendi!", icon="✅"); st.rerun()
-                if c3.button("🗑️ Sil", key=f"del_{u_email}"):
-                    del users_db[u_email]; save_data(USERS_FILE_PATH, users_db)
-                    st.toast("Üye silindi!", icon="🗑️"); st.rerun()
+                c1.write(f"**{u_data.get('ad_soyad')}{test_tag}{del_req_badge}** | {u_email} | Durum: {status}")
+                
+                # Onay mekanizması için state anahtarları
+                confirm_susp_key = f"conf_susp_{u_email}"
+                confirm_del_key = f"conf_del_{u_email}"
+                
+                if not st.session_state.get(confirm_susp_key, False):
+                    if c2.button("Kaldır / Askıya Al", key=f"btn_susp_{u_email}"):
+                        st.session_state[confirm_susp_key] = True
+                        st.rerun()
+                else:
+                    c2.warning("Emin misiniz?")
+                    if c2.button("Evet, Değiştir", key=f"yes_susp_{u_email}"):
+                        users_db[u_email]["suspended"] = not u_data.get("suspended", False)
+                        st.session_state[confirm_susp_key] = False
+                        save_data(USERS_FILE_PATH, users_db)
+                        st.toast("Üye durumu güncellendi!", icon="✅"); st.rerun()
+                    if c2.button("Vazgeç", key=f"no_susp_{u_email}"):
+                        st.session_state[confirm_susp_key] = False
+                        st.rerun()
+
+                if not st.session_state.get(confirm_del_key, False):
+                    if c3.button("🗑️ Kalıcı Sil", key=f"btn_del_{u_email}"):
+                        st.session_state[confirm_del_key] = True
+                        st.rerun()
+                else:
+                    c3.warning("Kalıcı silinsin mi?")
+                    if c3.button("Evet, Kalıcı Sil", key=f"yes_del_{u_email}"):
+                        del users_db[u_email]
+                        st.session_state[confirm_del_key] = False
+                        save_data(USERS_FILE_PATH, users_db)
+                        st.toast("Üye verileri tamamen silindi!", icon="🗑️"); st.rerun()
+                    if c3.button("Vazgeç", key=f"no_del_{u_email}"):
+                        st.session_state[confirm_del_key] = False
+                        st.rerun()
 
     with t2:
         st.subheader("Sistemdeki İlanlar")
         for inv in reversed(invites):
             c1, c2 = st.columns([6, 2])
-            c1.write(f"📍 {inv.get('court')} | 🗓️ {inv.get('date')} | Durum: **{inv.get('status')}** | 👤 {users_db.get(inv.get('creator'), {}).get('ad_soyad', 'Bilinmeyen')}")
-            if c2.button("🗑️ İlanı Kaldır", key=f"adm_del_{inv.get('id')}"):
-                invites = [i for i in invites if i.get('id') != inv.get('id')]
-                save_data(INVITES_FILE_PATH, invites)
-                st.toast("İlan silindi!", icon="✅"); st.rerun()
+            c1.write(f"📍 {inv.get('court')} | 🗓️ {inv.get('date')} | Durum: **{inv.get('status')}**")
+            
+            conf_inv_key = f"conf_inv_del_{inv.get('id')}"
+            if not st.session_state.get(conf_inv_key, False):
+                if c2.button("🗑️ İlanı Kaldır", key=f"btn_adm_del_{inv.get('id')}"):
+                    st.session_state[conf_inv_key] = True
+                    st.rerun()
+            else:
+                c2.warning("Silinsin mi?")
+                if c2.button("Evet", key=f"yes_inv_{inv.get('id')}"):
+                    invites = [i for i in invites if i.get('id') != inv.get('id')]
+                    st.session_state[conf_inv_key] = False
+                    save_data(INVITES_FILE_PATH, invites)
+                    st.toast("İlan silindi!", icon="✅"); st.rerun()
+                if c2.button("İptal", key=f"no_inv_{inv.get('id')}"):
+                    st.session_state[conf_inv_key] = False
+                    st.rerun()
 
     with t3:
         st.subheader("Sistem Yedekleme ve Kurtarma")
@@ -186,6 +248,8 @@ def admin_dashboard():
 
 # --- GİRİŞ VE VİTRİN SAYFASI ---
 def login_page():
+    sidebar_pwa_guide()
+    
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 İzmir Tenis Partner Ağı</h1>", unsafe_allow_html=True)
     users_db = load_data(USERS_FILE_PATH, default_type=dict)
     invites = load_data(INVITES_FILE_PATH, default_type=list)
@@ -195,7 +259,14 @@ def login_page():
     with col_showcase:
         st.markdown("### 🌟 Güncel İlanlar (Vitrin)")
         st.write("Aşağıdaki ilanlara teklif göndermek veya kendi ilanını açmak için sağ taraftan giriş yapmalısın.")
-        active_inv = [i for i in invites if i.get('status') == 'active']
+        # Dondurulmuş veya askıdaki kullanıcıların ilanları vitrinde görünmesin
+        active_inv = []
+        for i in invites:
+            if i.get('status') == 'active':
+                creator_d = users_db.get(i.get('creator'), {})
+                if isinstance(creator_d, dict) and not creator_d.get('suspended') and not creator_d.get('frozen'):
+                    active_inv.append(i)
+                    
         active_inv.sort(key=lambda x: x.get('date', '9999-12-31'))
         
         if not active_inv: st.info("Şu an havuzda aktif ilan bulunmuyor.")
@@ -219,7 +290,7 @@ def login_page():
                 email = st.text_input("E-posta")
                 password = st.text_input("Şifre", type="password")
                 if st.form_submit_button("Giriş Yap"):
-                    email = email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
+                    email = email.strip().lower()
                     if email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                         if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
                         else:
@@ -237,7 +308,7 @@ def login_page():
                     reg_ilce = st.selectbox("Yaşadığınız Bölge / İlçe", IZMIR_ILCELER)
                     
                     if st.form_submit_button("İleri (E-Posta Doğrulama)"):
-                        reg_email = reg_email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
+                        reg_email = reg_email.strip().lower()
                         if reg_email in users_db: st.error("Bu e-posta zaten kayıtlı.")
                         elif not reg_email or not reg_pass or not reg_name.strip(): st.error("Lütfen tüm alanları eksiksiz doldurun.")
                         else:
@@ -262,13 +333,17 @@ def login_page():
                             d = st.session_state.reg_data
                             users_db[d["email"]] = {
                                 "password_hash": d["pass"], "ad_soyad": d["name"], "level": d["level"],
-                                "ilce": d.get("ilce", "Belirtilmemiş"), "suspended": False, "is_bot": False, 
-                                "phone": "", "contact_visibility": "eslesince",
+                                "ilce": d.get("ilce", "Belirtilmemiş"), "suspended": False, "frozen": False, 
+                                "delete_requested": False, "is_bot": False, "phone": "", "contact_visibility": "eslesince",
                                 "privacy": {"ghost": False, "show_rating": True},
                                 "radar": {"active": False, "courts": [], "levels": [], "types": []},
                                 "ratings": {"zaman": [], "seviye": [], "davranis": []}
                             }
                             save_data(USERS_FILE_PATH, users_db)
+                            
+                            admin_msg = f"Sisteme yeni bir üye katıldı!<br><br><b>Ad Soyad:</b> {d['name']}<br><b>E-posta:</b> {d['email']}<br><b>NTRP Seviyesi:</b> {d['level']}<br><b>İlçe:</b> {d.get('ilce', 'Belirtilmedi')}"
+                            send_email(ADMIN_EMAIL, "🎉 Yeni Üye Kaydı", admin_msg)
+                            
                             st.session_state.reg_step = "form"
                             st.success("Kayıt başarılı! Giriş sekmesinden hesabınıza girebilirsiniz.")
                         else: st.error("Hatalı kod!")
@@ -280,7 +355,7 @@ def login_page():
                 st.info("Kayıtlı e-posta adresinizi girin. Size geçici bir şifre göndereceğiz.")
                 reset_email = st.text_input("E-posta Adresi")
                 if st.form_submit_button("Şifremi Sıfırla"):
-                    reset_email = reset_email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
+                    reset_email = reset_email.strip().lower()
                     if reset_email in users_db:
                         new_pass = generate_temp_password()
                         users_db[reset_email]["password_hash"] = hash_password(new_pass)
@@ -298,6 +373,8 @@ def login_page():
 
 # --- ANA UYGULAMA ---
 def main_app():
+    sidebar_pwa_guide()
+    
     users_db = load_data(USERS_FILE_PATH, default_type=dict)
     invites = load_data(INVITES_FILE_PATH, default_type=list)
     messages = load_data(MESSAGES_FILE_PATH, default_type=list)
@@ -309,10 +386,16 @@ def main_app():
 
     c_head1, c_head2 = st.columns([4, 1])
     c_head1.write("### 🎾 İzmir Tenis Partner Havuzu")
+    if me.get('frozen'):
+        c_head1.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır. Diğer üyeler size teklif gönderemez ve ilanlarınız görünmez.")
+    
     c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {my_rating_display}")
     if c_head2.button("🚪 Çıkış Yap"): st.session_state.logged_in = False; st.rerun()
 
-    tabs = st.tabs(["🏆 İlan Havuzu", "➕ İlan Oluştur", "👥 Üyeler", "🎾 Maç Kontrol Merkezi", "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar"])
+    my_inbox_count = len([m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending'])
+    kontrol_sekme_adi = f"🎾 Maç Kontrol Merkezi 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Maç Kontrol Merkezi"
+
+    tabs = st.tabs(["🏆 İlan Havuzu", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar"])
 
     # --- TAB 0: İLAN HAVUZU ---
     with tabs[0]:
@@ -322,7 +405,13 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
             
-        active_invites = [i for i in invites if i.get('status') == 'active']
+        # Dondurulmuş veya askıdaki kullanıcıların ilanlarını gizle
+        active_invites = []
+        for i in invites:
+            if i.get('status') == 'active':
+                u_creator = users_db.get(i.get('creator'), {})
+                if isinstance(u_creator, dict) and not u_creator.get('suspended') and not u_creator.get('frozen'):
+                    active_invites.append(i)
         
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
         if filter_level: active_invites = [i for i in active_invites if any(l in filter_level for l in i.get('levels', []))]
@@ -379,8 +468,9 @@ def main_app():
     # --- TAB 1: İLAN OLUŞTUR ---
     with tabs[1]:
         st.subheader("➕ Yeni İlan Yayınla")
-        st.write(f"İlanınız **{me.get('ad_soyad', 'Kullanıcı')}** (NTRP {me.get('level', '3.5')}) ismiyle yayınlanacaktır.")
-        
+        if me.get('frozen'):
+            st.warning("⚠️ Hesabınız dondurulmuş durumda. İlan oluşturabilirsiniz ancak hesabınızı aktifleştirene kadar ilanınız vitrinde görünmez.")
+            
         with st.form("create_invite"):
             c1, c2 = st.columns(2)
             d = c1.date_input("Tarih", min_value=datetime.date.today())
@@ -418,6 +508,7 @@ def main_app():
                     radar_count = 0
                     for u_email, u_data in users_db.items():
                         if u_email == st.session_state.current_user or not isinstance(u_data, dict): continue
+                        if u_data.get('frozen') or u_data.get('suspended'): continue # Dondurulanlara radar gitmez
                         r = u_data.get("radar", {})
                         if r.get("active", False):
                             match_court = not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))
@@ -435,7 +526,7 @@ def main_app():
                     if radar_count > 0: st.info(f"📡 Radar kriterleri eşleşen {radar_count} kişiye e-posta bildirimi gönderildi.")
                     st.rerun()
 
-    # --- TAB 2: ÜYELER (Oyuncu Listesi ve Sıralama) ---
+    # --- TAB 2: ÜYELER ---
     with tabs[2]:
         c_title, c_sort = st.columns([3, 2])
         c_title.subheader("👥 Oyuncu Listesi")
@@ -443,8 +534,9 @@ def main_app():
         
         user_list = []
         for u_email, u_data in users_db.items():
-            if not isinstance(u_data, dict) or u_email == st.session_state.current_user or u_data.get("privacy", {}).get("ghost"): 
-                continue
+            # Dondurulmuş veya hayalet veya askıdaki kullanıcılar üye listesinde görünmez
+            if not isinstance(u_data, dict) or u_email == st.session_state.current_user: continue
+            if u_data.get("privacy", {}).get("ghost") or u_data.get("frozen") or u_data.get("suspended"): continue
             
             u_rating = calculate_rating(u_data.get('ratings'))
             try: u_level = float(u_data.get('level', '3.5'))
@@ -520,8 +612,9 @@ def main_app():
     with tabs[3]:
         st.subheader("🎾 Maç Kontrol Merkezi")
         
+        inbox_label = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
         m_tab1, m_tab2, m_tab3, m_tab4 = st.tabs([
-            "📥 Gelen Teklifler", "📤 Gönderdiğim Teklifler", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"
+            inbox_label, "📤 Gönderdiğim Teklifler", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"
         ])
 
         with m_tab1:
@@ -547,19 +640,34 @@ def main_app():
                                     msg['calendar_link'] = generate_gcal_link("Tenis Maçı", i.get('date'), i.get('time_details', '18:00'), i.get('court'))
                                     break
                             save_data(INVITES_FILE_PATH, invites)
+                        else:
+                            msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', ''), msg.get('time', '18:00'), msg.get('court', ''))
+                            
                         save_data(MESSAGES_FILE_PATH, messages)
                         send_email(msg['sender'], "Teklifiniz Kabul Edildi!", f"<b>{me.get('ad_soyad')}</b> tenis teklifinizi kabul etti!")
                         st.toast("Teklif kabul edildi ve maç takvime eklendi! 🎉", icon="✅")
                         st.rerun()
 
-                    if c_rej.button("❌ Reddet", key=f"rej_{msg['id']}"):
-                        msg['status'] = 'rejected'
-                        save_data(MESSAGES_FILE_PATH, messages)
-                        st.toast("Teklif reddedildi.", icon="ℹ️")
-                        st.rerun()
+                    # Onay mekanizmalı Reddet butonu
+                    conf_rej_key = f"conf_rej_{msg['id']}"
+                    if not st.session_state.get(conf_rej_key, False):
+                        if c_rej.button("❌ Reddet", key=f"btn_rej_{msg['id']}"):
+                            st.session_state[conf_rej_key] = True
+                            st.rerun()
+                    else:
+                        c_rej.warning("Reddedilsin mi?")
+                        if c_rej.button("Evet, Reddet", key=f"yes_rej_{msg['id']}"):
+                            msg['status'] = 'rejected'
+                            st.session_state[conf_rej_key] = False
+                            save_data(MESSAGES_FILE_PATH, messages)
+                            st.toast("Teklif reddedildi.", icon="ℹ️")
+                            st.rerun()
+                        if c_rej.button("Vazgeç", key=f"no_rej_{msg['id']}"):
+                            st.session_state[conf_rej_key] = False
+                            st.rerun()
 
         with m_tab2:
-            my_sent = [m for m in messages if m.get('sender') == st.session_state.current_user]
+            my_sent = [m for m in messages if m.get('sender'] == st.session_state.current_user]
             if not my_sent: st.info("Henüz kimseye teklif göndermediniz.")
             for msg in reversed(my_sent):
                 with st.container(border=True):
@@ -568,14 +676,29 @@ def main_app():
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
                 with st.container(border=True):
                     partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
                     partner_u = users_db.get(partner_e, {})
-                    st.markdown(f"🤝 **{partner_u.get('ad_soyad', 'Partner')}** *(NTRP {partner_u.get('level', '3.5')})* ile maçınız onaylandı.")
+                    
+                    if acc.get('type') == 'invite_request':
+                        inv_data = next((i for i in invites if i.get('id') == acc.get('invite_id')), {})
+                        m_date = inv_data.get('date', 'Belirtilmedi')
+                        m_time = inv_data.get('time_details', 'Belirtilmedi')
+                        m_court = inv_data.get('court', 'Belirtilmedi')
+                    else:
+                        m_date = acc.get('date', 'Belirtilmedi')
+                        m_time = acc.get('time', 'Belirtilmedi')
+                        m_court = acc.get('court', 'Belirtilmedi')
+
+                    st.markdown(f"🤝 **Partner:** {partner_u.get('ad_soyad', 'Partner')} *(NTRP {partner_u.get('level', '3.5')})*")
+                    st.markdown(f"🗓️ **Tarih & Saat:** {m_date} | {m_time}")
+                    st.markdown(f"📍 **Kort:** {m_court}")
+                    
                     st.markdown(f"[📅 Google Takvime Ekle]({acc.get('calendar_link', '#')})")
+                    
                     p_vis = partner_u.get('contact_visibility', 'eslesince')
                     if p_vis in ['eslesince', 'herkes']:
                         st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
@@ -583,29 +706,53 @@ def main_app():
 
                     st.markdown("---")
                     c_opt1, c_opt2 = st.columns(2)
-                    if c_opt1.button("🗑️ Maçı İptal Et ve İlanı Tamamen Sil", key=f"del_acc_{acc['id']}"):
-                        acc['status'] = 'cancelled'
-                        if acc.get('type') == 'invite_request':
-                            invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
-                            save_data(INVITES_FILE_PATH, invites)
-                        save_data(MESSAGES_FILE_PATH, messages)
-                        send_email(partner_e, "Maç İptali", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
-                        st.toast("Maç iptal edildi ve ilan tamamen silindi.", icon="🗑️")
-                        st.rerun()
+                    
+                    # Onay mekanizmalı maç iptalleri
+                    conf_del_acc = f"conf_del_acc_{acc['id']}"
+                    if not st.session_state.get(conf_del_acc, False):
+                        if c_opt1.button("🗑️ Maçı İptal Et ve Sil", key=f"btn_del_acc_{acc['id']}"):
+                            st.session_state[conf_del_acc] = True
+                            st.rerun()
+                    else:
+                        c_opt1.warning("Maç iptal edilsin mi?")
+                        if c_opt1.button("Evet, İptal Et", key=f"yes_del_acc_{acc['id']}"):
+                            acc['status'] = 'cancelled'
+                            if acc.get('type') == 'invite_request':
+                                invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
+                                save_data(INVITES_FILE_PATH, invites)
+                            save_data(MESSAGES_FILE_PATH, messages)
+                            send_email(partner_e, "Maç İptali", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
+                            st.session_state[conf_del_acc] = False
+                            st.toast("Maç iptal edildi ve ilan tamamen silindi.", icon="🗑️")
+                            st.rerun()
+                        if c_opt1.button("Vazgeç", key=f"no_del_acc_{acc['id']}"):
+                            st.session_state[conf_del_acc] = False
+                            st.rerun()
 
-                    if c_opt2.button("✏️ Maçı İptal Et & İlanı Yeniden Yayınla", key=f"edit_acc_{acc['id']}"):
-                        acc['status'] = 'cancelled'
-                        save_data(MESSAGES_FILE_PATH, messages)
-                        if acc.get('type') == 'invite_request':
-                            for i in invites:
-                                if i.get('id') == acc.get('invite_id'):
-                                    i['status'] = 'active'
-                                    st.session_state.editing_invite = i.get('id')
-                                    break
-                            save_data(INVITES_FILE_PATH, invites)
-                        send_email(partner_e, "Maç İptal Edildi", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
-                        st.toast("İlan yeniden düzenleme moduna alındı!", icon="✏️")
-                        st.rerun()
+                    conf_edit_acc = f"conf_edit_acc_{acc['id']}"
+                    if not st.session_state.get(conf_edit_acc, False):
+                        if c_opt2.button("✏️ İptal Et & Yeniden Yayınla", key=f"btn_edit_acc_{acc['id']}"):
+                            st.session_state[conf_edit_acc] = True
+                            st.rerun()
+                    else:
+                        c_opt2.warning("Yeniden yayınlansın mı?")
+                        if c_opt2.button("Evet, Düzenle", key=f"yes_edit_acc_{acc['id']}"):
+                            acc['status'] = 'cancelled'
+                            save_data(MESSAGES_FILE_PATH, messages)
+                            if acc.get('type') == 'invite_request':
+                                for i in invites:
+                                    if i.get('id') == acc.get('invite_id'):
+                                        i['status'] = 'active'
+                                        st.session_state.editing_invite = i.get('id')
+                                        break
+                                save_data(INVITES_FILE_PATH, invites)
+                            send_email(partner_e, "Maç İptal Edildi", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
+                            st.session_state[conf_edit_acc] = False
+                            st.toast("İlan yeniden düzenleme moduna alındı!", icon="✏️")
+                            st.rerun()
+                        if c_opt2.button("Vazgeç", key=f"no_edit_acc_{acc['id']}"):
+                            st.session_state[conf_edit_acc] = False
+                            st.rerun()
 
             if st.session_state.editing_invite:
                 e_inv = next((i for i in invites if i.get('id') == st.session_state.editing_invite), None)
@@ -634,7 +781,7 @@ def main_app():
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
@@ -687,7 +834,60 @@ def main_app():
                     st.toast("Profil bilgileriniz güncellendi! ✅", icon="👤")
                     st.rerun()
 
+            with st.expander("🔑 Şifre Değiştir"):
+                with st.form("change_pass_form"):
+                    old_pass = st.text_input("Mevcut Şifre", type="password")
+                    new_pass = st.text_input("Yeni Şifre", type="password")
+                    new_pass_confirm = st.text_input("Yeni Şifre (Tekrar)", type="password")
+                    
+                    if st.form_submit_button("Şifreyi Güncelle"):
+                        if hash_password(old_pass) != me.get("password_hash"):
+                            st.error("Mevcut şifreniz hatalı!")
+                        elif new_pass != new_pass_confirm:
+                            st.error("Yeni şifreler eşleşmiyor!")
+                        elif len(new_pass) < 4:
+                            st.error("Şifre en az 4 karakter olmalıdır.")
+                        else:
+                            me["password_hash"] = hash_password(new_pass)
+                            users_db[st.session_state.current_user] = me
+                            save_data(USERS_FILE_PATH, users_db)
+                            st.success("Şifreniz başarıyla değiştirildi!")
+                            
+            # ⏸️ Hesap Dondurma (Pasife Alma)
             st.markdown("---")
+            st.subheader("⏸️ Hesap Durumu (Dondurma)")
+            with st.form("freeze_form"):
+                is_frozen = st.toggle("Bir süre tenis oynayamayacağım, hesabımı dondur (Pasife al)", value=me.get("frozen", False))
+                st.caption("Aktif ettiğinizde üyeler listesinde görünmezsiniz, ilanlarınız vitrinden kalkar ve size teklif gelemez.")
+                if st.form_submit_button("Durumu Güncelle"):
+                    me["frozen"] = is_frozen
+                    users_db[st.session_state.current_user] = me
+                    save_data(USERS_FILE_PATH, users_db)
+                    st.toast("Hesap dondurma tercihiniz güncellendi!", icon="⏸️")
+                    st.rerun()
+
+            # 🚨 Kalıcı Silme Talebi (Yönetici Onaylı)
+            st.markdown("---")
+            st.subheader("🚨 Tehlikeli Bölge")
+            with st.expander("Hesabımı Kalıcı Olarak Silme Talebi Gönder"):
+                st.warning("⚠️ **DİKKAT:** Bu işlem hesabınızın ve tüm verilerinizin kalıcı olarak silinmesi için yöneticiye talep bildirir.")
+                
+                if me.get("delete_requested"):
+                    st.info("ℹ️ Zaten bir silme talebiniz yöneticiye iletilmiştir. Onay bekleniyor.")
+                else:
+                    if st.button("🗑️ Silme Talebini Yöneticiye İlet"):
+                        me["delete_requested"] = True
+                        users_db[st.session_state.current_user] = me
+                        save_data(USERS_FILE_PATH, users_db)
+                        
+                        # Yöneticiye talep maili
+                        admin_del_mail = f"<b>{me.get('ad_soyad')}</b> ({st.session_state.current_user}) isimli üye hesabını ve verilerini kalıcı olarak silmek istiyor.<br><br>Yönetici Panelinden onaylayabilirsiniz."
+                        send_email(ADMIN_EMAIL, "🚨 Kalıcı Silme Talebi Var", admin_del_mail)
+                        
+                        st.toast("Silme talebiniz yöneticiye iletildi.", icon="📨")
+                        st.rerun()
+
+        with colR:
             st.subheader("🔒 İletişim & Gizlilik Ayarları")
             with st.form("privacy_form"):
                 vis_options = ["Gizle (Hiçbir Zaman Gösterme)", "Sadece Eşleşince Göster", "Herkese Açık (İlanda Göster)"]
@@ -707,7 +907,7 @@ def main_app():
                     st.toast("Gizlilik tercihleri kaydedildi! ✅", icon="🔒")
                     st.rerun()
 
-        with colR:
+            st.markdown("---")
             st.subheader("📡 Radar (E-posta Alarmı) Ayarları")
             radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
             with st.form("radar_form"):
