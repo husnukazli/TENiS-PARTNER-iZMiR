@@ -148,8 +148,6 @@ def admin_dashboard():
             with st.container(border=True):
                 c1, c2, c3 = st.columns([4, 2, 2])
                 status = "🔴 Askıda" if u_data.get("suspended") else "🟢 Aktif"
-                
-                # Spama düşmemesi için bot yerine Test Hesabı etiketi kullanıyoruz
                 test_tag = " 🧪 (Test Hesabı)" if u_data.get("is_bot") else ""
                 
                 c1.write(f"**{u_data.get('ad_soyad')}{test_tag}** | {u_email} | NTRP: {u_data.get('level', 'Belirtilmedi')} | {status}")
@@ -215,7 +213,6 @@ def login_page():
                     st.toast("Teklif göndermek için sağ taraftan giriş yapmalısın! 🎾", icon="⚠️")
 
     with col_login:
-        # Şifre sekmesinin adı daha kurumsal hale getirildi
         t1, t2, t3 = st.tabs(["🔑 Giriş", "📝 Kayıt", "🔐 Şifremi Unuttum"])
         with t1:
             with st.form("login"):
@@ -236,6 +233,7 @@ def login_page():
                     reg_pass = st.text_input("Şifre Belirle", type="password")
                     reg_name = st.text_input("Ad Soyad (Zorunlu)")
                     reg_level = st.selectbox("Seviyeniz (NTRP)", NTRP_LEVELS, index=5)
+                    reg_ilce = st.selectbox("Yaşadığınız Bölge / İlçe", IZMIR_ILCELER)
                     
                     if st.form_submit_button("İleri (E-Posta Doğrulama)"):
                         if reg_email in users_db: st.error("Bu e-posta zaten kayıtlı.")
@@ -243,7 +241,10 @@ def login_page():
                         else:
                             code = str(random.randint(100000, 999999))
                             st.session_state.reg_code = code
-                            st.session_state.reg_data = {"email": reg_email, "pass": hash_password(reg_pass), "name": reg_name.strip(), "level": reg_level}
+                            st.session_state.reg_data = {
+                                "email": reg_email, "pass": hash_password(reg_pass), 
+                                "name": reg_name.strip(), "level": reg_level, "ilce": reg_ilce
+                            }
                             
                             mail_sent = send_email(reg_email, "Hesap Doğrulama Kodu", f"Sisteme kayıt için doğrulama kodunuz: <b>{code}</b>")
                             if not mail_sent: st.warning(f"SMTP kapalı. Test Doğrulama Kodunuz: {code}")
@@ -259,9 +260,9 @@ def login_page():
                             d = st.session_state.reg_data
                             users_db[d["email"]] = {
                                 "password_hash": d["pass"], "ad_soyad": d["name"], "level": d["level"],
-                                "ilce": "Belirtilmemiş", "suspended": False, "is_bot": False, 
+                                "ilce": d.get("ilce", "Belirtilmemiş"), "suspended": False, "is_bot": False, 
                                 "phone": "", "contact_visibility": "eslesince",
-                                "privacy": {"ghost": False, "show_rating": True}, # Değerlendirme puanı görünürlüğü varsayılan açık
+                                "privacy": {"ghost": False, "show_rating": True},
                                 "radar": {"active": False, "courts": [], "levels": [], "types": []},
                                 "ratings": {"zaman": [], "seviye": [], "davranis": []}
                             }
@@ -283,7 +284,7 @@ def login_page():
                         save_data(USERS_FILE_PATH, users_db)
                         send_email(reset_email, "Şifre Sıfırlama Talebi", f"Geçici şifreniz: <b>{new_pass}</b><br><br>Giriş yaptıktan sonra profilinizden şifrenizi değiştirmeyi unutmayın.")
                         st.success("Yeni şifreniz e-posta adresinize gönderildi!")
-                    else: st.error("Sistemde böyle bir e-posta bulunamadı.")
+                    else: st.error("Sistemde böyle her e-posta bulunamadı.")
                     
         with st.expander("👑 Yönetici Paneli"):
             admin_code = st.text_input("Yönetici Parolası", type="password")
@@ -300,7 +301,6 @@ def main_app():
     me = users_db.get(st.session_state.current_user, {})
     if not isinstance(me, dict): me = {}
     
-    # Kullanıcının puan görünürlük tercihini okuma
     my_rating = calculate_rating(me.get('ratings'))
     my_rating_display = f"{my_rating:.1f}" if me.get("privacy", {}).get("show_rating", True) else "Gizli"
 
@@ -438,30 +438,26 @@ def main_app():
         c_title.subheader("👥 Oyuncu Listesi")
         sort_users = c_sort.selectbox("Üyeleri Sırala:", ["İsme Göre (A-Z)", "Seviyeye Göre (Yüksekten Düşüğe)", "Puana Göre (Popülerlik)", "Bölgeye Göre (İlçe)"])
         
-        # Liste oluşturma ve verileri hazırlama
         user_list = []
         for u_email, u_data in users_db.items():
             if not isinstance(u_data, dict) or u_email == st.session_state.current_user or u_data.get("privacy", {}).get("ghost"): 
                 continue
             
-            # Puan ve seviye float hesaplamaları (sıralama için)
             u_rating = calculate_rating(u_data.get('ratings'))
             try: u_level = float(u_data.get('level', '3.5'))
             except: u_level = 3.5
             
             user_list.append((u_email, u_data, u_rating, u_level))
 
-        # Sıralama Mantığı
         if sort_users == "İsme Göre (A-Z)":
             user_list.sort(key=lambda x: x[1].get('ad_soyad', '').lower())
         elif sort_users == "Seviyeye Göre (Yüksekten Düşüğe)":
             user_list.sort(key=lambda x: x[3], reverse=True)
         elif sort_users == "Puana Göre (Popülerlik)":
-            user_list.sort(key=lambda x: x[2], reverse=True) # Puan gizli bile olsa arka planda sıralar
+            user_list.sort(key=lambda x: x[2], reverse=True)
         elif sort_users == "Bölgeye Göre (İlçe)":
             user_list.sort(key=lambda x: x[1].get('ilce', 'Belirtilmemiş'))
 
-        # Özel teklif modülü
         if st.session_state.offer_to:
             target_u = users_db.get(st.session_state.offer_to, {})
             if not isinstance(target_u, dict): target_u = {}
@@ -490,12 +486,10 @@ def main_app():
                 if c_can.form_submit_button("İptal"):
                     st.session_state.offer_to = None; st.rerun()
 
-        # Üyeleri ekrana basma
         for u_email, u_data, rating_val, _ in user_list:
             with st.container(border=True):
                 colA, colB, colC = st.columns([3, 3, 2])
                 
-                # Puan Görünürlük Kontrolü
                 show_r = u_data.get("privacy", {}).get("show_rating", True)
                 disp_rating = f"{rating_val:.1f}" if show_r else "Gizli"
                 
@@ -528,7 +522,7 @@ def main_app():
         ])
 
         with m_tab1:
-            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
+            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
                 with st.container(border=True):
@@ -571,7 +565,7 @@ def main_app():
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
                 with st.container(border=True):
@@ -637,7 +631,7 @@ def main_app():
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
