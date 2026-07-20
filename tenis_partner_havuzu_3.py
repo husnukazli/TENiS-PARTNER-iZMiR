@@ -81,13 +81,27 @@ def get_github_repo():
 
 def load_data(file_path, default_type=list):
     repo = get_github_repo()
+    data = None
     if repo:
-        try: return json.loads(repo.get_contents(file_path).decoded_content.decode())
-        except: return default_type()
+        try: 
+            data = json.loads(repo.get_contents(file_path).decoded_content.decode())
+        except: 
+            return default_type()
     else:
         if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f: return json.load(f)
+            try:
+                with open(file_path, "r", encoding="utf-8") as f: 
+                    data = json.load(f)
+            except:
+                return default_type()
+        else:
+            return default_type()
+            
+    # VERİ TİPİ KONTROLÜ VE DÜZELTME (Hata önleyici)
+    if not isinstance(data, default_type):
         return default_type()
+        
+    return data
 
 def save_data(file_path, data):
     repo = get_github_repo()
@@ -103,7 +117,7 @@ def save_data(file_path, data):
     return True
 
 def calculate_rating(ratings_dict):
-    if not ratings_dict: return 5.0
+    if not isinstance(ratings_dict, dict): return 5.0
     all_scores = ratings_dict.get("zaman", []) + ratings_dict.get("seviye", []) + ratings_dict.get("davranis", [])
     return sum(all_scores) / len(all_scores) if all_scores else 5.0
 
@@ -127,7 +141,7 @@ def admin_dashboard():
     with t1:
         st.subheader("Kayıtlı Üyeler")
         for u_email, u_data in users_db.items():
-            if u_data.get("is_bot"): continue
+            if not isinstance(u_data, dict) or u_data.get("is_bot"): continue
             with st.container(border=True):
                 c1, c2, c3 = st.columns([4, 2, 2])
                 status = "🔴 Askıda" if u_data.get("suspended") else "🟢 Aktif"
@@ -200,7 +214,7 @@ def login_page():
                 email = st.text_input("E-posta").strip().lower()
                 password = st.text_input("Şifre", type="password")
                 if st.form_submit_button("Giriş Yap"):
-                    if email in users_db and users_db[email].get("password_hash") == hash_password(password):
+                    if email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                         if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
                         else:
                             st.session_state.logged_in = True
@@ -274,10 +288,11 @@ def main_app():
     invites = load_data(INVITES_FILE_PATH, default_type=list)
     messages = load_data(MESSAGES_FILE_PATH, default_type=list)
     me = users_db.get(st.session_state.current_user, {})
+    if not isinstance(me, dict): me = {}
     
     c_head1, c_head2 = st.columns([4, 1])
     c_head1.write("### 🎾 İzmir Tenis Partner Havuzu")
-    c_head2.write(f"👤 **{me.get('ad_soyad')}** ({me.get('level', '3.5')}) | ⭐ {calculate_rating(me.get('ratings')):.1f}")
+    c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {calculate_rating(me.get('ratings')):.1f}")
     if c_head2.button("🚪 Çıkış Yap"): st.session_state.logged_in = False; st.rerun()
 
     tabs = st.tabs(["🏆 İlan Havuzu", "➕ İlan Oluştur", "👥 Üyeler", "🎾 Maç Kontrol Merkezi", "⚖️ Değerlendirme", "⚙️ Profil & Radar Ayarları"])
@@ -309,6 +324,8 @@ def main_app():
                 k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
                 
                 creator_user = users_db.get(inv.get('creator'), {})
+                if not isinstance(creator_user, dict): creator_user = {}
+
                 c1.markdown(f"**📍 Kort:** {k_isim}")
                 c1.markdown(f"**🗓️ Tarih:** {inv.get('date')} | ⏰ **Saat:** {inv.get('time_details')}")
                 if inv.get('note'): c1.markdown(f"**📝 Not:** {inv.get('note')}")
@@ -318,13 +335,10 @@ def main_app():
                 
                 c3.markdown(f"👤 **Açan:** {creator_user.get('ad_soyad', 'Anonim')} *(NTRP {creator_user.get('level', '3.5')})*")
                 
-                # Herkese açık iletişim kontrolü
                 if creator_user.get('contact_visibility') == 'herkes':
                     c3.markdown(f"📞 {creator_user.get('phone', '-')} | ✉️ {inv.get('creator')}")
 
-                # Kendi ilanı değilse teklif butonu
                 if inv.get('creator') != st.session_state.current_user:
-                    # Mükerrer teklif kontrolü
                     has_sent = any(
                         m.get('sender') == st.session_state.current_user and 
                         m.get('invite_id') == inv.get('id') and 
@@ -343,13 +357,12 @@ def main_app():
                             }
                             messages.append(new_msg); save_data(MESSAGES_FILE_PATH, messages)
                             st.toast("Teklifiniz başarıyla ilan sahibine iletildi! 🎉", icon="✅")
-                            st.success("Teklifiniz iletildi!")
                             st.rerun()
 
     # --- TAB 1: İLAN OLUŞTUR & RADAR TETİKLEME ---
     with tabs[1]:
         st.subheader("➕ Yeni İlan Yayınla")
-        st.write(f"İlanınız **{me.get('ad_soyad')}** (NTRP {me.get('level', '3.5')}) ismiyle yayınlanacaktır.")
+        st.write(f"İlanınız **{me.get('ad_soyad', 'Kullanıcı')}** (NTRP {me.get('level', '3.5')}) ismiyle yayınlanacaktır.")
         
         with st.form("create_invite"):
             c1, c2 = st.columns(2)
@@ -385,10 +398,10 @@ def main_app():
                     invites.append(new_inv)
                     save_data(INVITES_FILE_PATH, invites)
                     
-                    # RADAR TETİKLEME (E-posta Alarmları)
+                    # RADAR TETİKLEME
                     radar_count = 0
                     for u_email, u_data in users_db.items():
-                        if u_email == st.session_state.current_user: continue
+                        if u_email == st.session_state.current_user or not isinstance(u_data, dict): continue
                         r = u_data.get("radar", {})
                         if r.get("active", False):
                             match_court = not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))
@@ -405,7 +418,6 @@ def main_app():
 
                     st.toast("İlanınız başarıyla yayınlandı! 🎉", icon="✅")
                     if radar_count > 0: st.info(f"📡 Radar kriterleri eşleşen {radar_count} kişiye e-posta bildirimi gönderildi.")
-                    st.success("İlan eklendi!")
                     st.rerun()
 
     # --- TAB 2: ÜYELER ---
@@ -414,7 +426,8 @@ def main_app():
         
         if st.session_state.offer_to:
             target_u = users_db.get(st.session_state.offer_to, {})
-            st.info(f"👉 **{target_u.get('ad_soyad')}** kişisine özel teklif oluşturuyorsunuz.")
+            if not isinstance(target_u, dict): target_u = {}
+            st.info(f"👉 **{target_u.get('ad_soyad', 'Kullanıcı')}** kişisine özel teklif oluşturuyorsunuz.")
             
             with st.form("direct_offer"):
                 o_date = st.date_input("Tarih Önerisi", min_value=datetime.date.today())
@@ -440,7 +453,7 @@ def main_app():
                     st.session_state.offer_to = None; st.rerun()
 
         for u_email, u_data in users_db.items():
-            if u_email == st.session_state.current_user or u_data.get("privacy", {}).get("ghost"): continue
+            if not isinstance(u_data, dict) or u_email == st.session_state.current_user or u_data.get("privacy", {}).get("ghost"): continue
             with st.container(border=True):
                 colA, colB, colC = st.columns([3, 3, 2])
                 colA.markdown(f"**👤 {u_data.get('ad_soyad')}** | NTRP: **{u_data.get('level', '3.5')}**")
@@ -452,7 +465,6 @@ def main_app():
                 else:
                     colB.write("🔒 İletişim: Eşleşince Görünür")
                 
-                # Mükerrer özel teklif kontrolü
                 has_direct = any(m.get('sender') == st.session_state.current_user and m.get('receiver') == u_email and m.get('status') == 'pending' for m in messages)
                 
                 if has_direct:
@@ -478,12 +490,13 @@ def main_app():
                 with st.container(border=True):
                     s_email = msg['sender']
                     s_user = users_db.get(s_email, {})
+                    if not isinstance(s_user, dict): s_user = {}
                     
                     if msg.get('type') == 'invite_request':
                         inv_data = next((i for i in invites if i.get('id') == msg.get('invite_id')), {})
-                        st.write(f"🔔 **{s_user.get('ad_soyad')}** (NTRP {s_user.get('level', '3.5')}) sizin **{inv_data.get('date')}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
+                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** (NTRP {s_user.get('level', '3.5')}) sizin **{inv_data.get('date')}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
                     else:
-                        st.write(f"🔔 **{s_user.get('ad_soyad')}** size özel maç teklif etti! Tarih: **{msg.get('date')}** | Kort: **{msg.get('court')}**")
+                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{msg.get('date')}** | Kort: **{msg.get('court')}**")
 
                     c_acc, c_rej = st.columns(2)
                     if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}"):
@@ -516,8 +529,9 @@ def main_app():
             for msg in reversed(my_sent):
                 with st.container(border=True):
                     r_user = users_db.get(msg.get('receiver'), {})
+                    if not isinstance(r_user, dict): r_user = {}
                     st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi"}
-                    st.write(f"📤 Alıcı: **{r_user.get('ad_soyad')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
+                    st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
 
         # 📅 ONAYLANMIŞ MAÇLARIM & DÜZENLEME / İPTAL
         with m_tab3:
@@ -529,11 +543,11 @@ def main_app():
                 with st.container(border=True):
                     partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
                     partner_u = users_db.get(partner_e, {})
+                    if not isinstance(partner_u, dict): partner_u = {}
                     
-                    st.markdown(f"🤝 **{partner_u.get('ad_soyad')}** *(NTRP {partner_u.get('level', '3.5')})* ile maçınız onaylandı.")
+                    st.markdown(f"🤝 **{partner_u.get('ad_soyad', 'Partner')}** *(NTRP {partner_u.get('level', '3.5')})* ile maçınız onaylandı.")
                     st.markdown(f"[📅 Google Takvime Ekle]({acc.get('calendar_link', '#')})")
                     
-                    # İletişim bilgisi gösterimi
                     p_vis = partner_u.get('contact_visibility', 'eslesince')
                     if p_vis in ['eslesince', 'herkes']:
                         st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
@@ -543,7 +557,6 @@ def main_app():
                     st.markdown("---")
                     c_opt1, c_opt2 = st.columns(2)
                     
-                    # Seçenek 1: Tamamen Sil
                     if c_opt1.button("🗑️ Maçı İptal Et ve İlanı Tamamen Sil", key=f"del_acc_{acc['id']}"):
                         acc['status'] = 'cancelled'
                         if acc.get('type') == 'invite_request':
@@ -554,12 +567,10 @@ def main_app():
                         st.toast("Maç iptal edildi ve ilan tamamen silindi.", icon="🗑️")
                         st.rerun()
 
-                    # Seçenek 2: Düzenle ve Yeniden Havuza Aç
                     if c_opt2.button("✏️ Maçı İptal Et & İlanı Düzenleyip Yeniden Yayınla", key=f"edit_acc_{acc['id']}"):
                         acc['status'] = 'cancelled'
                         save_data(MESSAGES_FILE_PATH, messages)
                         
-                        # İlgili ilanı aktif yapıp düzenleme moduna alalım
                         if acc.get('type') == 'invite_request':
                             for i in invites:
                                 if i.get('id') == acc.get('invite_id'):
@@ -571,7 +582,6 @@ def main_app():
                         st.toast("İlan yeniden düzenleme moduna alındı!", icon="✏️")
                         st.rerun()
 
-            # Düzenleme Modu Formu
             if st.session_state.editing_invite:
                 e_inv = next((i for i in invites if i.get('id') == st.session_state.editing_invite), None)
                 if e_inv:
@@ -609,7 +619,7 @@ def main_app():
             st.info("Değerlendirebileceğiniz tamamlanmış maç bulunmuyor.")
         else:
             with st.form("rating_form"):
-                evt_opts = {m['id']: f"Rakip: {users_db.get(m['sender'] if m['receiver'] == st.session_state.current_user else m['receiver'], {}).get('ad_soyad')}" for m in unrated_events}
+                evt_opts = {m['id']: f"Rakip: {users_db.get(m['sender'] if m['receiver'] == st.session_state.current_user else m['receiver'], {}).get('ad_soyad', 'Bilinmeyen')}" for m in unrated_events}
                 selected_event_id = st.selectbox("Değerlendirilecek Maç", options=list(evt_opts.keys()), format_func=lambda x: evt_opts[x])
                 
                 st.markdown("**(1: Zayıf - 5: Mükemmel)**")
@@ -621,7 +631,7 @@ def main_app():
                     target_event = next(m for m in unrated_events if m['id'] == selected_event_id)
                     p_email = target_event['sender'] if target_event['receiver'] == st.session_state.current_user else target_event['receiver']
                     
-                    if p_email in users_db:
+                    if p_email in users_db and isinstance(users_db[p_email], dict):
                         r_db = users_db[p_email].setdefault("ratings", {"zaman": [], "seviye": [], "davranis": []})
                         r_db["zaman"].append(sz); r_db["seviye"].append(ss); r_db["davranis"].append(sd)
                         save_data(USERS_FILE_PATH, users_db)
@@ -644,7 +654,6 @@ def main_app():
                 
                 level = st.selectbox("NTRP Oyuncu Seviyeniz", NTRP_LEVELS, index=NTRP_LEVELS.index(me.get("level", "3.5")) if me.get("level") in NTRP_LEVELS else 5)
                 
-                # Oyun Tarzı & Diğer
                 me_style = me.get("style", "All-Rounder")
                 is_custom_style = me_style not in ["Agresif Baseline", "Servis & Vole", "Defansif / Karşılayıcı", "All-Rounder", ""]
                 style_sel = st.selectbox("Oyun Tarzı", ["Agresif Baseline", "Servis & Vole", "Defansif / Karşılayıcı", "All-Rounder", "Diğer"], index=4 if is_custom_style else ["Agresif Baseline", "Servis & Vole", "Defansif / Karşılayıcı", "All-Rounder", ""].index(me_style) if me_style in ["Agresif Baseline", "Servis & Vole", "Defansif / Karşılayıcı", "All-Rounder"] else 3)
@@ -663,7 +672,7 @@ def main_app():
             with st.form("privacy_form"):
                 vis_options = ["Gizle (Hiçbir Zaman Gösterme)", "Sadece Eşleşince Göster", "Herkese Açık (İlanda Göster)"]
                 vis_keys = ["gizle", "eslesince", "herkes"]
-                curr_idx = vis_keys.index(me.get("contact_visibility", "eslesince"))
+                curr_idx = vis_keys.index(me.get("contact_visibility", "eslesince")) if me.get("contact_visibility") in vis_keys else 1
                 
                 c_vis = st.selectbox("Telefon ve E-Posta Görünürlüğü", vis_options, index=curr_idx)
                 ghost = st.toggle("👻 Hayalet Modu (Üye listesinde görünme)", value=me.get("privacy", {}).get("ghost", False))
@@ -694,6 +703,7 @@ def main_app():
                     st.toast("Radar ayarlarınız kaydedildi! 📡", icon="✅")
                     st.rerun()
 
+# --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
 elif st.session_state.is_admin: admin_dashboard()
 else: main_app()
