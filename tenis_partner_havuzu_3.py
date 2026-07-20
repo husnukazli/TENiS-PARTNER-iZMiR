@@ -216,9 +216,10 @@ def login_page():
         t1, t2, t3 = st.tabs(["🔑 Giriş", "📝 Kayıt", "🔐 Şifremi Unuttum"])
         with t1:
             with st.form("login"):
-                email = st.text_input("E-posta").strip().lower()
+                email = st.text_input("E-posta")
                 password = st.text_input("Şifre", type="password")
                 if st.form_submit_button("Giriş Yap"):
+                    email = email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
                     if email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                         if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
                         else:
@@ -229,13 +230,14 @@ def login_page():
         with t2:
             if st.session_state.reg_step == "form":
                 with st.form("register"):
-                    reg_email = st.text_input("E-posta Adresi").strip().lower()
+                    reg_email = st.text_input("E-posta Adresi")
                     reg_pass = st.text_input("Şifre Belirle", type="password")
                     reg_name = st.text_input("Ad Soyad (Zorunlu)")
                     reg_level = st.selectbox("Seviyeniz (NTRP)", NTRP_LEVELS, index=5)
                     reg_ilce = st.selectbox("Yaşadığınız Bölge / İlçe", IZMIR_ILCELER)
                     
                     if st.form_submit_button("İleri (E-Posta Doğrulama)"):
+                        reg_email = reg_email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
                         if reg_email in users_db: st.error("Bu e-posta zaten kayıtlı.")
                         elif not reg_email or not reg_pass or not reg_name.strip(): st.error("Lütfen tüm alanları eksiksiz doldurun.")
                         else:
@@ -276,8 +278,9 @@ def login_page():
         with t3:
             with st.form("forgot_pass"):
                 st.info("Kayıtlı e-posta adresinizi girin. Size geçici bir şifre göndereceğiz.")
-                reset_email = st.text_input("E-posta Adresi").strip().lower()
+                reset_email = st.text_input("E-posta Adresi")
                 if st.form_submit_button("Şifremi Sıfırla"):
+                    reset_email = reset_email.strip().lower() # Otomatik boşluk ve büyük harf temizliği
                     if reset_email in users_db:
                         new_pass = generate_temp_password()
                         users_db[reset_email]["password_hash"] = hash_password(new_pass)
@@ -631,7 +634,7 @@ def main_app():
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
