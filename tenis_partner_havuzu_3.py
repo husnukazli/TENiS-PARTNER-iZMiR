@@ -417,7 +417,7 @@ def main_app():
                     save_data(MESSAGES_FILE_PATH, messages); st.rerun()
 
         st.subheader("Kabul Edilmiş Maçlarım (Takvim)")
-        my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+        my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
         for acc in reversed(my_acc):
             partner = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
             st.info(f"🤝 **{users_db.get(partner, {}).get('ad_soyad')}** ile maç onaylı. [📅 Google Takvimine Ekle]({acc.get('calendar_link', '#')})")
@@ -425,7 +425,7 @@ def main_app():
     with tabs[4]: # ETKİNLİK BAZLI DEĞERLENDİRME
         st.subheader("Etkinlik Bazlı Oyuncu Değerlendirme")
         
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
