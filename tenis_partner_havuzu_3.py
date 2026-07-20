@@ -737,7 +737,7 @@ def main_app():
 
                     st.markdown("---")
                     
-                    # 💬 CHAT (SOHBET) BÖLÜMÜ BAŞLANGICI
+                    # 💬 CHAT (SOHBET) BÖLÜMÜ
                     with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
                         chat_history = acc.get("chat_history", [])
                         
@@ -757,7 +757,6 @@ def main_app():
                             acc["chat_history"] = chat_history
                             save_data(MESSAGES_FILE_PATH, messages)
                             
-                            # Karşı tarafa e-posta bildirimi gönder (Mesaj içeriği ve maç detaylarıyla)
                             benim_adim = me.get('ad_soyad', st.session_state.current_user)
                             mail_konu = f"💬 Yeni Mesaj: {m_date} / {m_court} Maçı"
                             mail_icerik = f"""
@@ -772,7 +771,6 @@ def main_app():
                             send_email(partner_e, mail_konu, mail_icerik)
                             
                             st.rerun()
-                    # 💬 CHAT BÖLÜMÜ BİTİŞİ
 
                     st.markdown("---")
                     c_opt1, c_opt2 = st.columns(2)
@@ -830,7 +828,9 @@ def main_app():
                             st.session_state[conf_edit_acc] = False
                             st.rerun()
 
-            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status'] == 'paused_by_cancellation']
+            # TÜM PARANTEZ/KÖŞELİ PARANTEZ HATALARI GİDERİLDİ
+            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
+            
             if paused_invites:
                 st.markdown("---")
                 st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak istersiniz?")
