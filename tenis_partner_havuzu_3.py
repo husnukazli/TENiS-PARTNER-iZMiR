@@ -296,18 +296,24 @@ def main_app():
                         }
                         if msg_status == "accepted":
                             t_str = inv.get('time_details', '18:00 - 19:30')
-                            new_msg['calendar_link'] = generate_gcal_link("Tenis Maçı", inv.get('date', str(datetime.date.today())), t_str, inv.get('court', 'Kort'))
+                            gcal = generate_gcal_link("Tenis Maçı", inv.get('date', str(datetime.date.today())), t_str, inv.get('court', 'Kort'))
+                            new_msg['calendar_link'] = gcal
+                            send_email(
+                                st.session_state.current_user, 
+                                "Bot Maç Teklifinizi Kabul Etti!", 
+                                f"<b>{creator.get('ad_soyad')}</b> (Bot) ilanınıza yaptığınız başvuruyu onayladı!<br>📅 Tarih: {inv.get('date')}<br>📍 Kort: {inv.get('court')}<br><a href='{gcal}'>Google Takvime Ekle</a>"
+                            )
                         
                         messages.append(new_msg)
                         save_data(MESSAGES_FILE_PATH, messages)
                         
                         if msg_status == "accepted":
-                            st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz.")
+                            st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz (Ayrıca e-posta gönderildi).")
                         else:
                             st.success("Teklifiniz ilan sahibine iletildi!")
                         st.rerun()
 
-    with tabs[1]: # İLAN OLUŞTUR (BAŞLANGIÇ VE BİTİŞ SAATİ AYRI + NOT ALANI)
+    with tabs[1]: # İLAN OLUŞTUR + RADAR KONTROLÜ
         with st.form("create_invite"):
             c1, c2 = st.columns(2)
             d = c1.date_input("Tarih")
@@ -336,10 +342,43 @@ def main_app():
                     }
                     invites.append(new_inv)
                     save_data(INVITES_FILE_PATH, invites)
-                    st.success("İlan yayınlandı!")
+                    
+                    # --- RADAR BİLDİRİM KONTROLÜ ---
+                    creator_name = me.get('ad_soyad', 'Bir kullanıcı')
+                    for u_email, u_data in users_db.items():
+                        if u_email == st.session_state.current_user:
+                            continue
+                        if u_data.get("is_bot") or u_data.get("privacy", {}).get("ghost"):
+                            continue
+                        
+                        notif = u_data.get("notif_prefs", {})
+                        if not notif.get("active"):
+                            continue
+                            
+                        r_levels = notif.get("levels", [])
+                        r_courts = notif.get("courts", [])
+                        r_types = notif.get("types", [])
+                        
+                        match_level = (not r_levels) or any(l in r_levels for l in levels)
+                        match_court = (not r_courts) or (court in r_courts)
+                        match_type = (not r_types) or (act_type in r_types)
+                        
+                        if match_level and match_court and match_type:
+                            send_email(
+                                u_email,
+                                "Radarınıza Uygun Yeni Bir İlan Yayınlandı! 🎾",
+                                f"<b>{creator_name}</b> radar kriterlerinize uyan yeni bir ilan oluşturdu!<br>"
+                                f"📍 Kort: {court}<br>"
+                                f"🗓️ Tarih: {d} | ⏰ {t_det}<br>"
+                                f"🎾 Tür: {act_type} | ⭐ Seviye: {', '.join(levels)}<br>"
+                                f"İlana göz atmak için sisteme giriş yapabilirsiniz."
+                            )
+                    # -----------------------------
+                    
+                    st.success("İlan yayınlandı ve radar kriterlerine uyan üyelere e-posta bildirimi gönderildi!")
                     st.rerun()
 
-    with tabs[2]: # ÜYELER & DOĞRUDAN TEKLİF (BOT OTOMATİK KABUL DESTEKLİ)
+    with tabs[2]: # ÜYELER & DOĞRUDAN TEKLİF
         if st.session_state.offer_to:
             target = st.session_state.offer_to
             st.info(f"👉 **{users_db[target].get('ad_soyad')}** kişisine teklif gönderiyorsunuz.")
@@ -365,14 +404,20 @@ def main_app():
                         "status": msg_status
                     }
                     if msg_status == "accepted":
-                        new_msg['calendar_link'] = generate_gcal_link("Tenis Maçı", str(o_date), o_time, o_court)
+                        gcal = generate_gcal_link("Tenis Maçı", str(o_date), o_time, o_court)
+                        new_msg['calendar_link'] = gcal
+                        send_email(
+                            st.session_state.current_user,
+                            "Meydan Okumanız Kabul Edildi!",
+                            f"<b>{users_db.get(target, {}).get('ad_soyad')}</b> (Bot) teklifinizi onayladı!<br>📅 Tarih: {o_date}<br>⏰ Saat: {o_time}<br>📍 Kort: {o_court}<br><a href='{gcal}'>Google Takvime Ekle</a>"
+                        )
                         
                     messages.append(new_msg)
                     save_data(MESSAGES_FILE_PATH, messages)
                     st.session_state.offer_to = None
                     
                     if msg_status == "accepted":
-                        st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz.")
+                        st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz (E-posta gönderildi).")
                     else:
                         st.success("Teklif iletildi!")
                     st.rerun()
@@ -396,12 +441,13 @@ def main_app():
 
     with tabs[3]: # KUTUM VE TAKVİM
         st.subheader("Gelen Teklifler")
-        my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
+        my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
         if not my_inbox: st.write("Bekleyen bir teklifiniz yok.")
         
         for msg in my_inbox:
             with st.container(border=True):
-                sender_name = users_db.get(msg['sender'], {}).get('ad_soyad')
+                sender_email = msg['sender']
+                sender_name = users_db.get(sender_email, {}).get('ad_soyad', 'Kullanıcı')
                 if msg['type'] == 'invite_request': st.write(f"🔔 **{sender_name}** ilanınıza katılmak istiyor!")
                 else: st.write(f"⚔️ **{sender_name}** sana teklif gönderdi! (🗓️ {msg.get('date')} | ⏰ {msg.get('time')} | 📍 {msg.get('court')} | 📝 {msg.get('note')})")
                 
@@ -409,9 +455,18 @@ def main_app():
                 if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}"):
                     msg['status'] = 'accepted'
                     t_str = msg.get('time', '18:00 - 19:30')
-                    msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', str(datetime.date.today())), t_str, msg.get('court', 'Kort'))
+                    gcal = generate_gcal_link("Tenis Maçı", msg.get('date', str(datetime.date.today())), t_str, msg.get('court', 'Kort'))
+                    msg['calendar_link'] = gcal
                     save_data(MESSAGES_FILE_PATH, messages)
-                    st.success("Kabul edildi!"); st.rerun()
+                    
+                    receiver_name = users_db.get(st.session_state.current_user, {}).get('ad_soyad', 'Kullanıcı')
+                    send_email(
+                        sender_email,
+                        "Maç Teklifiniz Kabul Edildi!",
+                        f"<b>{receiver_name}</b> teklifinizi onayladı!<br>📅 Tarih: {msg.get('date', 'Belirtilmemiş')}<br>📍 Kort: {msg.get('court', 'Kort')}<br><a href='{gcal}'>Google Takvime Ekle</a>"
+                    )
+                    
+                    st.success("Kabul edildi ve teklif sahibine e-posta gönderildi!"); st.rerun()
                 if c_rej.button("❌ Reddet", key=f"rej_{msg['id']}"):
                     msg['status'] = 'rejected'
                     save_data(MESSAGES_FILE_PATH, messages); st.rerun()
