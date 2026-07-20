@@ -38,7 +38,7 @@ REPO_NAME = st.secrets.get("REPO_NAME", "kullaniciadi/repo_adi")
 SMTP_USER = st.secrets.get("SMTP_USER", "")
 SMTP_PASS = st.secrets.get("SMTP_PASS", "")
 ADMIN_PASS = st.secrets.get("ADMIN_PANEL_PASS", "izmir35")
-ADMIN_EMAIL = "husnukazli@gmail.com"  # Yönetici e-posta adresi
+ADMIN_EMAIL = "husnukazli@gmail.com"
 
 INVITES_FILE_PATH = "invites.json"
 USERS_FILE_PATH = "users.json"
@@ -157,7 +157,6 @@ def admin_dashboard():
     active_inv_count = len([i for i in invites if i.get('status') == 'active'])
     inv_tab_label = f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi"
     
-    # Silme talebi gönderen kullanıcı sayısı rozeti
     del_requests_count = len([u for u, d in users_db.items() if isinstance(d, dict) and d.get('delete_requested')])
     users_tab_label = f"👥 Üye Yönetimi 🚨 ({del_requests_count})" if del_requests_count > 0 else "👥 Üye Yönetimi"
 
@@ -175,7 +174,6 @@ def admin_dashboard():
                 
                 c1.write(f"**{u_data.get('ad_soyad')}{test_tag}{del_req_badge}** | {u_email} | Durum: {status}")
                 
-                # Onay mekanizması için state anahtarları
                 confirm_susp_key = f"conf_susp_{u_email}"
                 confirm_del_key = f"conf_del_{u_email}"
                 
@@ -201,7 +199,7 @@ def admin_dashboard():
                 else:
                     c3.warning("Kalıcı silinsin mi?")
                     if c3.button("Evet, Kalıcı Sil", key=f"yes_del_{u_email}"):
-                        del users_db[u_email]
+                        users_db.pop(u_email, None)
                         st.session_state[confirm_del_key] = False
                         save_data(USERS_FILE_PATH, users_db)
                         st.toast("Üye verileri tamamen silindi!", icon="🗑️"); st.rerun()
@@ -259,7 +257,6 @@ def login_page():
     with col_showcase:
         st.markdown("### 🌟 Güncel İlanlar (Vitrin)")
         st.write("Aşağıdaki ilanlara teklif göndermek veya kendi ilanını açmak için sağ taraftan giriş yapmalısın.")
-        # Dondurulmuş veya askıdaki kullanıcıların ilanları vitrinde görünmesin
         active_inv = []
         for i in invites:
             if i.get('status') == 'active':
@@ -405,7 +402,6 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
             
-        # Dondurulmuş veya askıdaki kullanıcıların ilanlarını gizle
         active_invites = []
         for i in invites:
             if i.get('status') == 'active':
@@ -508,7 +504,7 @@ def main_app():
                     radar_count = 0
                     for u_email, u_data in users_db.items():
                         if u_email == st.session_state.current_user or not isinstance(u_data, dict): continue
-                        if u_data.get('frozen') or u_data.get('suspended'): continue # Dondurulanlara radar gitmez
+                        if u_data.get('frozen') or u_data.get('suspended'): continue
                         r = u_data.get("radar", {})
                         if r.get("active", False):
                             match_court = not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))
@@ -534,7 +530,6 @@ def main_app():
         
         user_list = []
         for u_email, u_data in users_db.items():
-            # Dondurulmuş veya hayalet veya askıdaki kullanıcılar üye listesinde görünmez
             if not isinstance(u_data, dict) or u_email == st.session_state.current_user: continue
             if u_data.get("privacy", {}).get("ghost") or u_data.get("frozen") or u_data.get("suspended"): continue
             
@@ -618,7 +613,7 @@ def main_app():
         ])
 
         with m_tab1:
-            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
+            my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
                 with st.container(border=True):
@@ -648,7 +643,6 @@ def main_app():
                         st.toast("Teklif kabul edildi ve maç takvime eklendi! 🎉", icon="✅")
                         st.rerun()
 
-                    # Onay mekanizmalı Reddet butonu
                     conf_rej_key = f"conf_rej_{msg['id']}"
                     if not st.session_state.get(conf_rej_key, False):
                         if c_rej.button("❌ Reddet", key=f"btn_rej_{msg['id']}"):
@@ -674,6 +668,27 @@ def main_app():
                     r_user = users_db.get(msg.get('receiver'), {})
                     st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi"}
                     st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
+                    
+                    # 🚀 YENİ ÖZELLİK: Bekleyen teklifi (pending) kendi başına geri çekebilme
+                    if msg.get('status') == 'pending':
+                        conf_with_key = f"conf_with_{msg['id']}"
+                        if not st.session_state.get(conf_with_key, False):
+                            if st.button("🗑️ Teklifi Geri Çek", key=f"btn_with_{msg['id']}"):
+                                st.session_state[conf_with_key] = True
+                                st.rerun()
+                        else:
+                            st.warning("Bu teklifi geri çekmek istediğinize emin misiniz?")
+                            cw1, cw2 = st.columns(2)
+                            if cw1.button("Evet, Geri Çek", key=f"yes_with_{msg['id']}"):
+                                # Eğer ilana yapılan bir teklifse ilanı etkilemez, mesajı tamamen siliyoruz
+                                messages = [m for m in messages if m['id'] != msg['id']]
+                                save_data(MESSAGES_FILE_PATH, messages)
+                                st.session_state[conf_with_key] = False
+                                st.toast("Teklifiniz başarıyla geri çekildi.", icon="✅")
+                                st.rerun()
+                            if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"):
+                                st.session_state[conf_with_key] = False
+                                st.rerun()
 
         with m_tab3:
             my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
@@ -707,23 +722,33 @@ def main_app():
                     st.markdown("---")
                     c_opt1, c_opt2 = st.columns(2)
                     
-                    # Onay mekanizmalı maç iptalleri
+                    # 🚀 YENİ ÖZELLİK: İptal Durumunda Akıllı Seçenekler (İlan Sahibi veya Teklif Veren Ayrımı)
                     conf_del_acc = f"conf_del_acc_{acc['id']}"
                     if not st.session_state.get(conf_del_acc, False):
-                        if c_opt1.button("🗑️ Maçı İptal Et ve Sil", key=f"btn_del_acc_{acc['id']}"):
+                        if c_opt1.button("🗑️ Maçı İptal Et", key=f"btn_del_acc_{acc['id']}"):
                             st.session_state[conf_del_acc] = True
                             st.rerun()
                     else:
-                        c_opt1.warning("Maç iptal edilsin mi?")
+                        c_opt1.warning("Maçı iptal etmek istediğinize emin misiniz?")
                         if c_opt1.button("Evet, İptal Et", key=f"yes_del_acc_{acc['id']}"):
                             acc['status'] = 'cancelled'
-                            if acc.get('type') == 'invite_request':
-                                invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
-                                save_data(INVITES_FILE_PATH, invites)
                             save_data(MESSAGES_FILE_PATH, messages)
+                            
+                            # Eğer bu ilan isteği ise ve maçı iptal eden taraf teklif gönderen (sender) ise, ilan sahibine seçenek sunmak üzere ilanı askıya/beklemeye alıyoruz
+                            if acc.get('type') == 'invite_request':
+                                target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
+                                if target_inv:
+                                    if st.session_state.current_user == target_inv.get('creator'):
+                                        # İlan sahibi iptal ettiyse ilan tamamen silinebilir veya pasife alınabilir
+                                        invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
+                                    else:
+                                        # Teklif veren kişi iptal ettiyse ilan sahibine bildirim gitsin diye ilanı 'paused_by_cancellation' yapalım
+                                        target_inv['status'] = 'paused_by_cancellation'
+                                    save_data(INVITES_FILE_PATH, invites)
+
                             send_email(partner_e, "Maç İptali", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
                             st.session_state[conf_del_acc] = False
-                            st.toast("Maç iptal edildi ve ilan tamamen silindi.", icon="🗑️")
+                            st.toast("Maç iptal edildi.", icon="🗑️")
                             st.rerun()
                         if c_opt1.button("Vazgeç", key=f"no_del_acc_{acc['id']}"):
                             st.session_state[conf_del_acc] = False
@@ -735,8 +760,8 @@ def main_app():
                             st.session_state[conf_edit_acc] = True
                             st.rerun()
                     else:
-                        c_opt2.warning("Yeniden yayınlansın mı?")
-                        if c_opt2.button("Evet, Düzenle", key=f"yes_edit_acc_{acc['id']}"):
+                        c_opt2.warning("İptal edilip ilanı yeniden yayına almak istiyor musunuz?")
+                        if c_opt2.button("Evet, Yeniden Yayınla", key=f"yes_edit_acc_{acc['id']}"):
                             acc['status'] = 'cancelled'
                             save_data(MESSAGES_FILE_PATH, messages)
                             if acc.get('type') == 'invite_request':
@@ -748,14 +773,34 @@ def main_app():
                                 save_data(INVITES_FILE_PATH, invites)
                             send_email(partner_e, "Maç İptal Edildi", f"<b>{me.get('ad_soyad')}</b> maçı iptal etti.")
                             st.session_state[conf_edit_acc] = False
-                            st.toast("İlan yeniden düzenleme moduna alındı!", icon="✏️")
+                            st.toast("İlan yeniden düzenleme moduna alındı ve havuza döndü!", icon="✏️")
                             st.rerun()
                         if c_opt2.button("Vazgeç", key=f"no_edit_acc_{acc['id']}"):
                             st.session_state[conf_edit_acc] = False
                             st.rerun()
 
+            # İlan sahibi için iptal edilen veya askıya alınan ilanları yeniden yönetme alanı
+            paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
+            if paused_invites:
+                st.markdown("---")
+                st.warning("⚠️ **Partner İptali Bildirimi:** Kabul edilen bir maçınız karşı tarafça iptal edildiği için aşağıdaki ilanınız askıya alındı. Ne yapmak্সিsiniz?")
+                for pinv in paused_invites:
+                    with st.container(border=True):
+                        st.write(f"📍 {pinv.get('court')} | 🗓️ {pinv.get('date')} tarihli ilanınızın eşleşmesi iptal oldu.")
+                        col_p1, col_p2 = st.columns(2)
+                        if col_p1.button("📢 İlanı Yeniden Yayına Al", key=f"repub_{pinv.get('id')}"):
+                            pinv['status'] = 'active'
+                            save_data(INVITES_FILE_PATH, invites)
+                            st.toast("İlanınız tekrar başarıyla vitrine eklendi! 🚀", icon="✅")
+                            st.rerun()
+                        if col_p2.button("🗑️ İlanı Tamamen Kapat", key=f"close_{pinv.get('id')}"):
+                            invites = [i for i in invites if i.get('id') != pinv.get('id')]
+                            save_data(INVITES_FILE_PATH, invites)
+                            st.toast("İlan tamamen kaldırıldı.", icon="🗑️")
+                            st.rerun()
+
             if st.session_state.editing_invite:
-                e_inv = next((i for i in invites if i.get('id') == st.session_state.editing_invite), None)
+                e_inv = next((i for i in invites if i.get('id'] == st.session_state.editing_invite), None)
                 if e_inv:
                     st.markdown("---")
                     st.subheader("✏️ İlanı Güncelle ve Yeniden Yayınla")
@@ -774,14 +819,14 @@ def main_app():
                             st.rerun()
 
         with m_tab4:
-            past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'rejected']]
+            past_m = [m for m in messages if (m.get('receiver'] == st.session_state.current_user or m.get('sender'] == st.session_state.current_user) and m.get('status'] in ['cancelled', 'rejected']]
             if not past_m: st.info("Geçmiş iptal kaydı bulunmuyor.")
             for pm in past_m: st.write(f"⚪ İptal/Reddedilen Kayıt | ID: {pm['id'][:8]} | Durum: **{pm['status']}**")
 
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
@@ -853,7 +898,6 @@ def main_app():
                             save_data(USERS_FILE_PATH, users_db)
                             st.success("Şifreniz başarıyla değiştirildi!")
                             
-            # ⏸️ Hesap Dondurma (Pasife Alma)
             st.markdown("---")
             st.subheader("⏸️ Hesap Durumu (Dondurma)")
             with st.form("freeze_form"):
@@ -866,7 +910,6 @@ def main_app():
                     st.toast("Hesap dondurma tercihiniz güncellendi!", icon="⏸️")
                     st.rerun()
 
-            # 🚨 Kalıcı Silme Talebi (Yönetici Onaylı)
             st.markdown("---")
             st.subheader("🚨 Tehlikeli Bölge")
             with st.expander("Hesabımı Kalıcı Olarak Silme Talebi Gönder"):
@@ -880,7 +923,6 @@ def main_app():
                         users_db[st.session_state.current_user] = me
                         save_data(USERS_FILE_PATH, users_db)
                         
-                        # Yöneticiye talep maili
                         admin_del_mail = f"<b>{me.get('ad_soyad')}</b> ({st.session_state.current_user}) isimli üye hesabını ve verilerini kalıcı olarak silmek istiyor.<br><br>Yönetici Panelinden onaylayabilirsiniz."
                         send_email(ADMIN_EMAIL, "🚨 Kalıcı Silme Talebi Var", admin_del_mail)
                         
