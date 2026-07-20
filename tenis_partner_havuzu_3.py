@@ -441,7 +441,7 @@ def main_app():
 
     with tabs[3]: # KUTUM VE TAKVİM
         st.subheader("Gelen Teklifler")
-        my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status'] == 'pending']
+        my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
         if not my_inbox: st.write("Bekleyen bir teklifiniz yok.")
         
         for msg in my_inbox:
