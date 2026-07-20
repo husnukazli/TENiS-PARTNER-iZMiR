@@ -22,7 +22,11 @@ IZMIR_KORTLARI = [
     "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları", "Diğer"
 ]
 ACTIVITY_TYPES = ["Maç", "Antrenman", "Ralli", "Fark Etmez"]
-COURT_STATUS = ["Kort Rezervasyonu Bende", "Birlikte Ayarlarız", "Davetlinin Kortu Olması Tercihimdir"]
+COURT_STATUS = [
+    "✅ Kort Kesin Rezerve Edildi (Hazır)",
+    "🤝 Birlikte Karar Vereceğiz / Ayarlayacağız",
+    "🙋 Davetlinin Kortu / Tesisi Olması Tercihimdir"
+]
 TURKEY_TZ = datetime.timezone(datetime.timedelta(hours=3))
 
 # --- AYARLAR ---
@@ -175,8 +179,8 @@ def admin_dashboard():
                 invites.append({
                     "id": str(uuid.uuid4()), "creator": b["e"], "date": str(datetime.date.today() + datetime.timedelta(days=2)),
                     "time_details": "18:00 - 19:30", "court": random.choice(IZMIR_KORTLARI),
-                    "court_custom": "", "court_status": "Birlikte Ayarlarız", "type": "Maç", "levels": [b["lvl"]],
-                    "status": "active", "is_bot": True
+                    "court_custom": "", "court_status": "✅ Kort Kesin Rezerve Edildi (Hazır)", "type": "Maç", "levels": [b["lvl"]],
+                    "status": "active", "is_bot": True, "note": "Bot test ilanına hoş geldiniz!"
                 })
             save_data(USERS_FILE_PATH, users_db)
             save_data(INVITES_FILE_PATH, invites)
@@ -273,6 +277,8 @@ def main_app():
                 c1, c2, c3 = st.columns([3, 3, 2])
                 c1.markdown(f"**📍 Kort:** {inv.get('court')} {'('+inv.get('court_custom')+')' if inv.get('court_custom') else ''}")
                 c1.markdown(f"**🗓️ Tarih:** {inv.get('date')} | ⏰ **Zaman Aralığı:** {inv.get('time_details')}")
+                if inv.get('note'):
+                    c1.markdown(f"**📝 Not:** {inv.get('note')}")
                 c2.markdown(f"**🎾 Tür:** {inv.get('type')} | **⭐ Seviye:** {', '.join(inv.get('levels', []))}")
                 c2.markdown(f"**🔑 Durum:** {inv.get('court_status')}")
                 
@@ -280,15 +286,28 @@ def main_app():
                 c3.markdown(f"👤 **Açan:** {creator.get('ad_soyad')}")
                 if inv.get('creator') != st.session_state.current_user:
                     if st.button("Teklif Gönder", key=f"inv_{inv.get('id')}"):
-                        messages.append({
+                        is_bot_creator = users_db.get(inv.get('creator'), {}).get("is_bot", False)
+                        msg_status = "accepted" if is_bot_creator else "pending"
+                        
+                        new_msg = {
                             "id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'),
                             "sender": st.session_state.current_user, "receiver": inv.get('creator'),
-                            "status": "pending", "timestamp": str(datetime.datetime.now())
-                        })
+                            "status": msg_status, "timestamp": str(datetime.datetime.now())
+                        }
+                        if msg_status == "accepted":
+                            t_str = inv.get('time_details', '18:00 - 19:30')
+                            new_msg['calendar_link'] = generate_gcal_link("Tenis Maçı", inv.get('date', str(datetime.date.today())), t_str, inv.get('court', 'Kort'))
+                        
+                        messages.append(new_msg)
                         save_data(MESSAGES_FILE_PATH, messages)
-                        st.success("Teklifiniz ilan sahibine iletildi!")
+                        
+                        if msg_status == "accepted":
+                            st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz.")
+                        else:
+                            st.success("Teklifiniz ilan sahibine iletildi!")
+                        st.rerun()
 
-    with tabs[1]: # İLAN OLUŞTUR (BAŞLANGIÇ VE BİTİŞ SAATİ AYRI)
+    with tabs[1]: # İLAN OLUŞTUR (BAŞLANGIÇ VE BİTİŞ SAATİ AYRI + NOT ALANI)
         with st.form("create_invite"):
             c1, c2 = st.columns(2)
             d = c1.date_input("Tarih")
@@ -304,6 +323,7 @@ def main_app():
             
             act_type = st.selectbox("Etkinlik Tipi", ACTIVITY_TYPES)
             levels = st.multiselect("Aranan Seviyeler", NTRP_LEVELS, default=["4.0"])
+            inv_note = st.text_area("İlan Notu / Açıklama (İsteğe bağlı)")
             
             if st.form_submit_button("İlanı Yayınla"):
                 if not levels: st.error("Lütfen en az bir seviye seçin.")
@@ -312,14 +332,14 @@ def main_app():
                         "id": str(uuid.uuid4()), "creator": st.session_state.current_user,
                         "date": str(d), "time_details": t_det,
                         "court": court, "court_custom": court_custom, "court_status": court_status,
-                        "type": act_type, "levels": levels, "status": "active"
+                        "type": act_type, "levels": levels, "status": "active", "note": inv_note
                     }
                     invites.append(new_inv)
                     save_data(INVITES_FILE_PATH, invites)
                     st.success("İlan yayınlandı!")
                     st.rerun()
 
-    with tabs[2]: # ÜYELER & DOĞRUDAN TEKLİF (BAŞLANGIÇ VE BİTİŞ SAATİ AYRI)
+    with tabs[2]: # ÜYELER & DOĞRUDAN TEKLİF (BOT OTOMATİK KABUL DESTEKLİ)
         if st.session_state.offer_to:
             target = st.session_state.offer_to
             st.info(f"👉 **{users_db[target].get('ad_soyad')}** kişisine teklif gönderiyorsunuz.")
@@ -335,15 +355,27 @@ def main_app():
                 o_note = st.text_area("Özel Not")
                 c_sub, c_can = st.columns(2)
                 if c_sub.form_submit_button("Gönder"):
-                    messages.append({
+                    is_bot_target = users_db.get(target, {}).get("is_bot", False)
+                    msg_status = "accepted" if is_bot_target else "pending"
+                    
+                    new_msg = {
                         "id": str(uuid.uuid4()), "type": "direct_challenge",
                         "sender": st.session_state.current_user, "receiver": target,
                         "date": str(o_date), "time": o_time, "court": o_court, "note": o_note,
-                        "status": "pending"
-                    })
+                        "status": msg_status
+                    }
+                    if msg_status == "accepted":
+                        new_msg['calendar_link'] = generate_gcal_link("Tenis Maçı", str(o_date), o_time, o_court)
+                        
+                    messages.append(new_msg)
                     save_data(MESSAGES_FILE_PATH, messages)
                     st.session_state.offer_to = None
-                    st.success("Teklif iletildi!"); st.rerun()
+                    
+                    if msg_status == "accepted":
+                        st.success("Bot teklifinizi otomatik kabul etti! Takvim ve Değerlendirme sekmelerinden inceleyebilirsiniz.")
+                    else:
+                        st.success("Teklif iletildi!")
+                    st.rerun()
                 if c_can.form_submit_button("İptal"):
                     st.session_state.offer_to = None; st.rerun()
 
@@ -385,7 +417,7 @@ def main_app():
                     save_data(MESSAGES_FILE_PATH, messages); st.rerun()
 
         st.subheader("Kabul Edilmiş Maçlarım (Takvim)")
-        my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         for acc in reversed(my_acc):
             partner = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
             st.info(f"🤝 **{users_db.get(partner, {}).get('ad_soyad')}** ile maç onaylı. [📅 Google Takvimine Ekle]({acc.get('calendar_link', '#')})")
@@ -393,7 +425,7 @@ def main_app():
     with tabs[4]: # ETKİNLİK BAZLI DEĞERLENDİRME
         st.subheader("Etkinlik Bazlı Oyuncu Değerlendirme")
         
-        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+        accepted_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
         unrated_events = [m for m in accepted_events if st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events:
