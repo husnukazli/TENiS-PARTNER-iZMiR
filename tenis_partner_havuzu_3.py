@@ -106,6 +106,14 @@ def send_email(to_address, subject, message):
         return True
     except: return False
 
+def format_date_tr(date_str):
+    if not date_str or date_str == '-': return "-"
+    if "." in date_str: return date_str
+    try:
+        return datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
+    except:
+        return date_str
+
 def generate_gcal_link(title, date_str, time_str, court_name):
     try:
         t_part = time_str.split('-')[0].strip() if '-' in time_str else time_str.strip()
@@ -303,7 +311,7 @@ def admin_dashboard():
         st.subheader("Sistemdeki İlanlar")
         for inv in reversed(invites):
             c1, c2 = st.columns([6, 2])
-            c1.write(f"📍 {inv.get('court')} | 🗓️ {inv.get('date')} | Durum: **{inv.get('status')}**")
+            c1.write(f"📍 {inv.get('court')} | 🗓️ {format_date_tr(inv.get('date'))} | Durum: **{inv.get('status')}**")
             if not st.session_state.get(f"conf_inv_{inv.get('id')}", False):
                 if c2.button("🗑️ Kaldır", key=f"btn_adm_del_{inv.get('id')}"):
                     st.session_state[f"conf_inv_{inv.get('id')}"] = True; st.rerun()
@@ -484,11 +492,11 @@ def login_page():
                 if not isinstance(c_user, dict): c_user = {}
 
                 if s == "expired":
-                    st.markdown(f"#### <span style='color:gray'>🗓️ {inv.get('date')} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
+                    st.markdown(f"#### <span style='color:gray'>🗓️ {format_date_tr(inv.get('date'))} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
                     st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
                     st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
                 else:
-                    st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
+                    st.markdown(f"#### 🗓️ {format_date_tr(inv.get('date'))}  |  ⏰ {inv.get('time_details')}")
                     st.markdown(f"### 📍 {k_isim}")
                     st.info(f"**Kort Durumu:** {inv.get('court_status')}")
                     fee_str = inv.get('fee_status', 'Belirtilmedi')
@@ -602,11 +610,11 @@ def main_app():
                 if not isinstance(c_user, dict): c_user = {}
 
                 if s == "expired":
-                    st.markdown(f"#### <span style='color:gray'>🗓️ {inv.get('date')} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
+                    st.markdown(f"#### <span style='color:gray'>🗓️ {format_date_tr(inv.get('date'))} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
                     st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
                     st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
                 else:
-                    st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
+                    st.markdown(f"#### 🗓️ {format_date_tr(inv.get('date'))}  |  ⏰ {inv.get('time_details')}")
                     st.markdown(f"### 📍 {k_isim}")
                     st.info(f"**Kort Durumu:** {inv.get('court_status')}")
                     fee_str = inv.get('fee_status', 'Belirtilmedi')
@@ -642,7 +650,7 @@ def main_app():
         if me.get('frozen'): st.warning("⚠️ Hesabınız dondurulmuş. İlanınız vitrinde görünmez.")
             
         c1, c2 = st.columns(2)
-        d = c1.date_input("Tarih", min_value=datetime.date.today(), key="inv_date")
+        d = c1.date_input("Tarih", min_value=datetime.date.today(), key="inv_date", format="DD.MM.YYYY")
         c_t1, c_t2 = c1.columns(2)
         t_start = c_t1.time_input("Başlangıç Saati", datetime.time(18, 0), key="inv_start")
         t_end = c_t2.time_input("Bitiş Saati", datetime.time(19, 30), key="inv_end")
@@ -692,16 +700,19 @@ def main_app():
             target_u = users_db.get(st.session_state.offer_to, {})
             st.info(f"👉 **{target_u.get('ad_soyad', 'Kullanıcı')}** kişisine özel teklif oluşturuyorsunuz.")
             
-            o_date = st.date_input("Tarih Önerisi", min_value=datetime.date.today(), key="do_date")
+            o_date = st.date_input("Tarih Önerisi", min_value=datetime.date.today(), key="do_date", format="DD.MM.YYYY")
             c_o1, c_o2 = st.columns(2)
             o_t1 = c_o1.time_input("Başlangıç", datetime.time(18, 0), key="do_t1")
             o_t2 = c_o2.time_input("Bitiş", datetime.time(19, 30), key="do_t2")
             o_court = st.selectbox("Kort Önerisi", IZMIR_KORTLARI, key="do_court")
             o_custom = st.text_input("Diğer ise belirtin:", key="do_cust") if o_court == "Diğer" else ""
             
+            o_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, key="do_fee_stat")
+            o_fee_amount = st.text_input("Kort Ücreti Tutarı (Örn: 500 TL vb.)", key="do_fee_amt") if o_fee_status != "Ücretsiz Kort / Abonelik" else ""
+            
             c_sub, c_can = st.columns(2)
             if c_sub.button("🚀 Teklifi Gönder", use_container_width=True):
-                new_msg = {"id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user, "receiver": st.session_state.offer_to, "date": str(o_date), "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}", "court": o_court, "court_custom": o_custom, "status": "pending"}
+                new_msg = {"id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user, "receiver": st.session_state.offer_to, "date": str(o_date), "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}", "court": o_court, "court_custom": o_custom, "fee_status": o_fee_status, "fee_amount": o_fee_amount.strip(), "status": "pending"}
                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
                     st.session_state.offer_to = None; st.toast("Teklif iletildi!", icon="✅"); time.sleep(1); st.rerun()
                 else: st.error("⚠️ Veri hatası: Özel teklifiniz kaydedilemedi.")
@@ -740,9 +751,16 @@ def main_app():
                     s_user = users_db.get(msg['sender'], {})
                     if msg.get('type') == 'invite_request':
                         inv_data = next((i for i in invites if i.get('id') == msg.get('invite_id')), {})
-                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** sizin **{inv_data.get('date')}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
+                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** (NTRP: {s_user.get('level', '3.5')}) sizin **{format_date_tr(inv_data.get('date'))}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
                     else:
-                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{msg.get('date')}** | Kort: **{msg.get('court')}**")
+                        fee_info = ""
+                        if msg.get('fee_status') and msg.get('fee_status') != 'Belirtilmedi':
+                            if msg.get('fee_status') == "Ücretsiz Kort / Abonelik":
+                                fee_info = " | 💰 Ücretsiz Kort"
+                            else:
+                                amt = f" ({msg.get('fee_amount')})" if msg.get('fee_amount') else ""
+                                fee_info = f" | 💰 {msg.get('fee_status')}{amt}"
+                        st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** (NTRP: {s_user.get('level', '3.5')}) size özel maç teklif etti! Tarih: **{format_date_tr(msg.get('date'))}** | Kort: **{msg.get('court')}**{fee_info}")
 
                     render_popover_profile(msg['sender'], s_user, messages)
 
@@ -807,7 +825,7 @@ def main_app():
                     if s in ["expired", "removed"]:
                         st.error("⏳ Bu ilanın süresi dolmuştur.")
                         
-                    st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {my_inv.get('date')} | ⏰ {my_inv.get('time_details')}")
+                    st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {format_date_tr(my_inv.get('date'))} | ⏰ {my_inv.get('time_details')}")
                     
                     fee_str = my_inv.get('fee_status', 'Belirtilmedi')
                     if fee_str != 'Belirtilmedi':
@@ -836,7 +854,7 @@ def main_app():
                 st.markdown("---")
                 st.subheader("✏️ İlanı Güncelle")
                 with st.form("edit_my_active_form"):
-                    ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
+                    ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
                     ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
                     
                     ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
@@ -865,12 +883,28 @@ def main_app():
                     
                     if acc.get('type') == 'invite_request':
                         inv_data = next((i for i in invites if i.get('id') == acc.get('invite_id')), {})
-                        m_date, m_time, m_court = inv_data.get('date', '-'), inv_data.get('time_details', '-'), inv_data.get('court', '-')
+                        m_date = inv_data.get('date', '-')
+                        m_time = inv_data.get('time_details', '-')
+                        m_court = inv_data.get('court', '-')
+                        m_fee_status = inv_data.get('fee_status', 'Belirtilmedi')
+                        m_fee_amount = inv_data.get('fee_amount', '')
                     else:
-                        m_date, m_time, m_court = acc.get('date', '-'), acc.get('time', '-'), acc.get('court', '-')
+                        m_date = acc.get('date', '-')
+                        m_time = acc.get('time', '-')
+                        m_court = acc.get('court', '-')
+                        m_fee_status = acc.get('fee_status', 'Belirtilmedi')
+                        m_fee_amount = acc.get('fee_amount', '')
 
                     st.markdown(f"🤝 **Partner:** {partner_u.get('ad_soyad', 'Partner')} *(NTRP {partner_u.get('level', '3.5')})*")
-                    st.markdown(f"🗓️ **Tarih & Saat:** {m_date} | {m_time} | 📍 **Kort:** {m_court}")
+                    st.markdown(f"🗓️ **Tarih & Saat:** {format_date_tr(m_date)} | {m_time} | 📍 **Kort:** {m_court}")
+                    
+                    if m_fee_status != 'Belirtilmedi':
+                        if m_fee_status == "Ücretsiz Kort / Abonelik":
+                            st.caption("💰 **Ücret:** Ücretsiz Kort / Abonelik")
+                        else:
+                            amt_str = f" ({m_fee_amount})" if m_fee_amount else ""
+                            st.caption(f"💰 **Ücret Anlaşması:** {m_fee_status}{amt_str}")
+
                     st.markdown(f"[📅 Google Takvime Ekle]({acc.get('calendar_link', '#')})")
                     
                     if partner_u.get('contact_visibility', 'eslesince') in ['eslesince', 'herkes']:
@@ -941,7 +975,7 @@ def main_app():
                 st.warning("⚠️ **İptal Bildirimi:** Karşı taraf iptal ettiği için aşağıdaki ilanınız askıya alındı.")
                 for pinv in paused_invites:
                     with st.container(border=True):
-                        st.write(f"📍 {pinv.get('court')} | 🗓️ {pinv.get('date')} eşleşmesi iptal oldu.")
+                        st.write(f"📍 {pinv.get('court')} | 🗓️ {format_date_tr(pinv.get('date'))} eşleşmesi iptal oldu.")
                         col_p1, col_p2 = st.columns(2)
                         if col_p1.button("📢 Yeniden Yayına Al", key=f"repub_{pinv.get('id')}"):
                             pinv['status'] = 'active'
@@ -953,7 +987,7 @@ def main_app():
                 if e_inv := next((i for i in invites if i.get('id') == st.session_state.editing_invite), None):
                     st.subheader("✏️ İlanı Güncelle")
                     with st.form("edit_inv_form_repub"):
-                        ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
+                        ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
                         ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
                         
                         ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
@@ -1053,7 +1087,6 @@ def main_app():
                 elif st.button("🗑️ Silme Talebini İlet"):
                     me["delete_requested"] = True; users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'):
-                        # SİLME TALEBİ YÖNETİCİ MAİLİ
                         send_email(ADMIN_EMAIL, "🚨 Silme Talebi", f"<b>{me.get('ad_soyad')}</b> ({st.session_state.current_user}) hesabını kalıcı olarak silmek istiyor. Yönetici panelinden işlemi onaylayabilirsiniz.")
                         st.toast("Talebiniz iletildi.", icon="📨"); time.sleep(1); st.rerun()
                     else: st.error("⚠️ Talebiniz iletilemedi.")
