@@ -67,6 +67,12 @@ COURT_STATUS = [
     "🤝 Birlikte Karar Vereceğiz / Ayarlayacağız",
     "🙋 Davetlinin Kortu / Tesisi Olması Tercihimdir"
 ]
+FEE_STATUS_OPTIONS = [
+    "Ücretsiz Kort / Abonelik", 
+    "Ücreti Bölüşeceğiz (Yarı Yarıya)", 
+    "Ücreti Ben Karşılayacağım", 
+    "Davetlinin Karşılaması Beklenir"
+]
 
 # --- AYARLAR ---
 GITHUB_TOKEN = st.secrets.get("GITHUB_TOKEN", "GITHUB_TOKEN_BURAYA")
@@ -116,7 +122,8 @@ def get_invite_status(inv_date, inv_time_details):
     try:
         t_str = inv_time_details.split('-')[0].strip()
         inv_dt = datetime.datetime.strptime(f"{inv_date} {t_str}", "%Y-%m-%d %H:%M")
-        now = datetime.datetime.now()
+        # Türkiye saatine göre zaman aşımı kontrolü (UTC +3)
+        now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
         if now > inv_dt + datetime.timedelta(hours=12):
             return "removed"
         elif now > inv_dt:
@@ -458,7 +465,14 @@ def login_page():
             if s != "removed":
                 filtered_active.append((inv, s))
                 
-        filtered_active.sort(key=lambda x: x[0].get('date', '9999-12-31'))
+        # Akıllı Sıralama: Aktifler üstte, Süresi Geçenler (gri) en altta.
+        active_only = [x for x in filtered_active if x[1] == 'active']
+        expired_only = [x for x in filtered_active if x[1] == 'expired']
+        
+        active_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')))
+        expired_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')), reverse=True)
+        
+        filtered_active = active_only + expired_only
         
         if not filtered_active: st.info("Şu an havuzda aktif ilan bulunmuyor.")
         for inv, s in filtered_active[:8]:
@@ -475,6 +489,13 @@ def login_page():
                     st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
                     st.markdown(f"### 📍 {k_isim}")
                     st.info(f"**Kort Durumu:** {inv.get('court_status')}")
+                    fee_str = inv.get('fee_status', 'Belirtilmedi')
+                    if fee_str != 'Belirtilmedi':
+                        if fee_str == "Ücretsiz Kort / Abonelik":
+                            st.success("💰 **Ücret:** Ücretsiz Kort / Abonelik")
+                        else:
+                            amt_str = f" ({inv.get('fee_amount')})" if inv.get('fee_amount') else ""
+                            st.warning(f"💰 **Ücret:** {fee_str}{amt_str}")
                     
                 st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
                 if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
@@ -557,7 +578,18 @@ def main_app():
             if s != "removed":
                 filtered_active_invites.append((inv, s))
                 
-        filtered_active_invites.sort(key=lambda x: x[0].get('date', '9999-12-31'), reverse=(sort_by != "Tarihe Göre (En Yakın)"))
+        # Akıllı Sıralama
+        active_only = [x for x in filtered_active_invites if x[1] == 'active']
+        expired_only = [x for x in filtered_active_invites if x[1] == 'expired']
+        
+        if sort_by == "Tarihe Göre (En Yakın)":
+            active_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')))
+            expired_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')), reverse=True)
+        else:
+            active_only.sort(key=lambda x: x[0].get('created_at', '1900-01-01'), reverse=True)
+            expired_only.sort(key=lambda x: x[0].get('created_at', '1900-01-01'), reverse=True)
+            
+        filtered_active_invites = active_only + expired_only
         
         if not filtered_active_invites: st.info("Kriterlere uygun aktif ilan bulunamadı.")
 
@@ -575,6 +607,13 @@ def main_app():
                     st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
                     st.markdown(f"### 📍 {k_isim}")
                     st.info(f"**Kort Durumu:** {inv.get('court_status')}")
+                    fee_str = inv.get('fee_status', 'Belirtilmedi')
+                    if fee_str != 'Belirtilmedi':
+                        if fee_str == "Ücretsiz Kort / Abonelik":
+                            st.success("💰 **Ücret:** Ücretsiz Kort / Abonelik")
+                        else:
+                            amt_str = f" ({inv.get('fee_amount')})" if inv.get('fee_amount') else ""
+                            st.warning(f"💰 **Ücret:** {fee_str}{amt_str}")
                     
                 st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
                 if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
@@ -610,6 +649,12 @@ def main_app():
         court_custom = c2.text_input("Diğer ise Kort Adını Yazın:", key="inv_court_cust") if court == "Diğer" else ""
         court_status = c2.selectbox("Kort Rezervasyon Durumu", COURT_STATUS, key="inv_c_status")
         
+        # KORT ÜCRETİ ALANI EKLENDİ
+        fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, key="inv_fee_stat")
+        fee_amount = ""
+        if fee_status != "Ücretsiz Kort / Abonelik":
+            fee_amount = st.text_input("Kort Ücreti Tutarı (Örn: 500 TL, Saati 300 TL vb.)", key="inv_fee_amt")
+        
         act_type = st.selectbox("Etkinlik Tipi", ACTIVITY_TYPES, key="inv_act_type")
         levels = st.multiselect("Aranan Seviyeler (NTRP)", NTRP_LEVELS, default=[me.get("level", "3.5")], key="inv_lvls")
         inv_note = st.text_area("İlan Notu / Açıklama (İsteğe bağlı)", key="inv_note")
@@ -619,7 +664,7 @@ def main_app():
             elif court == "Diğer" and not court_custom.strip(): st.error("Lütfen Kort Adı alanını doldurun.")
             elif t_start >= t_end: st.error("Bitiş saati başlangıç saatinden sonra olmalıdır.")
             else:
-                new_inv = {"id": str(uuid.uuid4()), "creator": st.session_state.current_user, "date": str(d), "time_details": f"{t_start.strftime('%H:%M')} - {t_end.strftime('%H:%M')}", "court": court, "court_custom": court_custom, "court_status": court_status, "type": act_type, "levels": levels, "status": "active", "note": inv_note, "created_at": str(datetime.datetime.now())}
+                new_inv = {"id": str(uuid.uuid4()), "creator": st.session_state.current_user, "date": str(d), "time_details": f"{t_start.strftime('%H:%M')} - {t_end.strftime('%H:%M')}", "court": court, "court_custom": court_custom, "court_status": court_status, "fee_status": fee_status, "fee_amount": fee_amount.strip(), "type": act_type, "levels": levels, "status": "active", "note": inv_note, "created_at": str(datetime.datetime.now())}
                 if save_data(INVITES_FILE_PATH, invites + [new_inv], 'db_invites'):
                     for u_email, u_data in users_db.items():
                         if u_email == st.session_state.current_user or not isinstance(u_data, dict) or u_data.get('frozen') or u_data.get('suspended'): continue
@@ -762,6 +807,15 @@ def main_app():
                         st.error("⏳ Bu ilanın süresi dolmuştur.")
                         
                     st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {my_inv.get('date')} | ⏰ {my_inv.get('time_details')}")
+                    
+                    fee_str = my_inv.get('fee_status', 'Belirtilmedi')
+                    if fee_str != 'Belirtilmedi':
+                        if fee_str == "Ücretsiz Kort / Abonelik":
+                            st.caption("💰 Ücret: Ücretsiz Kort / Abonelik")
+                        else:
+                            amt_str = f" ({my_inv.get('fee_amount')})" if my_inv.get('fee_amount') else ""
+                            st.caption(f"💰 Ücret: {fee_str}{amt_str}")
+
                     col_i1, col_i2 = st.columns(2)
                     
                     if col_i1.button("✏️ Düzenle", key=f"edit_myinv_{my_inv.get('id')}"):
@@ -783,11 +837,16 @@ def main_app():
                 with st.form("edit_my_active_form"):
                     ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
                     ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
+                    
+                    # Güncelleme ekranında da ücret seçeneği
+                    ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
+                    ed_fee_amount = st.text_input("Kort Ücreti Tutarı (Örn: 500 TL vb.)", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
+                    
                     ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
                     
                     c_btn1, c_btn2 = st.columns(2)
                     if c_btn1.form_submit_button("Güncelle ve Kaydet"):
-                        e_inv.update({'date': str(ed_d), 'court': ed_court, 'note': ed_note})
+                        e_inv.update({'date': str(ed_d), 'court': ed_court, 'fee_status': ed_fee_status, 'fee_amount': ed_fee_amount.strip(), 'note': ed_note})
                         if save_data(INVITES_FILE_PATH, invites, 'db_invites'):
                             st.session_state.edit_my_active = None
                             st.toast("İlanınız güncellendi!", icon="✅")
@@ -859,7 +918,10 @@ def main_app():
                             inv_kayit = True
                             if acc.get('type') == 'invite_request':
                                 for i in invites:
-                                    if i.get('id') == acc.get('invite_id'): i['status'] = 'active'; st.session_state.editing_invite = i.get('id'); break
+                                    if i.get('id') == acc.get('invite_id'): 
+                                        i['status'] = 'active'
+                                        st.session_state.editing_invite = i.get('id')
+                                        break
                                 inv_kayit = save_data(INVITES_FILE_PATH, invites, 'db_invites')
                             if inv_kayit and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
                                 st.session_state[f"conf_edit_acc_{acc['id']}"] = False; st.toast("Havuza döndü!", icon="✏️"); time.sleep(1); st.rerun()
@@ -890,12 +952,16 @@ def main_app():
             if st.session_state.editing_invite:
                 if e_inv := next((i for i in invites if i.get('id') == st.session_state.editing_invite), None):
                     st.subheader("✏️ İlanı Güncelle")
-                    with st.form("edit_inv_form"):
+                    with st.form("edit_inv_form_repub"):
                         ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
                         ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
+                        
+                        ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
+                        ed_fee_amount = st.text_input("Kort Ücreti Tutarı", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
+                        
                         ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
                         if st.form_submit_button("Güncelle ve Gönder"):
-                            e_inv.update({'date': str(ed_d), 'court': ed_court, 'note': ed_note, 'status': 'active'})
+                            e_inv.update({'date': str(ed_d), 'court': ed_court, 'fee_status': ed_fee_status, 'fee_amount': ed_fee_amount.strip(), 'note': ed_note, 'status': 'active'})
                             if save_data(INVITES_FILE_PATH, invites, 'db_invites'): st.session_state.editing_invite = None; st.toast("Güncellendi!", icon="✅"); time.sleep(1); st.rerun()
 
         with m_tab5:
