@@ -226,7 +226,9 @@ def admin_dashboard():
     st.markdown("<h1 style='color: #D32F2F;'>👑 Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
     if st.button("🚪 Yönetici Panelinden Çık"):
         st.session_state.logged_in = False; st.session_state.is_admin = False
-        if cookie_manager: cookie_manager.delete("remember_user")
+        if cookie_manager and cookie_manager.get("remember_user"):
+            cookie_manager.delete("remember_user")
+            time.sleep(0.5)
         st.rerun()
     
     users_db = st.session_state.db_users
@@ -498,7 +500,9 @@ def main_app():
                 st.caption("👉 Onay için 'Tenis Ajandam' sekmesine gidin.")
         if st.button("🚪 Çıkış Yap", use_container_width=True): 
             st.session_state.logged_in = False
-            if cookie_manager: cookie_manager.delete("remember_user")
+            if cookie_manager and cookie_manager.get("remember_user"):
+                cookie_manager.delete("remember_user")
+                time.sleep(0.5)
             st.rerun()
 
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
