@@ -560,7 +560,7 @@ def main_app():
             st.rerun()
 
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
-    tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi"])
+    tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"])
 
     # --- TAB 0: İLAN HAVUZU ---
     with tabs[0]:
@@ -1150,6 +1150,23 @@ def main_app():
                 st.markdown("**📍 Adres:** Ege Üniversitesi Kampüsü İçi, Bornova")
                 st.markdown("**📞 Rezervasyon SKSDB:** 0(232) 311 10 10 (Santral)")
                 st.caption("Not: SKS (Sağlık Kültür ve Spor Daire Başkanlığı) üzerinden öğrenci/mezun/sivil statüsüne göre saatlik kiralanabilir.")
+
+    # --- TAB 8: NTRP SEVİYE REHBERİ ---
+    with tabs[7]:
+        st.subheader("📊 NTRP Seviye Rehberi (Dürüst ve Eğlenceli)")
+        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
+        
+        st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır. *\"Tenis kıyafetlerim çok güzel ama topla henüz tam anlaştığımız söylenemez.\"*")
+        
+        st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
+        
+        st.success("**3.0 - 3.5 (Klasik Hafta Sonu Savaşçısı)**\n\nİzmir'deki kortların en kalabalık grubu! Temel kuralları biliyor, fena ralli yapmıyor ve güzel terliyorsunuz. Harika bir winner vuruşunun hemen ardından en basit topu dışarı atabilme yeteneğine de sahipsiniz. *\"Ben aslında daha iyi oynuyorum ama bugün kort/raket/rüzgar bana karşıydı.\"*")
+        
+        st.success("**4.0 - 4.5 (Kortların Ustası)**\n\nArtık oyunun taktik tarafındasınız. Servisleriniz silahınız, spin ve slice vurabiliyor, rakibin zayıf yönünü analiz edip oraya oynuyorsunuz. Bu seviyedeki maçları izlemek dışarıdan da keyiflidir. *\"Tenis sadece topa vurmak değil, kortta oynanan bir satrançtır.\"*")
+        
+        st.warning("**5.0 - 5.5 (Yarı Profesyonel / Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa avcıları. Eğer bu seviyedeki biriyle eşleştiyseniz muhtemelen kortta nefes nefese kalacaksınız ve topu sadece yanınızdan geçerken göreceksiniz. *\"Isınırken bile terlemiyorum.\"*")
+        
+        st.error("**6.0 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller. Eğer gerçekten bu seviyedeyseniz, sistemimizde partner aramak yerine Grand Slam'lere hazırlanmalısınız! Buralarda işiniz ne?")
 
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
