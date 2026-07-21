@@ -112,6 +112,20 @@ def generate_gcal_link(title, date_str, time_str, court_name):
     params = {"text": title, "dates": dates, "location": court_name, "details": "İzmir Tenis Ağı üzerinden ayarlandı."}
     return "https://calendar.google.com/calendar/render?action=TEMPLATE&" + urllib.parse.urlencode(params)
 
+def get_invite_status(inv_date, inv_time_details):
+    try:
+        t_str = inv_time_details.split('-')[0].strip()
+        inv_dt = datetime.datetime.strptime(f"{inv_date} {t_str}", "%Y-%m-%d %H:%M")
+        now = datetime.datetime.now()
+        if now > inv_dt + datetime.timedelta(hours=12):
+            return "removed"
+        elif now > inv_dt:
+            return "expired"
+        else:
+            return "active"
+    except:
+        return "active"
+
 @st.cache_resource
 def get_github_repo():
     if GITHUB_TOKEN != "GITHUB_TOKEN_BURAYA":
@@ -181,7 +195,7 @@ def sidebar_pwa_guide():
         """)
 
 # --- OTURUM YÖNETİMİ ---
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form']:
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active']:
     if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
 
@@ -223,7 +237,7 @@ def render_popover_profile(user_email, user_data, messages_db):
 # --- YÖNETİCİ KONTROL MERKEZİ ---
 def admin_dashboard():
     sidebar_pwa_guide()
-    st.markdown("<h1 style='color: #D32F2F;'>👑 Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color: #D32F2F;'>Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
     if st.button("🚪 Yönetici Panelinden Çık"):
         st.session_state.logged_in = False; st.session_state.is_admin = False
         if cookie_manager and cookie_manager.get("remember_user"):
@@ -331,7 +345,7 @@ def admin_dashboard():
                 else:
                     st.error("⚠️ Hata: Mesaj yedeği yüklenemedi.")
 
-# --- GİRİŞ VE VİTRİN SAYFASI ---
+# --- GİRİŞ VE GÜNCEL İLANLAR SAYFASI ---
 def login_page():
     sidebar_pwa_guide()
     
@@ -347,7 +361,7 @@ def login_page():
             if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", use_container_width=True):
                 st.session_state.show_login_form = True; st.rerun()
         else:
-            if st.button("🔙 İlanlara (Vitrine) Geri Dön", use_container_width=True):
+            if st.button("🔙 İlanlara Geri Dön", use_container_width=True):
                 st.session_state.show_login_form = False; st.rerun()
                 
     st.markdown("---")
@@ -433,34 +447,51 @@ def login_page():
                             else: st.error("⚠️ Veritabanı hatası.")
                         else: st.error("Sistemde böyle bir e-posta bulunamadı.")
     else:
-        st.markdown("### 🌟 Güncel İlanlar (Vitrin)")
+        st.markdown("### ☀️ Güncel İlanlar")
         st.write("Aşağıdaki ilanlara teklif göndermek için yukarıdan giriş yapmalısınız.")
-        active_inv = [i for i in invites if i.get('status') == 'active' and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
-        active_inv.sort(key=lambda x: x.get('date', '9999-12-31'))
         
-        if not active_inv: st.info("Şu an havuzda aktif ilan bulunmuyor.")
-        for inv in active_inv[:8]:
+        active_inv = [i for i in invites if i.get('status') == 'active' and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
+        
+        filtered_active = []
+        for inv in active_inv:
+            s = get_invite_status(inv.get('date'), inv.get('time_details', ''))
+            if s != "removed":
+                filtered_active.append((inv, s))
+                
+        filtered_active.sort(key=lambda x: x[0].get('date', '9999-12-31'))
+        
+        if not filtered_active: st.info("Şu an havuzda aktif ilan bulunmuyor.")
+        for inv, s in filtered_active[:8]:
             with st.container(border=True):
                 k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
                 c_user = users_db.get(inv.get('creator'), {})
                 if not isinstance(c_user, dict): c_user = {}
 
-                st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
-                st.markdown(f"### 📍 {k_isim}")
+                if s == "expired":
+                    st.markdown(f"#### <span style='color:gray'>🗓️ {inv.get('date')} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
+                    st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
+                else:
+                    st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
+                    st.markdown(f"### 📍 {k_isim}")
+                    st.info(f"**Kort Durumu:** {inv.get('court_status')}")
+                    
                 st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
-                st.info(f"**Kort Durumu:** {inv.get('court_status')}")
                 if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
                 
                 # Açılır Profil Kartı
                 render_popover_profile(inv.get('creator'), c_user, messages)
 
-                if st.button("Teklif Gönder", key=f"pub_{inv.get('id')}", use_container_width=True):
-                    st.toast("Teklif göndermek için yukarıdaki butondan giriş yapmalısın! 🎾", icon="⚠️")
-                    st.session_state.show_login_form = True; time.sleep(1); st.rerun()
+                if s == "expired":
+                    st.button("Teklif Gönder", key=f"pub_exp_{inv.get('id')}", disabled=True, use_container_width=True)
+                else:
+                    if st.button("Teklif Gönder", key=f"pub_{inv.get('id')}", use_container_width=True):
+                        st.toast("Teklif göndermek için yukarıdaki butondan giriş yapmalısın! 🎾", icon="⚠️")
+                        st.session_state.show_login_form = True; time.sleep(1); st.rerun()
 
     # YÖNETİCİ GİRİŞİ (ANA EKRANIN EN ALTINDA)
     st.markdown("---")
-    with st.expander("👑 Yönetici Paneli"):
+    with st.expander("Yönetici Paneli"):
         admin_code = st.text_input("Yönetici Parolası", type="password")
         if st.button("Panele Gir", use_container_width=True):
             if admin_code == ADMIN_PASS:
@@ -520,19 +551,32 @@ def main_app():
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
         if filter_level: active_invites = [i for i in active_invites if any(l in filter_level for l in i.get('levels', []))]
         
-        active_invites.sort(key=lambda x: x.get('date', '9999-12-31'), reverse=(sort_by != "Tarihe Göre (En Yakın)"))
-        if not active_invites: st.info("Kriterlere uygun aktif ilan bulunamadı.")
-
+        filtered_active_invites = []
         for inv in active_invites:
+            s = get_invite_status(inv.get('date'), inv.get('time_details', ''))
+            if s != "removed":
+                filtered_active_invites.append((inv, s))
+                
+        filtered_active_invites.sort(key=lambda x: x[0].get('date', '9999-12-31'), reverse=(sort_by != "Tarihe Göre (En Yakın)"))
+        
+        if not filtered_active_invites: st.info("Kriterlere uygun aktif ilan bulunamadı.")
+
+        for inv, s in filtered_active_invites:
             with st.container(border=True):
                 k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
                 c_user = users_db.get(inv.get('creator'), {})
                 if not isinstance(c_user, dict): c_user = {}
 
-                st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
-                st.markdown(f"### 📍 {k_isim}")
+                if s == "expired":
+                    st.markdown(f"#### <span style='color:gray'>🗓️ {inv.get('date')} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
+                    st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
+                    st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
+                else:
+                    st.markdown(f"#### 🗓️ {inv.get('date')}  |  ⏰ {inv.get('time_details')}")
+                    st.markdown(f"### 📍 {k_isim}")
+                    st.info(f"**Kort Durumu:** {inv.get('court_status')}")
+                    
                 st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
-                st.info(f"**Kort Durumu:** {inv.get('court_status')}")
                 if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
                 
                 # Açılır Profil Kartı
@@ -542,11 +586,14 @@ def main_app():
                     if any(m.get('sender') == st.session_state.current_user and m.get('invite_id') == inv.get('id') and m.get('status') == 'pending' for m in messages):
                         st.button("✅ Teklif İletildi", key=f"inv_sent_{inv.get('id')}", disabled=True, use_container_width=True)
                     else:
-                        if st.button("🎾 Teklif Gönder", key=f"inv_{inv.get('id')}", use_container_width=True):
-                            new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(datetime.datetime.now())}
-                            if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
-                                st.toast("Teklifiniz iletildi! 🎉", icon="✅"); time.sleep(1); st.rerun()
-                            else: st.error("⚠️ Veri hatası: Teklifiniz kaydedilemedi.")
+                        if s == "expired":
+                            st.button("Teklif Gönder", key=f"inv_exp_{inv.get('id')}", disabled=True, use_container_width=True)
+                        else:
+                            if st.button("🎾 Teklif Gönder", key=f"inv_{inv.get('id')}", use_container_width=True):
+                                new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(datetime.datetime.now())}
+                                if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
+                                    st.toast("Teklifiniz iletildi! 🎉", icon="✅"); time.sleep(1); st.rerun()
+                                else: st.error("⚠️ Veri hatası: Teklifiniz kaydedilemedi.")
 
     # --- TAB 1: İLAN OLUŞTUR ---
     with tabs[1]:
@@ -637,7 +684,7 @@ def main_app():
         st.subheader("🎾 Tenis Ajandam")
         
         inbox_label = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
-        m_tab1, m_tab2, m_tab3, m_tab4 = st.tabs([inbox_label, "📤 Gönderdiğim Teklifler", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"])
+        m_tab1, m_tab2, m_tab3, m_tab4, m_tab5 = st.tabs([inbox_label, "📤 Gönderdiğim Teklifler", "📢 Yayındaki İlanlarım", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"])
 
         with m_tab1:
             my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
@@ -672,7 +719,7 @@ def main_app():
                         else: st.error("⚠️ Veritabanı çakışması: Onayınız kaydedilemedi.")
 
                     if not st.session_state.get(f"conf_rej_{msg['id']}", False):
-                        if c_rej.button("❌ Reddet", key=f"btn_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = True; st.rerun()
+                        if c_rej.button("❌ Reddet / Gizle", key=f"btn_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = True; st.rerun()
                     else:
                         c_rej.warning("Reddedilsin mi?")
                         if c_rej.button("Evet, Reddet", key=f"yes_rej_{msg['id']}"):
@@ -704,8 +751,54 @@ def main_app():
                             if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
-            if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
+            my_active_invs = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'active']
+            if not my_active_invs: 
+                st.info("Şu an yayında olan aktif bir ilanınız bulunmuyor.")
+            
+            for my_inv in my_active_invs:
+                with st.container(border=True):
+                    s = get_invite_status(my_inv.get('date'), my_inv.get('time_details', ''))
+                    if s in ["expired", "removed"]:
+                        st.error("⏳ Bu ilanın süresi dolmuştur.")
+                        
+                    st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {my_inv.get('date')} | ⏰ {my_inv.get('time_details')}")
+                    col_i1, col_i2 = st.columns(2)
+                    
+                    if col_i1.button("✏️ Düzenle", key=f"edit_myinv_{my_inv.get('id')}"):
+                        st.session_state.edit_my_active = my_inv.get('id')
+                        st.rerun()
+                        
+                    if col_i2.button("🗑️ İlanı Kaldır", key=f"del_myinv_{my_inv.get('id')}"):
+                        yeni_ilanlar = [i for i in invites if i.get('id') != my_inv.get('id')]
+                        if save_data(INVITES_FILE_PATH, yeni_ilanlar, 'db_invites'):
+                            st.toast("İlanınız başarıyla kaldırıldı.", icon="🗑️")
+                            time.sleep(1); st.rerun()
+                        else:
+                            st.error("⚠️ İlan kaldırılamadı.")
+                            
+            if st.session_state.get('edit_my_active') and any(i.get('id') == st.session_state.edit_my_active for i in my_active_invs):
+                e_inv = next(i for i in invites if i.get('id') == st.session_state.edit_my_active)
+                st.markdown("---")
+                st.subheader("✏️ İlanı Güncelle")
+                with st.form("edit_my_active_form"):
+                    ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
+                    ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
+                    ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
+                    
+                    c_btn1, c_btn2 = st.columns(2)
+                    if c_btn1.form_submit_button("Güncelle ve Kaydet"):
+                        e_inv.update({'date': str(ed_d), 'court': ed_court, 'note': ed_note})
+                        if save_data(INVITES_FILE_PATH, invites, 'db_invites'):
+                            st.session_state.edit_my_active = None
+                            st.toast("İlanınız güncellendi!", icon="✅")
+                            time.sleep(1); st.rerun()
+                    if c_btn2.form_submit_button("Vazgeç"):
+                        st.session_state.edit_my_active = None
+                        st.rerun()
+
+        with m_tab4:
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('hidden_by', [])]
+            if not my_acc: st.info("Yaklaşan veya görüntülenen onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
                 with st.container(border=True):
                     partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
@@ -773,6 +866,14 @@ def main_app():
                             else: st.error("⚠️ Hata.")
                         if c_opt2.button("Vazgeç", key=f"no_edit_acc_{acc['id']}"): st.session_state[f"conf_edit_acc_{acc['id']}"] = False; st.rerun()
 
+                    acc_stat = get_invite_status(m_date, m_time)
+                    if acc_stat in ["expired", "removed"]:
+                        st.markdown("---")
+                        if st.button("🗑️ Geçmiş Maçı Listemden Gizle", key=f"hide_past_acc_{acc['id']}", use_container_width=True):
+                            acc.setdefault('hidden_by', []).append(st.session_state.current_user)
+                            save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
+                            st.rerun()
+
             paused_invites = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'paused_by_cancellation']
             if paused_invites:
                 st.warning("⚠️ **İptal Bildirimi:** Karşı taraf iptal ettiği için aşağıdaki ilanınız askıya alındı.")
@@ -797,7 +898,7 @@ def main_app():
                             e_inv.update({'date': str(ed_d), 'court': ed_court, 'note': ed_note, 'status': 'active'})
                             if save_data(INVITES_FILE_PATH, invites, 'db_invites'): st.session_state.editing_invite = None; st.toast("Güncellendi!", icon="✅"); time.sleep(1); st.rerun()
 
-        with m_tab4:
+        with m_tab5:
             past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'rejected'] and st.session_state.current_user not in m.get('hidden_by', [])]
             if not past_m: st.info("Geçmiş iptal veya red kaydı bulunmuyor.")
             for pm in past_m: 
