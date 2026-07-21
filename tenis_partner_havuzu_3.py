@@ -1153,20 +1153,26 @@ def main_app():
 
     # --- TAB 8: NTRP SEVİYE REHBERİ ---
     with tabs[7]:
-        st.subheader("📊 NTRP Seviye Rehberi (Dürüst ve Eğlenceli)")
+        st.subheader("📊 NTRP Seviye Rehberi")
         st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
         
         st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır. *\"Tenis kıyafetlerim çok güzel ama topla henüz tam anlaştığımız söylenemez.\"*")
         
-        st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
+        st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
         
-        st.success("**3.0 - 3.5 (Klasik Hafta Sonu Savaşçısı)**\n\nİzmir'deki kortların en kalabalık grubu! Temel kuralları biliyor, fena ralli yapmıyor ve güzel terliyorsunuz. Harika bir winner vuruşunun hemen ardından en basit topu dışarı atabilme yeteneğine de sahipsiniz. *\"Ben aslında daha iyi oynuyorum ama bugün kort/raket/rüzgar bana karşıydı.\"*")
+        st.info("**3.0 (İstikrar Arayışı / Geçiş Dönemi)**\n\nArtık fena ralli yapmıyorsunuz ama 4. veya 5. vuruşta top illa ki bir yere uçuyor. Gelen topun hızına ve yönüne göre pozisyon almakta bazen zorlanıyorsunuz. *\"Forehand'im efsane de backhand'ime top gelince içimden ufak bir dua ediyorum.\"*")
+
+        st.success("**3.5 (Klasik Hafta Sonu Savaşçısı)**\n\nİzmir kortlarının en kalabalık grubu! Temel taktikleri biliyor, kortu kullanıyor ve güzel terliyorsunuz. Harika bir *winner* vuruşunun hemen ardından, en basit topu dışarı atabilme yeteneğine de sahipsiniz. *\"Ben aslında çok daha iyi oynuyorum ama bugün raket/rüzgar/güneş bana karşıydı.\"*")
         
-        st.success("**4.0 - 4.5 (Kortların Ustası)**\n\nArtık oyunun taktik tarafındasınız. Servisleriniz silahınız, spin ve slice vurabiliyor, rakibin zayıf yönünü analiz edip oraya oynuyorsunuz. Bu seviyedeki maçları izlemek dışarıdan da keyiflidir. *\"Tenis sadece topa vurmak değil, kortta oynanan bir satrançtır.\"*")
+        st.success("**4.0 (Taktiksel Uyanış)**\n\nArtık oyunun sadece topa sert vurmak olmadığını çözdünüz. Güvenilir bir ilk servisiniz var, rakibin zayıf yönünü analiz edip oraya oynayabiliyorsunuz. Kendi hatalarınızdan kaybettiğiniz puanlar epey azaldı. *\"Tenis bacaklarla ve beyinle oynanır, kollar sadece teferruattır.\"*")
+
+        st.success("**4.5 (Kortların Ustası)**\n\nGüçlü silahlarınız var (spin, slice, nokta atışı servisler). Baskı altındayken bile zor durumlardan kurtulabiliyor ve kendi oyun planınızı rakibe dikte edebiliyorsunuz. İzlemesi son derece keyifli bir oyuncusunuz. *\"O topu oradan nasıl çıkardığıma ben bile şaşırmıyorum artık.\"*")
+
+        st.warning("**5.0 - 5.5 (Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa koleksiyonerleri. Vuruşlarınızda hem ciddi bir güç hem de kusursuz bir istikrar var. Eğer bu seviyedeki biriyle eşleştiyseniz, kortta muhtemelen nefes nefese kalacaksınız ve topu sadece yanınızdan geçerken göreceksiniz. *\"Isınırken terlemem bile, maçta görüşürüz.\"*")
         
-        st.warning("**5.0 - 5.5 (Yarı Profesyonel / Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa avcıları. Eğer bu seviyedeki biriyle eşleştiyseniz muhtemelen kortta nefes nefese kalacaksınız ve topu sadece yanınızdan geçerken göreceksiniz. *\"Isınırken bile terlemiyorum.\"*")
-        
-        st.error("**6.0 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller. Eğer gerçekten bu seviyedeyseniz, sistemimizde partner aramak yerine Grand Slam'lere hazırlanmalısınız! Buralarda işiniz ne?")
+        st.warning("**6.0 (Ulusal Gururumuz)**\n\nBölgesel ve ulusal düzeyde turnuva oynayan, dereceleri olan oyuncular. Bu seviyeyle maç yapmak, bir amatör için tenis dersi almak gibidir. *\"Raket benim elimde bir uzvum gibi, topun nerede sekmesi gerektiğine sadece ben karar veririm.\"*")
+
+        st.error("**6.5 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller, Grand Slam oyuncuları ve dünya sıralamasındakiler. *\"Eğer gerçekten bu seviyedeyseniz, sistemimizde partner aramak yerine Wimbledon'a hazırlanmalısınız! Buralarda işiniz ne?\"*")
 
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
