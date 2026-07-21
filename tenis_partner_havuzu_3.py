@@ -181,7 +181,7 @@ def sidebar_pwa_guide():
         """)
 
 # --- OTURUM YÖNETİMİ ---
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form']:
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active']:
     if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
 
@@ -637,7 +637,7 @@ def main_app():
         st.subheader("🎾 Tenis Ajandam")
         
         inbox_label = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
-        m_tab1, m_tab2, m_tab3, m_tab4 = st.tabs([inbox_label, "📤 Gönderdiğim Teklifler", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"])
+        m_tab1, m_tab2, m_tab3, m_tab4, m_tab5 = st.tabs([inbox_label, "📤 Gönderdiğim Teklifler", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler", "📢 Yayındaki İlanlarım"])
 
         with m_tab1:
             my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
@@ -704,7 +704,7 @@ def main_app():
                             if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
 
         with m_tab3:
-            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted']
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted']
             if not my_acc: st.info("Yaklaşan onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
                 with st.container(border=True):
@@ -748,7 +748,7 @@ def main_app():
                             if acc.get('type') == 'invite_request':
                                 target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
                                 if target_inv:
-                                    if st.session_state.current_user == target_inv.get('creator'): invites = [i for i in invites if i.get('id') != acc.get('invite_id')]
+                                    if st.session_state.current_user == target_inv.get('creator'): invites = [i for i in invites if i.get('id'] != acc.get('invite_id')]
                                     else: target_inv['status'] = 'paused_by_cancellation'
                                     inv_kayit = save_data(INVITES_FILE_PATH, invites, 'db_invites')
                             if inv_kayit and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
@@ -808,10 +808,52 @@ def main_app():
                     save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
                     st.rerun()
 
+        with m_tab5:
+            my_active_invs = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status'] == 'active']
+            if not my_active_invs: 
+                st.info("Şu an yayında olan aktif bir ilanınız bulunmuyor.")
+            
+            for my_inv in my_active_invs:
+                with st.container(border=True):
+                    st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {my_inv.get('date')} | ⏰ {my_inv.get('time_details')}")
+                    col_i1, col_i2 = st.columns(2)
+                    
+                    if col_i1.button("✏️ Düzenle", key=f"edit_myinv_{my_inv.get('id')}"):
+                        st.session_state.edit_my_active = my_inv.get('id')
+                        st.rerun()
+                        
+                    if col_i2.button("🗑️ İlanı Kaldır", key=f"del_myinv_{my_inv.get('id')}"):
+                        yeni_ilanlar = [i for i in invites if i.get('id') != my_inv.get('id')]
+                        if save_data(INVITES_FILE_PATH, yeni_ilanlar, 'db_invites'):
+                            st.toast("İlanınız başarıyla kaldırıldı.", icon="🗑️")
+                            time.sleep(1); st.rerun()
+                        else:
+                            st.error("⚠️ İlan kaldırılamadı.")
+                            
+            if st.session_state.get('edit_my_active') and any(i.get('id') == st.session_state.edit_my_active for i in my_active_invs):
+                e_inv = next(i for i in invites if i.get('id') == st.session_state.edit_my_active)
+                st.markdown("---")
+                st.subheader("✏️ İlanı Güncelle")
+                with st.form("edit_my_active_form"):
+                    ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
+                    ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
+                    ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
+                    
+                    c_btn1, c_btn2 = st.columns(2)
+                    if c_btn1.form_submit_button("Güncelle ve Kaydet"):
+                        e_inv.update({'date': str(ed_d), 'court': ed_court, 'note': ed_note})
+                        if save_data(INVITES_FILE_PATH, invites, 'db_invites'):
+                            st.session_state.edit_my_active = None
+                            st.toast("İlanınız güncellendi!", icon="✅")
+                            time.sleep(1); st.rerun()
+                    if c_btn2.form_submit_button("Vazgeç"):
+                        st.session_state.edit_my_active = None
+                        st.rerun()
+
     # --- TAB 4: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
-        unrated_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('rated_by', [])]
+        unrated_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status'] == 'accepted' and st.session_state.current_user not in m.get('rated_by', [])]
         
         if not unrated_events: st.info("Değerlendirebileceğiniz tamamlanmış maç bulunmuyor.")
         else:
