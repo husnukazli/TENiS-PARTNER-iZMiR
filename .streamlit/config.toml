@@ -1,0 +1,21 @@
+[theme]
+# Tenis temasına uygun ana renk (butonlar, seçim kutuları vb. için)
+primaryColor = "#2E7D32"
+
+# Arka plan renkleri
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6" # Yan menü (sidebar) arka plan rengi
+
+# Yazı rengi ve font
+textColor = "#262730"
+font = "sans serif"
+
+[client]
+# Sağ üstteki Streamlit hamburger menüsünü ve 'Deploy' butonunu gizler/küçültür
+# Bu sayede ekran daha temiz görünür ve kullanıcıların kafası karışmaz
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[server]
+# Mobil cihazlarda yatay kaydırma (horizontal scroll) sorunlarını azaltmaya yardımcı olur
+runOnSave = false
