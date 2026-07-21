@@ -295,10 +295,39 @@ def admin_dashboard():
                     st.session_state[f"conf_inv_{inv.get('id')}"] = False; st.rerun()
 
     with t3:
-        st.subheader("Sistem Yedekleme")
-        st.download_button("Üyeler Yedeği", data=json.dumps(users_db, indent=4, ensure_ascii=False), file_name="users_backup.json")
-        st.download_button("İlanlar Yedeği", data=json.dumps(invites, indent=4, ensure_ascii=False), file_name="invites_backup.json")
-        st.download_button("Mesajlar Yedeği", data=json.dumps(messages, indent=4, ensure_ascii=False), file_name="messages_backup.json")
+        st.subheader("Sistem Yedekleme ve Kurtarma")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("### 📥 Yedeği İndir")
+            st.download_button("Üyeler Yedeği (users.json)", data=json.dumps(users_db, indent=4, ensure_ascii=False), file_name="users_backup.json", mime="application/json")
+            st.download_button("İlanlar Yedeği (invites.json)", data=json.dumps(invites, indent=4, ensure_ascii=False), file_name="invites_backup.json", mime="application/json")
+            st.download_button("Mesajlar Yedeği (messages.json)", data=json.dumps(messages, indent=4, ensure_ascii=False), file_name="messages_backup.json", mime="application/json")
+        with c2:
+            st.markdown("### 📤 Yedekten Yükle")
+            
+            up_u = st.file_uploader("Üye Yedeği Yükle (users.json)", type=["json"])
+            if st.button("Uygula (Üyeler)") and up_u:
+                if save_data(USERS_FILE_PATH, json.loads(up_u.getvalue().decode("utf-8")), 'db_users'):
+                    st.success("Üyeler başarıyla güncellendi!")
+                    time.sleep(1); st.rerun()
+                else:
+                    st.error("⚠️ Hata: Üye yedeği yüklenemedi.")
+                    
+            up_i = st.file_uploader("İlanlar Yedeği Yükle (invites.json)", type=["json"])
+            if st.button("Uygula (İlanlar)") and up_i:
+                if save_data(INVITES_FILE_PATH, json.loads(up_i.getvalue().decode("utf-8")), 'db_invites'):
+                    st.success("İlanlar başarıyla güncellendi!")
+                    time.sleep(1); st.rerun()
+                else:
+                    st.error("⚠️ Hata: İlan yedeği yüklenemedi.")
+                    
+            up_m = st.file_uploader("Mesajlar Yedeği Yükle (messages.json)", type=["json"])
+            if st.button("Uygula (Mesajlar)") and up_m:
+                if save_data(MESSAGES_FILE_PATH, json.loads(up_m.getvalue().decode("utf-8")), 'db_messages'):
+                    st.success("Mesajlar başarıyla güncellendi!")
+                    time.sleep(1); st.rerun()
+                else:
+                    st.error("⚠️ Hata: Mesaj yedeği yüklenemedi.")
 
 # --- GİRİŞ VE VİTRİN SAYFASI ---
 def login_page():
@@ -427,7 +456,7 @@ def login_page():
                     st.toast("Teklif göndermek için yukarıdaki butondan giriş yapmalısın! 🎾", icon="⚠️")
                     st.session_state.show_login_form = True; time.sleep(1); st.rerun()
 
-    # YÖNETİCİ GİRİŞİ (ANA EKRANIN EN ALTINDA, GÖZDEN UZAK)
+    # YÖNETİCİ GİRİŞİ (ANA EKRANIN EN ALTINDA)
     st.markdown("---")
     with st.expander("👑 Yönetici Paneli"):
         admin_code = st.text_input("Yönetici Parolası", type="password")
