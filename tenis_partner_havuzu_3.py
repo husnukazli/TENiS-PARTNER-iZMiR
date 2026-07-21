@@ -23,13 +23,25 @@ except ImportError:
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
-# MOBİL ARAYÜZ (UI) GÜVENLİ CSS KODLARI
+# MOBİL ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE GİZLİLİK
 st.markdown("""
 <style>
+    /* Üst boşluk (padding-top) 4.5rem yapılarak isimlerin menü altında kesilmesi engellendi */
     .block-container { padding-top: 4.5rem; padding-bottom: 2rem; }
+    
+    /* Tüm butonları modern, yuvarlak köşeli ve tam genişlikte (app tarzı) yap */
     .stButton > button { width: 100%; border-radius: 12px; font-weight: 600; }
+    
+    /* Sekmeleri (Tab'ları) mobil ekrana daha iyi yay ve kaydırılabilir yap */
     .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: space-evenly; overflow-x: auto; }
+    
+    /* Container (Kart) kenarlarını daha yumuşak yuvarlat */
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
+
+    /* KORSAN GİRİŞLERE KARŞI STREAMLIT VE GITHUB İZLERİNİ GİZLEME */
+    #MainMenu {visibility: hidden;} /* Sağ üstteki hamburger menüyü gizler */
+    header {visibility: hidden;} /* Üstteki GitHub ikonunu ve bandı gizler */
+    footer {visibility: hidden;} /* En alttaki "Made with Streamlit" yazısını gizler */
 </style>
 """, unsafe_allow_html=True)
 
@@ -292,6 +304,19 @@ def admin_dashboard():
 # --- GİRİŞ VE VİTRİN SAYFASI ---
 def login_page():
     sidebar_pwa_guide()
+    
+    # YÖNETİCİ GİRİŞİ YAN MENÜYE TAŞINDI
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("👑 Yönetici Paneli"):
+        admin_code = st.text_input("Yönetici Parolası", type="password")
+        if st.button("Panele Gir", use_container_width=True):
+            if admin_code == ADMIN_PASS:
+                st.session_state.logged_in = True
+                st.session_state.is_admin = True
+                st.rerun()
+            else:
+                st.error("Hatalı Parola!")
+
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 İzmir Tenis Partner Ağı</h1>", unsafe_allow_html=True)
     
     users_db = st.session_state.db_users
