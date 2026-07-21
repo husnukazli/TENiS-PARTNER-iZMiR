@@ -122,7 +122,6 @@ def get_invite_status(inv_date, inv_time_details):
     try:
         t_str = inv_time_details.split('-')[0].strip()
         inv_dt = datetime.datetime.strptime(f"{inv_date} {t_str}", "%Y-%m-%d %H:%M")
-        # Türkiye saatine göre zaman aşımı kontrolü (UTC +3)
         now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
         if now > inv_dt + datetime.timedelta(hours=12):
             return "removed"
@@ -465,7 +464,6 @@ def login_page():
             if s != "removed":
                 filtered_active.append((inv, s))
                 
-        # Akıllı Sıralama: Aktifler üstte, Süresi Geçenler (gri) en altta.
         active_only = [x for x in filtered_active if x[1] == 'active']
         expired_only = [x for x in filtered_active if x[1] == 'expired']
         
@@ -558,7 +556,7 @@ def main_app():
             st.rerun()
 
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
-    tabs = st.tabs(["🏆 İlan Havuzu", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar"])
+    tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi"])
 
     # --- TAB 0: İLAN HAVUZU ---
     with tabs[0]:
@@ -578,7 +576,6 @@ def main_app():
             if s != "removed":
                 filtered_active_invites.append((inv, s))
                 
-        # Akıllı Sıralama
         active_only = [x for x in filtered_active_invites if x[1] == 'active']
         expired_only = [x for x in filtered_active_invites if x[1] == 'expired']
         
@@ -649,7 +646,6 @@ def main_app():
         court_custom = c2.text_input("Diğer ise Kort Adını Yazın:", key="inv_court_cust") if court == "Diğer" else ""
         court_status = c2.selectbox("Kort Rezervasyon Durumu", COURT_STATUS, key="inv_c_status")
         
-        # KORT ÜCRETİ ALANI EKLENDİ
         fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, key="inv_fee_stat")
         fee_amount = ""
         if fee_status != "Ücretsiz Kort / Abonelik":
@@ -838,9 +834,8 @@ def main_app():
                     ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date())
                     ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
                     
-                    # Güncelleme ekranında da ücret seçeneği
                     ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
-                    ed_fee_amount = st.text_input("Kort Ücreti Tutarı (Örn: 500 TL vb.)", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
+                    ed_fee_amount = st.text_input("Kort Ücreti Tutarı", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
                     
                     ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
                     
@@ -975,7 +970,7 @@ def main_app():
                     save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
                     st.rerun()
 
-    # --- TAB 4: DEĞERLENDİRME ---
+    # --- TAB 5: DEĞERLENDİRME ---
     with tabs[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
         unrated_events = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('rated_by', [])]
@@ -1001,7 +996,7 @@ def main_app():
                             st.toast("Değerlendirmeniz kaydedildi! ⭐", icon="✅"); time.sleep(1); st.rerun()
                         else: st.error("⚠️ Değerlendirme kaydedilemedi.")
 
-    # --- TAB 5: PROFİL & AYARLAR ---
+    # --- TAB 6: PROFİL & AYARLAR ---
     with tabs[5]:
         colL, colR = st.columns(2)
         with colL:
@@ -1085,6 +1080,62 @@ def main_app():
                     users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.toast("Radar ayarlarınız kaydedildi! 📡", icon="✅"); time.sleep(1); st.rerun()
                     else: st.error("⚠️ Radar tercihleriniz kaydedilemedi.")
+
+    # --- TAB 7: KORT REHBERİ ---
+    with tabs[6]:
+        st.subheader("📍 İzmir Kort ve Tesis Rehberi")
+        st.markdown("İzmir'deki popüler tenis kortlarının ve kulüplerinin güncel iletişim, adres ve rezervasyon bilgilerine buradan ulaşabilirsiniz.")
+        
+        c_rehber1, c_rehber2 = st.columns(2)
+        
+        with c_rehber1:
+            st.markdown("### 🏛️ Belediye Kortları")
+            
+            with st.expander("Bostanlı Suat Taşer / Rekreasyon Kortları", expanded=True):
+                st.markdown("**📍 Adres:** Mavişehir / Bostanlı Sahil Şeridi, Karşıyaka [cite: 1.3.2]")
+                st.markdown("**📞 Telefon:** 0(232) 362 48 28 - 0(232) 294 21 72")
+                st.markdown("**🌐 Rezervasyon:** online.izmir.bel.tr")
+                st.caption("Not: İzmir Büyükşehir Belediyesi'ne bağlıdır.")
+
+            with st.expander("İnciraltı Spor Tesisleri (İzmir BŞB)"):
+                st.markdown("**📍 Adres:** İnciraltı Açıkhava Tiyatrosu Altı, Balçova [cite: 1.2.1]")
+                st.markdown("**📞 Telefon:** 0(232) 294 22 98 - 0(232) 425 04 21")
+                
+            with st.expander("Fuar Alanı (Celal Atik) Kortları"):
+                st.markdown("**📍 Adres:** Kültürpark İçi (Fuar Alanı), Konak")
+                st.markdown("**📞 Telefon:** 0(232) 425 04 21 [cite: 1.2.2]")
+                
+            with st.expander("Buca Tenis Kulübü (Buca Belediyesi)"):
+                st.markdown("**📍 Adres:** Şirinkapı Mah. Yavuz Sultan Selim Cad. No:78/1, Buca")
+                st.markdown("**📞 Telefon:** 0(232) 442 61 61")
+                st.markdown("**🌐 Web:** bucatenis.com")
+
+            with st.expander("Gaziemir Belediyesi / Gaziemir Tenis Kulübü"):
+                st.markdown("**📍 Adres:** Gazikent Mah. Gazi Atatürk Bulvarı No:14, Gaziemir")
+                st.markdown("**📞 Telefon:** 0(232) 274 42 97 - 0(232) 252 48 27")
+                
+        with c_rehber2:
+            st.markdown("### 🏆 Özel Tenis Kulüpleri")
+            
+            with st.expander("Kültürpark Tenis Kulübü (KTK)", expanded=True):
+                st.markdown("**📍 Adres:** Mimar Sinan Mah. Fuar İçi No:103, Alsancak / Konak")
+                st.markdown("**📞 Telefon:** 0(232) 483 33 52 - 0(530) 370 30 25")
+                st.markdown("**🌐 Web:** kptk.org")
+                st.caption("Not: Tesis içerisindeki korta giriş kuralları kulüp üyeliği veya misafir oyuncu statüsüne göre değişiklik gösterebilir.")
+
+            with st.expander("Küçük Kulüp Alliance"):
+                st.markdown("**📍 Adres:** Kültür Mah. 1383 Sokak No:18, Alsancak / Konak")
+                st.markdown("**📞 Telefon:** 0(232) 463 87 47 - 0(232) 421 39 70")
+                st.markdown("**🌐 Web:** kucukkulup.org [cite: 2.2.1]")
+
+            with st.expander("Göztepe Tenis Kulübü"):
+                st.markdown("**📍 Adres:** İnciraltı Mah. Mustafa Kemal Sahil Blv. Balçova (Göztepe Spor Tesisleri)")
+                st.caption("Not: Özel rezervasyon ve turnuva günleri için kulüp sekreterliği ile görüşülmesi tavsiye edilir.")
+                
+            with st.expander("Ege Üniversitesi Tenis Kortları"):
+                st.markdown("**📍 Adres:** Ege Üniversitesi Kampüsü İçi, Bornova")
+                st.markdown("**📞 Rezervasyon SKSDB:** 0(232) 311 10 10 (Santral)")
+                st.caption("Not: SKS (Sağlık Kültür ve Spor Daire Başkanlığı) üzerinden öğrenci/mezun/sivil statüsüne göre saatlik kiralanabilir.")
 
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
