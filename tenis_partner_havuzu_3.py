@@ -38,9 +38,8 @@ st.markdown("""
     /* Container (Kart) kenarlarını daha yumuşak yuvarlat */
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
 
-    /* KORSAN GİRİŞLERE KARŞI STREAMLIT VE GITHUB İZLERİNİ GİZLEME */
+    /* KORSAN GİRİŞLERE KARŞI STREAMLIT İZLERİNİ GİZLEME */
     #MainMenu {visibility: hidden;} /* Sağ üstteki hamburger menüyü gizler */
-    header {visibility: hidden;} /* Üstteki GitHub ikonunu ve bandı gizler */
     footer {visibility: hidden;} /* En alttaki "Made with Streamlit" yazısını gizler */
 </style>
 """, unsafe_allow_html=True)
@@ -305,18 +304,6 @@ def admin_dashboard():
 def login_page():
     sidebar_pwa_guide()
     
-    # YÖNETİCİ GİRİŞİ YAN MENÜYE TAŞINDI
-    st.sidebar.markdown("---")
-    with st.sidebar.expander("👑 Yönetici Paneli"):
-        admin_code = st.text_input("Yönetici Parolası", type="password")
-        if st.button("Panele Gir", use_container_width=True):
-            if admin_code == ADMIN_PASS:
-                st.session_state.logged_in = True
-                st.session_state.is_admin = True
-                st.rerun()
-            else:
-                st.error("Hatalı Parola!")
-
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 İzmir Tenis Partner Ağı</h1>", unsafe_allow_html=True)
     
     users_db = st.session_state.db_users
@@ -439,6 +426,18 @@ def login_page():
                 if st.button("Teklif Gönder", key=f"pub_{inv.get('id')}", use_container_width=True):
                     st.toast("Teklif göndermek için yukarıdaki butondan giriş yapmalısın! 🎾", icon="⚠️")
                     st.session_state.show_login_form = True; time.sleep(1); st.rerun()
+
+    # YÖNETİCİ GİRİŞİ (ANA EKRANIN EN ALTINDA, GÖZDEN UZAK)
+    st.markdown("---")
+    with st.expander("👑 Yönetici Paneli"):
+        admin_code = st.text_input("Yönetici Parolası", type="password")
+        if st.button("Panele Gir", use_container_width=True):
+            if admin_code == ADMIN_PASS:
+                st.session_state.logged_in = True
+                st.session_state.is_admin = True
+                st.rerun()
+            else:
+                st.error("Hatalı Parola!")
 
 # --- ANA UYGULAMA ---
 def main_app():
