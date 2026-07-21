@@ -433,6 +433,9 @@ def login_page():
                                     "ratings": {"zaman": [], "seviye": [], "davranis": []}
                                 }
                                 if save_data(USERS_FILE_PATH, users_db, 'db_users'):
+                                    # YÖNETİCİYE BİLDİRİM MAİLİ (YENİ ÜYE)
+                                    send_email(ADMIN_EMAIL, "🔔 Yeni Üye Kaydı", f"Sisteme yeni bir üye katıldı!<br><br><b>Ad Soyad:</b> {d['name']}<br><b>E-posta:</b> {d['email']}<br><b>Seviye:</b> {d['level']}<br><b>İlçe:</b> {d.get('ilce', 'Belirtilmemiş')}")
+                                    
                                     st.session_state.reg_step = "form"
                                     st.success("Kayıt başarılı! 🎉 Giriş yapabilirsiniz.")
                                     time.sleep(2); st.rerun()
@@ -1050,7 +1053,8 @@ def main_app():
                 elif st.button("🗑️ Silme Talebini İlet"):
                     me["delete_requested"] = True; users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'):
-                        send_email(ADMIN_EMAIL, "🚨 Silme Talebi", f"<b>{me.get('ad_soyad')}</b> hesabını silmek istiyor.")
+                        # SİLME TALEBİ YÖNETİCİ MAİLİ
+                        send_email(ADMIN_EMAIL, "🚨 Silme Talebi", f"<b>{me.get('ad_soyad')}</b> ({st.session_state.current_user}) hesabını kalıcı olarak silmek istiyor. Yönetici panelinden işlemi onaylayabilirsiniz.")
                         st.toast("Talebiniz iletildi.", icon="📨"); time.sleep(1); st.rerun()
                     else: st.error("⚠️ Talebiniz iletilemedi.")
 
