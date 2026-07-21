@@ -55,7 +55,8 @@ NTRP_LEVELS = ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5
 IZMIR_KORTLARI = [
     "Kültürpark Tenis Kulübü (KTK)", "İnciraltı Büyükşehir Kortları", "Bostanlı Suat Taşer Kortları",
     "Fuar Alanı (Celal Atik) Kortları", "Buca Tenis Kulübü", "Ege Üniversitesi Tenis Kortları",
-    "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları", "Diğer"
+    "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları",
+    "Aşık Veysel Rekreasyon Alanı Kortları", "Hasanağa Bahçesi Kortları", "Diğer"
 ]
 IZMIR_ILCELER = [
     "Belirtilmemiş", "Balçova", "Bayraklı", "Bornova", "Buca", "Çiğli", "Gaziemir", 
@@ -576,6 +577,7 @@ def main_app():
             if s != "removed":
                 filtered_active_invites.append((inv, s))
                 
+        # Akıllı Sıralama
         active_only = [x for x in filtered_active_invites if x[1] == 'active']
         expired_only = [x for x in filtered_active_invites if x[1] == 'expired']
         
@@ -1092,18 +1094,26 @@ def main_app():
             st.markdown("### 🏛️ Belediye Kortları")
             
             with st.expander("Bostanlı Suat Taşer / Rekreasyon Kortları", expanded=True):
-                st.markdown("**📍 Adres:** Mavişehir / Bostanlı Sahil Şeridi, Karşıyaka [cite: 1.3.2]")
+                st.markdown("**📍 Adres:** Mavişehir / Bostanlı Sahil Şeridi, Karşıyaka")
                 st.markdown("**📞 Telefon:** 0(232) 362 48 28 - 0(232) 294 21 72")
                 st.markdown("**🌐 Rezervasyon:** online.izmir.bel.tr")
                 st.caption("Not: İzmir Büyükşehir Belediyesi'ne bağlıdır.")
 
             with st.expander("İnciraltı Spor Tesisleri (İzmir BŞB)"):
-                st.markdown("**📍 Adres:** İnciraltı Açıkhava Tiyatrosu Altı, Balçova [cite: 1.2.1]")
+                st.markdown("**📍 Adres:** İnciraltı Açıkhava Tiyatrosu Altı, Balçova")
                 st.markdown("**📞 Telefon:** 0(232) 294 22 98 - 0(232) 425 04 21")
                 
             with st.expander("Fuar Alanı (Celal Atik) Kortları"):
                 st.markdown("**📍 Adres:** Kültürpark İçi (Fuar Alanı), Konak")
-                st.markdown("**📞 Telefon:** 0(232) 425 04 21 [cite: 1.2.2]")
+                st.markdown("**📞 Telefon:** 0(232) 425 04 21")
+
+            with st.expander("Aşık Veysel Rekreasyon Alanı Kortları"):
+                st.markdown("**📍 Adres:** Kızılay Mah., Aşık Veysel Rekreasyon Alanı İçi, Bornova")
+                st.caption("Not: Halka açık kortlardır. Çoğunlukla rezervasyon sistemi yoktur (gel-sıra bekle-oyna mantığıyla çalışır).")
+
+            with st.expander("Hasanağa Bahçesi Kortları"):
+                st.markdown("**📍 Adres:** Adatepe Mah., Hasanağa Bahçesi İçi, Buca")
+                st.caption("Not: Buca Belediyesi'ne bağlı halka açık kortlardır. Genellikle doğrudan gidilip müsaitlik durumuna göre kullanılır.")
                 
             with st.expander("Buca Tenis Kulübü (Buca Belediyesi)"):
                 st.markdown("**📍 Adres:** Şirinkapı Mah. Yavuz Sultan Selim Cad. No:78/1, Buca")
@@ -1126,7 +1136,7 @@ def main_app():
             with st.expander("Küçük Kulüp Alliance"):
                 st.markdown("**📍 Adres:** Kültür Mah. 1383 Sokak No:18, Alsancak / Konak")
                 st.markdown("**📞 Telefon:** 0(232) 463 87 47 - 0(232) 421 39 70")
-                st.markdown("**🌐 Web:** kucukkulup.org [cite: 2.2.1]")
+                st.markdown("**🌐 Web:** kucukkulup.org")
 
             with st.expander("Göztepe Tenis Kulübü"):
                 st.markdown("**📍 Adres:** İnciraltı Mah. Mustafa Kemal Sahil Blv. Balçova (Göztepe Spor Tesisleri)")
