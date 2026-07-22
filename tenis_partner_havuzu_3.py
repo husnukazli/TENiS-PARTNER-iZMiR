@@ -23,12 +23,16 @@ except ImportError:
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
-# MOBİL ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE GİZLİLİK
+# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE GİZLİLİK
 st.markdown("""
 <style>
-    .block-container { padding-top: 4.5rem; padding-bottom: 2rem; }
-    .stButton > button { width: 100%; border-radius: 12px; font-weight: 600; }
-    .stTabs [data-baseweb="tab-list"] { display: flex; justify-content: space-evenly; overflow-x: auto; }
+    /* Fontları büyütme ve okunabilirliği artırma */
+    html, body, [class*="css"] {
+        font-size: 1.05rem !important;
+    }
+    .block-container { padding-top: 3.5rem; padding-bottom: 2rem; }
+    /* Butonları daha etli ve kalın yapma */
+    .stButton > button { width: 100%; border-radius: 12px; font-weight: 700; padding-top: 0.6rem; padding-bottom: 0.6rem; }
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} 
     footer {visibility: hidden;} 
@@ -259,7 +263,7 @@ def dialog_delete_invite(inv_id):
 
 
 # --- OTURUM YÖNETİMİ ---
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast']:
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'main_menu_secim']:
     if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
 
@@ -319,10 +323,14 @@ def admin_dashboard():
     active_inv_count = len([i for i in invites if i.get('status') == 'active'])
     del_req_count = len([u for u, d in users_db.items() if isinstance(d, dict) and d.get('delete_requested')])
 
-    t1, t2, t3 = st.tabs([f"👥 Üye Yönetimi 🚨 ({del_req_count})" if del_req_count > 0 else "👥 Üye Yönetimi", f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi", "💾 Yedekleme & Kurtarma"])
-    
-    with t1:
-        # YENİ ÖZELLİK: TOPLU MESAJ VE DUYURU SİSTEMİ
+    admin_menu = [
+        f"👥 Üye Yönetimi 🚨 ({del_req_count})" if del_req_count > 0 else "👥 Üye Yönetimi",
+        f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi",
+        "💾 Yedekleme & Kurtarma"
+    ]
+    secilen_admin_sekme = st.selectbox("📌 YÖNETİCİ MENÜSÜ", admin_menu)
+
+    if secilen_admin_sekme == admin_menu[0]:
         st.subheader("📢 Üyelere Sistem Duyurusu Gönder")
         with st.expander("Yeni Duyuru / Toplu Mesaj Oluştur"):
             with st.form("admin_announcement_form"):
@@ -401,10 +409,9 @@ def admin_dashboard():
                     if c3.button("Vazgeç", key=f"no_del_{u_email}"):
                         st.session_state[f"conf_del_{u_email}"] = False; st.rerun()
 
-    with t2:
+    elif secilen_admin_sekme == admin_menu[1]:
         st.subheader("Sistemdeki İlanlar (Yönetim)")
         st.caption("Detaylarını görmek için ilanların üzerine tıklayın.")
-        # YENİ ÖZELLİK: AKORDEON İLAN YÖNETİMİ
         for inv in reversed(invites):
             c_user = users_db.get(inv.get('creator'), {})
             creator_name = c_user.get('ad_soyad', 'Bilinmeyen Kullanıcı') if isinstance(c_user, dict) else inv.get('creator')
@@ -434,7 +441,7 @@ def admin_dashboard():
                     if del_c2.button("İptal Et", key=f"no_inv_{inv.get('id')}", use_container_width=True):
                         st.session_state[f"conf_inv_{inv.get('id')}"] = False; st.rerun()
 
-    with t3:
+    elif secilen_admin_sekme == admin_menu[2]:
         st.subheader("Sistem Yedekleme ve Kurtarma")
         c1, c2 = st.columns(2)
         with c1:
@@ -496,7 +503,8 @@ def login_page():
                     st.markdown(f"<div style='background-color:#e8f5e9; color:#2e7d32; font-size:0.95em; padding: 8px; border: 1px solid #a5d6a7; border-radius: 6px; margin-bottom: 5px;'>✅ <b>{format_date_tr(m_inv.get('date'))}</b> | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
                 st.markdown("<br>", unsafe_allow_html=True)
 
-            if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", use_container_width=True):
+            # --- DİKKAT ÇEKİCİ (PRIMARY) GİRİŞ BUTONU ---
+            if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", type="primary", use_container_width=True):
                 st.session_state.show_login_form = True; st.rerun()
         else:
             if st.button("🔙 İlanlara Geri Dön", use_container_width=True):
@@ -507,13 +515,14 @@ def login_page():
     if st.session_state.show_login_form:
         c_space1, c_form, c_space2 = st.columns([1, 4, 1])
         with c_form:
+            # Login formu içerisindeki sekmeleri selectbox yapmaya gerek yok, form içinde küçük kaldıkları için mobilde de rahat görünürler.
             t1, t2, t3 = st.tabs(["🔑 Giriş Yap", "📝 Yeni Kayıt Oluştur", "🔐 Şifremi Unuttum"])
             with t1:
                 with st.form("login"):
                     email = st.text_input("E-posta")
                     password = st.text_input("Şifre", type="password")
                     remember = st.checkbox("Beni Hatırla", value=True)
-                    if st.form_submit_button("Giriş Yap"):
+                    if st.form_submit_button("Giriş Yap", type="primary"):
                         email = email.strip().lower()
                         if email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                             if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
@@ -552,7 +561,7 @@ def login_page():
                     st.info(f"**{st.session_state.reg_data['email']}** adresine 6 haneli kod gönderdik.")
                     with st.form("verify"):
                         user_code = st.text_input("Doğrulama Kodu")
-                        if st.form_submit_button("Kayıt İşlemini Tamamla"):
+                        if st.form_submit_button("Kayıt İşlemini Tamamla", type="primary"):
                             if user_code.strip() == st.session_state.reg_code:
                                 d = st.session_state.reg_data
                                 users_db[d["email"]] = {
@@ -636,7 +645,7 @@ def login_page():
                 if s == "expired":
                     st.button("Teklif Gönder", key=f"pub_exp_{inv.get('id')}", disabled=True, use_container_width=True)
                 else:
-                    if st.button("Teklif Gönder", key=f"pub_{inv.get('id')}", use_container_width=True):
+                    if st.button("🎾 Teklif Gönder", key=f"pub_{inv.get('id')}", type="primary", use_container_width=True):
                         st.session_state.show_toast = "Teklif göndermek için yukarıdan giriş yapmalısın! 🎾"
                         st.session_state.show_login_form = True; st.rerun()
 
@@ -689,12 +698,26 @@ def main_app():
                 time.sleep(0.5)
             st.rerun()
 
+    # YENİ MOBİL ODAKLI ANA MENÜ (AÇILIR KUTU - SELECTBOX)
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
-    tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"])
+    
+    ana_menu_secenekleri = [
+        "☀️ Güncel İlanlar", 
+        "➕ İlan Oluştur", 
+        "👥 Üyeler", 
+        kontrol_sekme_adi, 
+        "⚖️ Değerlendirme", 
+        "⚙️ Profil & Ayarlar", 
+        "📍 Kort Rehberi", 
+        "📊 Seviye Rehberi"
+    ]
+    
+    secilen_sayfa = st.selectbox("📌 GİTMEK İSTEDİĞİNİZ SAYFAYI SEÇİN:", ana_menu_secenekleri)
+    st.markdown("---")
 
-    # --- TAB 0: İLAN HAVUZU ---
-    with tabs[0]:
-        with st.expander("🔍 İlanları Filtrele ve Sırala", expanded=True):
+    # --- SAYFA 0: İLAN HAVUZU ---
+    if secilen_sayfa == ana_menu_secenekleri[0]:
+        with st.expander("🔍 İlanları Filtrele ve Sırala"):
             f_col1, f_col2, f_col3 = st.columns(3)
             sort_by = f_col1.selectbox("Sıralama Ölçütü", ["Tarihe Göre (En Yakın)", "Eklenme Zamanına Göre (En Yeni)"])
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
@@ -712,7 +735,6 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
         
-        # Formu gizleyen yeni akordeon sekmesi
         with st.expander("⚙️ Radar Ayarlarını Düzenle"):
             radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
             with st.form("radar_form_main"):
@@ -720,7 +742,7 @@ def main_app():
                 r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
                 r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
                 r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
-                if st.form_submit_button("Radar Tercihlerini Kaydet"):
+                if st.form_submit_button("Radar Tercihlerini Kaydet", type="primary"):
                     me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
                     users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
@@ -794,7 +816,7 @@ def main_app():
                         else:
                             w_key = f"btn_req_{inv.get('id')}"
                             lock_key = f"lock_{inv.get('id')}"
-                            if st.button("🎾 Teklif Gönder", key=w_key, disabled=st.session_state.get(lock_key, False), use_container_width=True):
+                            if st.button("🎾 Teklif Gönder", key=w_key, type="primary", disabled=st.session_state.get(lock_key, False), use_container_width=True):
                                 st.session_state[lock_key] = True
                                 new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(datetime.datetime.now())}
                                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
@@ -802,8 +824,8 @@ def main_app():
                                     st.rerun()
                                 else: st.error("⚠️ Veri hatası: Teklifiniz kaydedilemedi.")
 
-    # --- TAB 1: İLAN OLUŞTUR ---
-    with tabs[1]:
+    # --- SAYFA 1: İLAN OLUŞTUR ---
+    elif secilen_sayfa == ana_menu_secenekleri[1]:
         st.subheader("➕ Yeni İlan Yayınla")
         if me.get('frozen'): st.warning("⚠️ Hesabınız dondurulmuş. İlanınız vitrinde görünmez.")
             
@@ -826,7 +848,7 @@ def main_app():
         levels = st.multiselect("Aranan Seviyeler (NTRP)", NTRP_LEVELS, default=[me.get("level", "3.5")], key="inv_lvls")
         inv_note = st.text_area("İlan Notu / Açıklama (İsteğe bağlı)", key="inv_note")
         
-        if st.button("📢 İlanı Yayınla", use_container_width=True):
+        if st.button("📢 İlanı Yayınla", type="primary", use_container_width=True):
             zaten_var = any(
                 i.get('creator') == st.session_state.current_user and 
                 i.get('date') == str(d) and 
@@ -853,8 +875,8 @@ def main_app():
                     st.rerun()
                 else: st.error("⚠️ Veri çakışması! İlanınız sisteme kaydedilemedi. Lütfen tekrar deneyin.")
 
-    # --- TAB 2: ÜYELER ---
-    with tabs[2]:
+    # --- SAYFA 2: ÜYELER ---
+    elif secilen_sayfa == ana_menu_secenekleri[2]:
         c_title, c_sort = st.columns([3, 2])
         c_title.subheader("👥 Oyuncu Listesi")
         sort_users = c_sort.selectbox("Üyeleri Sırala:", ["İsme Göre (A-Z)", "Seviyeye Göre (Yüksekten Düşüğe)", "Puana Göre (Popülerlik)", "Bölgeye Göre (İlçe)"])
@@ -881,7 +903,7 @@ def main_app():
             o_fee_amount = st.text_input("Kort Ücreti Tutarı", key="do_fee_amt") if o_fee_status != "Ücretsiz Kort / Abonelik" else ""
             
             c_sub, c_can = st.columns(2)
-            if c_sub.button("🚀 Teklifi Gönder", use_container_width=True):
+            if c_sub.button("🚀 Teklifi Gönder", type="primary", use_container_width=True):
                 new_msg = {"id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user, "receiver": st.session_state.offer_to, "date": str(o_date), "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}", "court": o_court, "court_custom": o_custom, "fee_status": o_fee_status, "fee_amount": o_fee_amount.strip(), "status": "pending"}
                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
                     st.session_state.offer_to = None; st.session_state.show_toast = "Teklif iletildi!"
@@ -905,16 +927,25 @@ def main_app():
                 if any(m.get('sender') == st.session_state.current_user and m.get('receiver') == u_email and m.get('status') == 'pending' for m in messages):
                     colC.button("✅ Teklif Gönderildi", key=f"dir_sent_{u_email}", disabled=True)
                 else:
-                    if colC.button("🎾 Özel Teklif Et", key=f"chall_{u_email}"): st.session_state.offer_to = u_email; st.rerun()
+                    if colC.button("🎾 Özel Teklif Et", key=f"chall_{u_email}", type="primary"): st.session_state.offer_to = u_email; st.rerun()
 
-    # --- TAB 3: TENİS AJANDAM ---
-    with tabs[3]:
+    # --- SAYFA 3: TENİS AJANDAM (ALT MENÜSÜ DE SELECTBOX YAPILDI) ---
+    elif secilen_sayfa == ana_menu_secenekleri[3]:
         st.subheader("🎾 Tenis Ajandam")
         
         inbox_label = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
-        m_tab1, m_tab2, m_tab3, m_tab4, m_tab5 = st.tabs([inbox_label, "📤 Gönderdiğim Teklifler", "📢 Yayındaki İlanlarım", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"])
+        ajanda_secenekleri = [
+            inbox_label, 
+            "📤 Gönderdiğim Teklifler", 
+            "📢 Yayındaki İlanlarım", 
+            "📅 Onaylanmış Maçlarım", 
+            "📜 Geçmiş & İptal Edilenler"
+        ]
+        
+        ajanda_secim = st.selectbox("📂 İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜM:", ajanda_secenekleri)
+        st.markdown("---")
 
-        with m_tab1:
+        if ajanda_secim == ajanda_secenekleri[0]: # Gelen Teklifler
             my_inbox = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
@@ -923,7 +954,7 @@ def main_app():
                     if msg.get('type') == 'admin_announcement':
                         st.markdown(f"📢 <span style='color:#D32F2F; font-size:1.1em; font-weight:bold;'>YÖNETİCİ DUYURUSU: {msg.get('title')}</span>", unsafe_allow_html=True)
                         st.info(msg.get('content'))
-                        if st.button("✅ Okudum / Kapat", key=f"read_{msg['id']}"):
+                        if st.button("✅ Okudum / Kapat", key=f"read_{msg['id']}", type="primary"):
                             msg['status'] = 'read'
                             save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
                             st.rerun()
@@ -943,7 +974,7 @@ def main_app():
                         render_popover_profile(msg['sender'], s_user, messages)
     
                         c_acc, c_rej = st.columns(2)
-                        if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}"):
+                        if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}", type="primary"):
                             msg['status'] = 'accepted'
                             inv_kayit_basarili = True
                             if msg.get('type') == 'invite_request':
@@ -972,7 +1003,7 @@ def main_app():
                                     st.rerun()
                             if c_rej.button("Vazgeç", key=f"no_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = False; st.rerun()
 
-        with m_tab2:
+        elif ajanda_secim == ajanda_secenekleri[1]: # Gönderdiğim Teklifler
             my_sent = [m for m in messages if m.get('sender') == st.session_state.current_user]
             if not my_sent: st.info("Henüz kimseye teklif göndermediniz.")
             for msg in reversed(my_sent):
@@ -993,7 +1024,7 @@ def main_app():
                                     st.rerun()
                             if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
 
-        with m_tab3:
+        elif ajanda_secim == ajanda_secenekleri[2]: # Yayındaki İlanlarım
             my_active_invs = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'active']
             if not my_active_invs: 
                 st.info("Şu an yayında olan aktif bir ilanınız bulunmuyor.")
@@ -1025,7 +1056,7 @@ def main_app():
                     ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
                     
                     c_btn1, c_btn2 = st.columns(2)
-                    if c_btn1.form_submit_button("Güncelle ve Kaydet"):
+                    if c_btn1.form_submit_button("Güncelle ve Kaydet", type="primary"):
                         e_inv.update({'date': str(ed_d), 'court': ed_court, 'fee_status': ed_fee_status, 'fee_amount': ed_fee_amount.strip(), 'note': ed_note})
                         if save_data(INVITES_FILE_PATH, invites, 'db_invites'):
                             st.session_state.edit_my_active = None
@@ -1035,7 +1066,7 @@ def main_app():
                         st.session_state.edit_my_active = None
                         st.rerun()
 
-        with m_tab4:
+        elif ajanda_secim == ajanda_secenekleri[3]: # Onaylanmış Maçlarım
             my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('hidden_by', [])]
             if not my_acc: st.info("Yaklaşan veya görüntülenen onaylanmış bir maçınız yok.")
             for acc in reversed(my_acc):
@@ -1058,6 +1089,11 @@ def main_app():
                     
                     if partner_u.get('contact_visibility', 'eslesince') in ['eslesince', 'herkes']:
                         st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
+                    
+                    # --- EKSİK OLAN GOOGLE TAKVİM BUTONU GERİ GELDİ ---
+                    if acc.get('calendar_link'):
+                        st.link_button("📅 Maçı Google Takvim'e Ekle", acc.get('calendar_link'), use_container_width=True)
+                    # --------------------------------------------------
 
                     with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
                         for chat in acc.get("chat_history", []):
@@ -1094,7 +1130,7 @@ def main_app():
                             save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
                             st.rerun()
 
-        with m_tab5:
+        elif ajanda_secim == ajanda_secenekleri[4]: # Geçmiş & İptal Edilenler
             past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'cancelled_late', 'rejected'] and st.session_state.current_user not in m.get('hidden_by', [])]
             if not past_m: st.info("Geçmiş iptal veya red kaydı bulunmuyor.")
             for pm in past_m: 
@@ -1106,8 +1142,8 @@ def main_app():
                     save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
                     st.rerun()
 
-    # --- TAB 5: DEĞERLENDİRME ---
-    with tabs[4]:
+    # --- SAYFA 4: DEĞERLENDİRME ---
+    elif secilen_sayfa == ana_menu_secenekleri[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
         
         now_dt = datetime.datetime.now()
@@ -1139,7 +1175,7 @@ def main_app():
                     p_name = users_db.get(p_email, {}).get('ad_soyad', 'Partner')
                     st.write(f"**{p_name}** bu maçı başlama saatine 3 saatten az kala iptal etti.")
                     sr = st.slider("Güvenilirlik Puanı (1: Çok Mağdur Oldum - 5: Benim İçin Sorun Olmadı)", 1, 5, 1)
-                    if st.form_submit_button("Cezai Puanı Gönder"):
+                    if st.form_submit_button("Cezai Puanı Gönder", type="primary"):
                         users_db[p_email].setdefault("ratings", {"zaman": [], "seviye": [], "davranis": []})["davranis"].append(sr)
                         lc.setdefault('rated_by', []).append(st.session_state.current_user)
                         if save_data(USERS_FILE_PATH, users_db, 'db_users') and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
@@ -1156,7 +1192,7 @@ def main_app():
                 st.markdown("**(1: Zayıf - 5: Mükemmel)**")
                 sz = st.slider("Zaman Planlamasına Uyum", 1, 5, 5); ss = st.slider("Seviye Tutarlılığı", 1, 5, 5); sd = st.slider("Sportmenlik & İletişim", 1, 5, 5)
                 
-                if st.form_submit_button("⭐ Puanı Gönder"):
+                if st.form_submit_button("⭐ Puanı Gönder", type="primary"):
                     target_event = next(m for m in valid_unrated if m['id'] == selected_event_id)
                     p_email = target_event['sender'] if target_event['receiver'] == st.session_state.current_user else target_event['receiver']
                     
@@ -1170,8 +1206,8 @@ def main_app():
                             st.rerun()
                         else: st.error("⚠️ Değerlendirme kaydedilemedi.")
 
-    # --- TAB 6: PROFİL & AYARLAR ---
-    with tabs[5]:
+    # --- SAYFA 5: PROFİL & AYARLAR ---
+    elif secilen_sayfa == ana_menu_secenekleri[5]:
         colL, colR = st.columns(2)
         with colL:
             st.subheader("👤 Profil Bilgilerim")
@@ -1186,7 +1222,7 @@ def main_app():
             style_sel = st.selectbox("Oyun Tarzı", style_opts, index=4 if me_style not in style_opts[:-1] else style_opts.index(me_style), key="prof_style")
             style_custom = st.text_input("Diğer ise Oyun Tarzınızı Yazın:", value=me_style if me_style not in style_opts[:-1] else "", key="prof_style_cust") if style_sel == "Diğer" else ""
 
-            if st.button("💾 Profili Güncelle", use_container_width=True):
+            if st.button("💾 Profili Güncelle", type="primary", use_container_width=True):
                 me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "ilce": ilce, "level": level, "style": style_custom.strip() if style_sel == "Diğer" else style_sel})
                 users_db[st.session_state.current_user] = me
                 if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Profil güncellendi! ✅"; st.rerun()
@@ -1195,7 +1231,7 @@ def main_app():
                 with st.form("change_pass_form"):
                     old_pass = st.text_input("Mevcut Şifre", type="password")
                     new_pass = st.text_input("Yeni Şifre", type="password")
-                    if st.form_submit_button("Şifreyi Güncelle"):
+                    if st.form_submit_button("Şifreyi Güncelle", type="primary"):
                         if hash_password(old_pass) != me.get("password_hash"): st.error("Mevcut şifreniz hatalı!")
                         elif len(new_pass) < 4: st.error("Şifre en az 4 karakter olmalıdır.")
                         else:
@@ -1216,7 +1252,7 @@ def main_app():
             with st.expander("Hesabımı Kalıcı Olarak Silme Talebi Gönder"):
                 st.warning("⚠️ **DİKKAT:** Hesabınız ve tüm verileriniz kalıcı olarak silinir.")
                 if me.get("delete_requested"): st.info("ℹ️ Silme talebiniz onay bekliyor.")
-                elif st.button("🗑️ Silme Talebini ilet"):
+                elif st.button("🗑️ Silme Talebini İlet"):
                     me["delete_requested"] = True; users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'):
                         send_email(ADMIN_EMAIL, "🚨 Silme Talebi", f"<b>{me.get('ad_soyad')}</b> ({st.session_state.current_user}) hesabını kalıcı olarak silmek istiyor. Yönetici panelinden işlemi onaylayabilirsiniz.")
@@ -1229,14 +1265,14 @@ def main_app():
                 c_vis = st.selectbox("Telefon/E-Posta Görünürlüğü", ["Gizle (Hiçbir Zaman Gösterme)", "Sadece Eşleşince Göster", "Herkese Açık (İlanda Göster)"], index=vis_keys.index(me.get("contact_visibility", "eslesince")) if me.get("contact_visibility") in vis_keys else 1)
                 ghost = st.toggle("👻 Hayalet Modu (Üye listesinde görünme)", value=me.get("privacy", {}).get("ghost", False))
                 show_r = st.toggle("⭐ Değerlendirme Puanımı Göster", value=me.get("privacy", {}).get("show_rating", True))
-                if st.form_submit_button("🔒 Ayarları Kaydet"):
+                if st.form_submit_button("🔒 Ayarları Kaydet", type="primary"):
                     me["contact_visibility"] = vis_keys[["Gizle (Hiçbir Zaman Gösterme)", "Sadece Eşleşince Göster", "Herkese Açık (İlanda Göster)"].index(c_vis)]
                     me.setdefault("privacy", {})["ghost"] = ghost; me.setdefault("privacy", {})["show_rating"] = show_r
                     users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Gizlilik tercihleri kaydedildi! ✅"; st.rerun()
 
-    # --- TAB 7: KORT REHBERİ ---
-    with tabs[6]:
+    # --- SAYFA 6: KORT REHBERİ ---
+    elif secilen_sayfa == ana_menu_secenekleri[6]:
         st.subheader("📍 İzmir Kort ve Tesis Rehberi")
         st.markdown("İzmir'deki popüler tenis kortlarının ve kulüplerinin güncel iletişim, adres ve rezervasyon bilgilerine buradan ulaşabilirsiniz.")
         
@@ -1299,8 +1335,8 @@ def main_app():
                 st.markdown("**📞 Rezervasyon SKSDB:** 0(232) 311 10 10 (Santral)")
                 st.caption("Not: SKS (Sağlık Kültür ve Spor Daire Başkanlığı) üzerinden öğrenci/mezun/sivil statüsüne göre saatlik kiralanabilir.")
 
-    # --- TAB 8: NTRP SEVİYE REHBERİ ---
-    with tabs[7]:
+    # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
+    elif secilen_sayfa == ana_menu_secenekleri[7]:
         st.subheader("📊 NTRP Seviye Rehberi")
         st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
         
