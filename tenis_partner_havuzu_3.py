@@ -25,6 +25,12 @@ except ImportError:
     HAS_STX = False
     st.sidebar.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' kurun.")
 
+# DİKKAT: BİR ÖNCEKİ KODDA YANLIŞLIKLA SİLİNEN KISIM BURASIYDI
+if HAS_STX:
+    cookie_manager = stx.CookieManager(key="cm_izmir")
+else:
+    cookie_manager = None
+
 # Pasta Grafik için Plotly Kütüphanesi
 try:
     import plotly.express as px
@@ -894,7 +900,6 @@ def main_app():
             
         filtered_active_invites = active_only + expired_only
         
-        # YENİ: Eşleşen Maçların Şeffaf Açılır Görünümü
         matched_invs = [i for i in invites if i.get('status') == 'matched']
         render_matched_invites(matched_invs, invites, messages, users_db)
 
@@ -1325,7 +1330,6 @@ def main_app():
                         target_event.setdefault('rated_by', []).append(st.session_state.current_user)
                         
                         if save_data(USERS_FILE_PATH, users_db, 'db_users') and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
-                            # YENİ: Değerlendirme Mail Bildirimi
                             send_email(p_email, "⭐ Yeni Bir Değerlendirme Aldınız!", f"Merhaba,\n\nSon oynadığınız maçın ardından partneriniz sizi değerlendirdi. Güvenilirlik ve oyun puanlarınız güncellendi.\n\nSisteme girerek profilinizdeki güncel puanınızı görebilirsiniz.")
                             st.session_state.show_toast = "Değerlendirmeniz kaydedildi ve partnerinize bildirildi! ⭐"
                             st.rerun()
