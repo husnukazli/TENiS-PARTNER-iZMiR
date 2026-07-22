@@ -32,13 +32,6 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} 
     footer {visibility: hidden;} 
-    
-    /* RADAR VURGUSU: Zehirli Yeşil (#39FF14) */
-    .radar-header p {
-        color: #39FF14 !important;
-        font-size: 1.1em !important;
-        font-weight: 700 !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -443,7 +436,7 @@ def login_page():
             if matched_invs:
                 st.markdown("#### 🤝 Son Eşleşen Maçlar")
                 for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:3]:
-                    st.markdown(f"<div style='color:gray; font-size:0.9em; padding: 6px; border: 1px dashed #ccc; border-radius: 6px; margin-bottom: 5px;'>✅ {format_date_tr(m_inv.get('date'))} | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='background-color:#e8f5e9; color:#2e7d32; font-size:0.95em; padding: 8px; border: 1px solid #a5d6a7; border-radius: 6px; margin-bottom: 5px;'>✅ <b>{format_date_tr(m_inv.get('date'))}</b> | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
                 st.markdown("<br>", unsafe_allow_html=True)
 
             if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", use_container_width=True):
@@ -639,7 +632,7 @@ def main_app():
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
     tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"])
 
-# --- TAB 0: İLAN HAVUZU ---
+    # --- TAB 0: İLAN HAVUZU ---
     with tabs[0]:
         with st.expander("🔍 İlanları Filtrele ve Sırala", expanded=True):
             f_col1, f_col2, f_col3 = st.columns(3)
@@ -647,7 +640,7 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
 
-        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (DİKKAT ÇEKİCİ YENİ TASARIM)
+        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (PANKART + AKORDEON)
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 6px solid #39FF14; padding: 15px; border-radius: 8px; margin-top: 5px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="color: #ffffff; font-size: 1.15em; font-weight: bold; margin-bottom: 5px;">
@@ -659,20 +652,20 @@ def main_app():
         </div>
         """, unsafe_allow_html=True)
         
-        if st.toggle("⚙️ Radar Ayarlarını Aç / Kapat", key="radar_toggle"):
+        # Formu gizleyen yeni akordeon sekmesi
+        with st.expander("⚙️ Radar Ayarlarını Düzenle"):
             radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
-            with st.container(border=True):
-                with st.form("radar_form_main"):
-                    r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
-                    r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
-                    r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
-                    r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
-                    if st.form_submit_button("Radar Tercihlerini Kaydet"):
-                        me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
-                        users_db[st.session_state.current_user] = me
-                        if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
-                            st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
-                            st.rerun()
+            with st.form("radar_form_main"):
+                r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
+                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
+                r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
+                r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
+                if st.form_submit_button("Radar Tercihlerini Kaydet"):
+                    me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
+                    users_db[st.session_state.current_user] = me
+                    if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
+                        st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
+                        st.rerun()
             
         active_invites = [i for i in invites if i.get('status') == 'active' and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
@@ -700,7 +693,7 @@ def main_app():
         if matched_invs:
             st.markdown("#### 🤝 Son Eşleşen Maçlar")
             for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:3]:
-                st.markdown(f"<div style='color:gray; font-size:0.9em; padding: 4px; border: 1px dashed #ccc; border-radius: 6px; margin-bottom: 5px;'>✅ {format_date_tr(m_inv.get('date'))} | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background-color:#e8f5e9; color:#2e7d32; font-size:0.95em; padding: 8px; border: 1px solid #a5d6a7; border-radius: 6px; margin-bottom: 5px;'>✅ <b>{format_date_tr(m_inv.get('date'))}</b> | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
             st.markdown("---")
 
         if not filtered_active_invites: st.info("Kriterlere uygun aktif ilan bulunamadı.")
@@ -739,7 +732,6 @@ def main_app():
                         if s == "expired":
                             st.button("Teklif Gönder", key=f"inv_exp_{inv.get('id')}", disabled=True, use_container_width=True)
                         else:
-                            # HATA DÜZELTİLDİ: Widget Key ve State Kilit Key'i ayrıldı.
                             w_key = f"btn_req_{inv.get('id')}"
                             lock_key = f"lock_{inv.get('id')}"
                             if st.button("🎾 Teklif Gönder", key=w_key, disabled=st.session_state.get(lock_key, False), use_container_width=True):
