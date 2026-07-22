@@ -11,6 +11,7 @@ import string
 import uuid
 import urllib.parse
 import time
+from collections import Counter
 
 # Çerez (Cookie) yönetimi için kütüphane
 try:
@@ -326,6 +327,7 @@ def admin_dashboard():
     admin_menu = [
         f"👥 Üye Yönetimi 🚨 ({del_req_count})" if del_req_count > 0 else "👥 Üye Yönetimi",
         f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi",
+        "📊 Sistem İstatistikleri",
         "💾 Yedekleme & Kurtarma"
     ]
     secilen_admin_sekme = st.selectbox("📌 YÖNETİCİ MENÜSÜ", admin_menu)
@@ -442,6 +444,49 @@ def admin_dashboard():
                         st.session_state[f"conf_inv_{inv.get('id')}"] = False; st.rerun()
 
     elif secilen_admin_sekme == admin_menu[2]:
+        st.subheader("📊 Sistem İstatistikleri ve Analizler")
+        
+        # VERİ HESAPLAMALARI
+        total_users = len([e for e, d in users_db.items() if isinstance(d, dict)])
+        active_users = len([e for e, d in users_db.items() if isinstance(d, dict) and not d.get('frozen') and not d.get('suspended')])
+        frozen_users = total_users - active_users
+        
+        total_invites = len(invites)
+        matched_invites = len([i for i in invites if i.get('status') == 'matched'])
+        active_inv = len([i for i in invites if i.get('status') == 'active'])
+        
+        # Son 7 gün sisteme girenleri sayma (Eğer 'last_login' kaydedilmişse)
+        # Şimdilik mevcut veri yapısında last_login olmadığı için bu alan rezervdir.
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Toplam Üye Sayısı", total_users, f"{active_users} Aktif")
+        col2.metric("Toplam Açılan İlan", total_invites, f"{active_inv} Yayında")
+        col3.metric("Eşleşen (Başarılı) Maç", matched_invites)
+        
+        st.markdown("---")
+        
+        c_graf1, c_graf2 = st.columns(2)
+        with c_graf1:
+            st.markdown("### 📈 Üyelerin Seviye Dağılımı (NTRP)")
+            levels_list = [d.get('level', '3.5') for e, d in users_db.items() if isinstance(d, dict)]
+            level_counts = Counter(levels_list)
+            st.bar_chart(level_counts)
+            
+        with c_graf2:
+            st.markdown("### 📍 Üyelerin İlçe Dağılımı")
+            ilce_list = [d.get('ilce', 'Belirtilmemiş') for e, d in users_db.items() if isinstance(d, dict)]
+            ilce_counts = Counter(ilce_list)
+            st.bar_chart(ilce_counts)
+            
+        st.markdown("---")
+        
+        with st.container():
+            st.markdown("### 🎾 İlan (Kort) Tercihleri")
+            kort_list = [i.get('court', 'Diğer') for i in invites]
+            kort_counts = Counter(kort_list)
+            st.bar_chart(kort_counts)
+
+    elif secilen_admin_sekme == admin_menu[3]:
         st.subheader("Sistem Yedekleme ve Kurtarma")
         c1, c2 = st.columns(2)
         with c1:
