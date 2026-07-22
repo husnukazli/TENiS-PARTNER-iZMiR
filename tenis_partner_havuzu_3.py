@@ -1,4 +1,8 @@
 import streamlit as st
+
+# --- SAYFA AYARLARI (HER ŞEYDEN ÖNCE GELMELİDİR) ---
+st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
+
 import json
 import datetime
 import hashlib
@@ -19,7 +23,7 @@ try:
     HAS_STX = True
 except ImportError:
     HAS_STX = False
-    st.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' komutunu çalıştırın.")
+    st.sidebar.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' kurun.")
 
 # Pasta Grafik için Plotly Kütüphanesi
 try:
@@ -27,12 +31,9 @@ try:
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
-    st.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
+    st.sidebar.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
 
-# --- SAYFA AYARLARI ---
-st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
-
-# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE GİZLİLİK
+# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI
 st.markdown("""
 <style>
     /* Fontları büyütme ve okunabilirliği artırma */
@@ -68,7 +69,7 @@ st.markdown("""
         font-size: 1.1rem;
     }
     
-    /* YENİ: Açılan listedeki maddelerin (seçeneklerin) arasını açma ve büyütme */
+    /* Açılan listedeki maddelerin arasını açma ve büyütme */
     div[data-baseweb="popover"] ul {
         font-size: 1.15rem !important;
     }
@@ -83,11 +84,6 @@ st.markdown("""
     footer {visibility: hidden;} 
 </style>
 """, unsafe_allow_html=True)
-
-if HAS_STX:
-    cookie_manager = stx.CookieManager(key="cm_izmir")
-else:
-    cookie_manager = None
 
 # --- SABİT VERİLER ---
 NTRP_LEVELS = ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0"]
@@ -350,14 +346,13 @@ def render_popover_profile(user_email, user_data, messages_db):
             else:
                 st.info("🔒 İletişim bilgileri sadece eşleşilen kişilere açıktır.")
 
-# YENİ: EŞLEŞMİŞ MAÇLARI ŞEFFAF GÖSTEREN YARDIMCI FONKSİYON
+# EŞLEŞMİŞ MAÇLARI ŞEFFAF GÖSTEREN YARDIMCI FONKSİYON
 def render_matched_invites(matched_invs, invites, messages, users_db):
     if matched_invs:
         st.markdown("#### 🤝 Son Eşleşen Maçlar")
         st.caption("Aşağıdaki saatler doludur, kort çakışması yaşamamak için kontrol ediniz.")
         for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:5]:
             creator_name = users_db.get(m_inv.get('creator'), {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
-            # Eşleşen partneri bulalım
             acc_msg = next((m for m in messages if m.get('type') == 'invite_request' and m.get('invite_id') == m_inv.get('id') and m.get('status') == 'accepted'), None)
             if acc_msg:
                 partner_name = users_db.get(acc_msg['sender'], {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
@@ -533,7 +528,6 @@ def admin_dashboard():
         
         st.markdown("---")
         
-        # YENİ EKLENEN PASTA GRAFİKLER (PLOTLY İLE)
         c_graf1, c_graf2 = st.columns(2)
         with c_graf1:
             st.markdown("### 📈 Üyelerin Seviye Dağılımı")
@@ -545,7 +539,7 @@ def admin_dashboard():
                 fig_levels.update_layout(margin=dict(t=0, b=0, l=0, r=0))
                 st.plotly_chart(fig_levels, use_container_width=True)
             else:
-                st.bar_chart(level_counts) # Plotly yüklü değilse çubuk grafiğe düş
+                st.bar_chart(level_counts) 
             
         with c_graf2:
             st.markdown("### 📍 Üyelerin İlçe Dağılımı")
@@ -628,7 +622,6 @@ def login_page():
             3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
             """)
             
-            # YENİ: Eşleşen Maçların Şeffaf Açılır Görünümü
             matched_invs = [i for i in invites if i.get('status') == 'matched']
             render_matched_invites(matched_invs, invites, messages, users_db)
 
