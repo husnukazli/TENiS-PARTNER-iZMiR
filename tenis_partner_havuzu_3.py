@@ -639,7 +639,7 @@ def main_app():
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
     tabs = st.tabs(["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"])
 
-    # --- TAB 0: İLAN HAVUZU ---
+# --- TAB 0: İLAN HAVUZU ---
     with tabs[0]:
         with st.expander("🔍 İlanları Filtrele ve Sırala", expanded=True):
             f_col1, f_col2, f_col3 = st.columns(3)
@@ -647,22 +647,32 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
 
-        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (ZEHİRLİ YEŞİL VURGULU)
-        with st.expander("📡 Aradığınız ilanı bulamadınız mı? Radarı kurun, eşleşme anında haber verelim!"):
-            st.markdown("<div class='radar-header'></div>", unsafe_allow_html=True) 
-            st.caption("Aşağıdaki kriterlerinize uyan yeni bir ilan havuza eklendiğinde, sistem size otomatik e-posta gönderir.")
+        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (DİKKAT ÇEKİCİ YENİ TASARIM)
+        st.markdown("""
+        <div style="background-color: #0b3d16; border-left: 6px solid #39FF14; padding: 15px; border-radius: 8px; margin-top: 5px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="color: #ffffff; font-size: 1.15em; font-weight: bold; margin-bottom: 5px;">
+                📡 Aradığınız ilanı bulamadınız mı?
+            </div>
+            <div style="color: #e0e0e0; font-size: 0.95em;">
+                Radarı kurun, kriterlerinize uygun bir maç havuza düştüğü an <span style="color: #39FF14; font-weight: bold;">otomatik e-posta</span> ile ilk sizin haberiniz olsun!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.toggle("⚙️ Radar Ayarlarını Aç / Kapat", key="radar_toggle"):
             radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
-            with st.form("radar_form_main"):
-                r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
-                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
-                r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
-                r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
-                if st.form_submit_button("Radar Tercihlerini Kaydet"):
-                    me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
-                    users_db[st.session_state.current_user] = me
-                    if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
-                        st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
-                        st.rerun()
+            with st.container(border=True):
+                with st.form("radar_form_main"):
+                    r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
+                    r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
+                    r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
+                    r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
+                    if st.form_submit_button("Radar Tercihlerini Kaydet"):
+                        me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
+                        users_db[st.session_state.current_user] = me
+                        if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
+                            st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
+                            st.rerun()
             
         active_invites = [i for i in invites if i.get('status') == 'active' and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
