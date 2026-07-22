@@ -36,9 +36,29 @@ st.markdown("""
     /* Butonları daha etli ve kalın yapma */
     .stButton > button { width: 100%; border-radius: 12px; font-weight: 700; padding-top: 0.6rem; padding-bottom: 0.6rem; }
     
-    /* ÖZEL: Ana (Yeşil - Primary) Butonların Fontunu Daha da Büyütme */
-    button[kind="primary"] * {
-        font-size: 1.25rem !important;
+    /* ÖZEL: Ana (Yeşil - Primary) Giriş Butonunun Fontunu Daha da Büyütme */
+    button[kind="primary"] p {
+        font-size: 1.3rem !important;
+    }
+
+    /* YENİ: Selectbox (Açılır Menü) Kutusunu 3D Kabartmalı Bir Butona Çevirme */
+    div[data-baseweb="select"] > div {
+        background-color: #f8f9fa;
+        border: 2px solid #2e7d32 !important;
+        border-radius: 12px;
+        box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 4px 6px rgba(0,0,0,0.15);
+        padding: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    div[data-baseweb="select"] > div:hover {
+        box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 6px 10px rgba(0,0,0,0.25);
+        transform: translateY(-1px);
+    }
+    /* Selectbox içindeki yazının boyutunu biraz artırma */
+    div[data-baseweb="select"] span {
+        font-weight: 600;
+        font-size: 1.1rem;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
@@ -338,10 +358,10 @@ def admin_dashboard():
         "💾 Yedekleme & Kurtarma"
     ]
     
-    # YÖNETİCİ MENÜSÜ GÖRSEL DÜZENLEMESİ (Kırmızı vurgulu HTML)
+    # RAPTIYE KALDIRILDI, SADELEŞTİRİLDİ
     st.markdown("""
     <div style="background-color: #2b0808; border-left: 5px solid #ff4b4b; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
-        <span style="color: #ff4b4b; font-size: 1.15em; font-weight: bold;">📌 YÖNETİCİ MENÜSÜNÜ SEÇİN:</span>
+        <span style="color: #ff4b4b; font-size: 1.15em; font-weight: bold;">YÖNETİCİ MENÜSÜ: İşlem Seçin</span>
     </div>
     """, unsafe_allow_html=True)
     secilen_admin_sekme = st.selectbox("", admin_menu, label_visibility="collapsed")
@@ -753,7 +773,7 @@ def main_app():
                 time.sleep(0.5)
             st.rerun()
 
-    # YENİ MOBİL ODAKLI ANA MENÜ GÖRSEL DÜZENLEMESİ (Yeşil Vurgulu HTML)
+    # YENİ MOBİL ODAKLI ANA MENÜ GÖRSEL DÜZENLEMESİ (Raptiye Kaldırıldı)
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
     
     ana_menu_secenekleri = [
@@ -769,7 +789,7 @@ def main_app():
     
     st.markdown("""
     <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
-        <span style="color: #39FF14; font-size: 1.15em; font-weight: bold;">📌 GİTMEK İSTEDİĞİNİZ SAYFAYI SEÇİN:</span>
+        <span style="color: #39FF14; font-size: 1.15em; font-weight: bold;">MENÜ: Gitmek İstediğiniz Sayfayı Seçin</span>
     </div>
     """, unsafe_allow_html=True)
     secilen_sayfa = st.selectbox("", ana_menu_secenekleri, label_visibility="collapsed")
@@ -989,7 +1009,7 @@ def main_app():
                 else:
                     if colC.button("🎾 Özel Teklif Et", key=f"chall_{u_email}", type="primary"): st.session_state.offer_to = u_email; st.rerun()
 
-    # --- SAYFA 3: TENİS AJANDAM (ALT MENÜSÜ DE SELECTBOX YAPILDI) ---
+    # --- SAYFA 3: TENİS AJANDAM ---
     elif secilen_sayfa == ana_menu_secenekleri[3]:
         st.subheader("🎾 Tenis Ajandam")
         
@@ -1002,10 +1022,10 @@ def main_app():
             "📜 Geçmiş & İptal Edilenler"
         ]
         
-        # AJANDA ALT MENÜSÜ GÖRSEL DÜZENLEMESİ (Yeşil Vurgulu HTML)
+        # AJANDA ALT MENÜSÜ GÖRSEL DÜZENLEMESİ (Raptiye Kaldırıldı)
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
-            <span style="color: #39FF14; font-size: 1.1em; font-weight: bold;">📂 İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜM:</span>
+            <span style="color: #39FF14; font-size: 1.1em; font-weight: bold;">İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜMÜ SEÇİN</span>
         </div>
         """, unsafe_allow_html=True)
         ajanda_secim = st.selectbox("", ajanda_secenekleri, label_visibility="collapsed")
@@ -1016,7 +1036,7 @@ def main_app():
             if not my_inbox: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
             for msg in my_inbox:
                 with st.container(border=True):
-                    # YENİ ÖZELLİK: ADMİN DUYURUSU YAKALAMA
+                    # ADMİN DUYURUSU
                     if msg.get('type') == 'admin_announcement':
                         st.markdown(f"📢 <span style='color:#D32F2F; font-size:1.1em; font-weight:bold;'>YÖNETİCİ DUYURUSU: {msg.get('title')}</span>", unsafe_allow_html=True)
                         st.info(msg.get('content'))
@@ -1156,10 +1176,8 @@ def main_app():
                     if partner_u.get('contact_visibility', 'eslesince') in ['eslesince', 'herkes']:
                         st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
                     
-                    # --- EKSİK OLAN GOOGLE TAKVİM BUTONU GERİ GELDİ ---
                     if acc.get('calendar_link'):
                         st.link_button("📅 Maçı Google Takvim'e Ekle", acc.get('calendar_link'), use_container_width=True)
-                    # --------------------------------------------------
 
                     with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
                         for chat in acc.get("chat_history", []):
