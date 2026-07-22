@@ -32,8 +32,15 @@ st.markdown("""
         font-size: 1.05rem !important;
     }
     .block-container { padding-top: 3.5rem; padding-bottom: 2rem; }
+    
     /* Butonları daha etli ve kalın yapma */
     .stButton > button { width: 100%; border-radius: 12px; font-weight: 700; padding-top: 0.6rem; padding-bottom: 0.6rem; }
+    
+    /* ÖZEL: Ana (Yeşil - Primary) Butonların Fontunu Daha da Büyütme */
+    button[kind="primary"] * {
+        font-size: 1.25rem !important;
+    }
+
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} 
     footer {visibility: hidden;} 
@@ -330,7 +337,14 @@ def admin_dashboard():
         "📊 Sistem İstatistikleri",
         "💾 Yedekleme & Kurtarma"
     ]
-    secilen_admin_sekme = st.selectbox("📌 YÖNETİCİ MENÜSÜ", admin_menu)
+    
+    # YÖNETİCİ MENÜSÜ GÖRSEL DÜZENLEMESİ (Kırmızı vurgulu HTML)
+    st.markdown("""
+    <div style="background-color: #2b0808; border-left: 5px solid #ff4b4b; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
+        <span style="color: #ff4b4b; font-size: 1.15em; font-weight: bold;">📌 YÖNETİCİ MENÜSÜNÜ SEÇİN:</span>
+    </div>
+    """, unsafe_allow_html=True)
+    secilen_admin_sekme = st.selectbox("", admin_menu, label_visibility="collapsed")
 
     if secilen_admin_sekme == admin_menu[0]:
         st.subheader("📢 Üyelere Sistem Duyurusu Gönder")
@@ -455,9 +469,6 @@ def admin_dashboard():
         matched_invites = len([i for i in invites if i.get('status') == 'matched'])
         active_inv = len([i for i in invites if i.get('status') == 'active'])
         
-        # Son 7 gün sisteme girenleri sayma (Eğer 'last_login' kaydedilmişse)
-        # Şimdilik mevcut veri yapısında last_login olmadığı için bu alan rezervdir.
-        
         col1, col2, col3 = st.columns(3)
         col1.metric("Toplam Üye Sayısı", total_users, f"{active_users} Aktif")
         col2.metric("Toplam Açılan İlan", total_invites, f"{active_inv} Yayında")
@@ -560,7 +571,6 @@ def login_page():
     if st.session_state.show_login_form:
         c_space1, c_form, c_space2 = st.columns([1, 4, 1])
         with c_form:
-            # Login formu içerisindeki sekmeleri selectbox yapmaya gerek yok, form içinde küçük kaldıkları için mobilde de rahat görünürler.
             t1, t2, t3 = st.tabs(["🔑 Giriş Yap", "📝 Yeni Kayıt Oluştur", "🔐 Şifremi Unuttum"])
             with t1:
                 with st.form("login"):
@@ -743,7 +753,7 @@ def main_app():
                 time.sleep(0.5)
             st.rerun()
 
-    # YENİ MOBİL ODAKLI ANA MENÜ (AÇILIR KUTU - SELECTBOX)
+    # YENİ MOBİL ODAKLI ANA MENÜ GÖRSEL DÜZENLEMESİ (Yeşil Vurgulu HTML)
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
     
     ana_menu_secenekleri = [
@@ -757,7 +767,12 @@ def main_app():
         "📊 Seviye Rehberi"
     ]
     
-    secilen_sayfa = st.selectbox("📌 GİTMEK İSTEDİĞİNİZ SAYFAYI SEÇİN:", ana_menu_secenekleri)
+    st.markdown("""
+    <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
+        <span style="color: #39FF14; font-size: 1.15em; font-weight: bold;">📌 GİTMEK İSTEDİĞİNİZ SAYFAYI SEÇİN:</span>
+    </div>
+    """, unsafe_allow_html=True)
+    secilen_sayfa = st.selectbox("", ana_menu_secenekleri, label_visibility="collapsed")
     st.markdown("---")
 
     # --- SAYFA 0: İLAN HAVUZU ---
@@ -768,7 +783,7 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
 
-        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (PANKART + AKORDEON)
+        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 6px solid #39FF14; padding: 15px; border-radius: 8px; margin-top: 5px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="color: #ffffff; font-size: 1.15em; font-weight: bold; margin-bottom: 5px;">
@@ -987,7 +1002,13 @@ def main_app():
             "📜 Geçmiş & İptal Edilenler"
         ]
         
-        ajanda_secim = st.selectbox("📂 İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜM:", ajanda_secenekleri)
+        # AJANDA ALT MENÜSÜ GÖRSEL DÜZENLEMESİ (Yeşil Vurgulu HTML)
+        st.markdown("""
+        <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
+            <span style="color: #39FF14; font-size: 1.1em; font-weight: bold;">📂 İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜM:</span>
+        </div>
+        """, unsafe_allow_html=True)
+        ajanda_secim = st.selectbox("", ajanda_secenekleri, label_visibility="collapsed")
         st.markdown("---")
 
         if ajanda_secim == ajanda_secenekleri[0]: # Gelen Teklifler
