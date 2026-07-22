@@ -21,6 +21,14 @@ except ImportError:
     HAS_STX = False
     st.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' komutunu çalıştırın.")
 
+# Pasta Grafik için Plotly Kütüphanesi
+try:
+    import plotly.express as px
+    HAS_PLOTLY = True
+except ImportError:
+    HAS_PLOTLY = False
+    st.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
+
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
@@ -41,7 +49,7 @@ st.markdown("""
         font-size: 1.3rem !important;
     }
 
-    /* YENİ: Selectbox (Açılır Menü) Kutusunu 3D Kabartmalı Bir Butona Çevirme */
+    /* Selectbox Kutusunu 3D Kabartmalı Bir Butona Çevirme */
     div[data-baseweb="select"] > div {
         background-color: #f8f9fa;
         border: 2px solid #2e7d32 !important;
@@ -55,10 +63,19 @@ st.markdown("""
         box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 6px 10px rgba(0,0,0,0.25);
         transform: translateY(-1px);
     }
-    /* Selectbox içindeki yazının boyutunu biraz artırma */
     div[data-baseweb="select"] span {
         font-weight: 600;
         font-size: 1.1rem;
+    }
+    
+    /* YENİ: Açılan listedeki maddelerin (seçeneklerin) arasını açma ve büyütme */
+    div[data-baseweb="popover"] ul {
+        font-size: 1.15rem !important;
+    }
+    div[data-baseweb="popover"] li {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+        border-bottom: 1px solid #f0f0f0;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
@@ -333,6 +350,28 @@ def render_popover_profile(user_email, user_data, messages_db):
             else:
                 st.info("🔒 İletişim bilgileri sadece eşleşilen kişilere açıktır.")
 
+# YENİ: EŞLEŞMİŞ MAÇLARI ŞEFFAF GÖSTEREN YARDIMCI FONKSİYON
+def render_matched_invites(matched_invs, invites, messages, users_db):
+    if matched_invs:
+        st.markdown("#### 🤝 Son Eşleşen Maçlar")
+        st.caption("Aşağıdaki saatler doludur, kort çakışması yaşamamak için kontrol ediniz.")
+        for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:5]:
+            creator_name = users_db.get(m_inv.get('creator'), {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
+            # Eşleşen partneri bulalım
+            acc_msg = next((m for m in messages if m.get('type') == 'invite_request' and m.get('invite_id') == m_inv.get('id') and m.get('status') == 'accepted'), None)
+            if acc_msg:
+                partner_name = users_db.get(acc_msg['sender'], {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
+                baslik_metni = f"✅ {format_date_tr(m_inv.get('date'))} | {m_inv.get('court')} | 🤝 {creator_name} & {partner_name} eşleşti"
+            else:
+                baslik_metni = f"✅ {format_date_tr(m_inv.get('date'))} | {m_inv.get('court')} | 🤝 {creator_name} (Eşleşti)"
+            
+            with st.expander(baslik_metni):
+                st.write(f"⏰ **Maç Saati:** {m_inv.get('time_details')}")
+                st.write(f"⭐ **Seviye:** {', '.join(m_inv.get('levels', []))}")
+                if m_inv.get('note'):
+                    st.caption(f"📝 Not: {m_inv.get('note')}")
+        st.markdown("<br>", unsafe_allow_html=True)
+
 # --- YÖNETİCİ KONTROL MERKEZİ ---
 def admin_dashboard():
     sidebar_pwa_guide()
@@ -358,7 +397,6 @@ def admin_dashboard():
         "💾 Yedekleme & Kurtarma"
     ]
     
-    # RAPTIYE KALDIRILDI, SADELEŞTİRİLDİ
     st.markdown("""
     <div style="background-color: #2b0808; border-left: 5px solid #ff4b4b; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
         <span style="color: #ff4b4b; font-size: 1.15em; font-weight: bold;">YÖNETİCİ MENÜSÜ: İşlem Seçin</span>
@@ -480,7 +518,6 @@ def admin_dashboard():
     elif secilen_admin_sekme == admin_menu[2]:
         st.subheader("📊 Sistem İstatistikleri ve Analizler")
         
-        # VERİ HESAPLAMALARI
         total_users = len([e for e, d in users_db.items() if isinstance(d, dict)])
         active_users = len([e for e, d in users_db.items() if isinstance(d, dict) and not d.get('frozen') and not d.get('suspended')])
         frozen_users = total_users - active_users
@@ -496,18 +533,31 @@ def admin_dashboard():
         
         st.markdown("---")
         
+        # YENİ EKLENEN PASTA GRAFİKLER (PLOTLY İLE)
         c_graf1, c_graf2 = st.columns(2)
         with c_graf1:
-            st.markdown("### 📈 Üyelerin Seviye Dağılımı (NTRP)")
+            st.markdown("### 📈 Üyelerin Seviye Dağılımı")
             levels_list = [d.get('level', '3.5') for e, d in users_db.items() if isinstance(d, dict)]
             level_counts = Counter(levels_list)
-            st.bar_chart(level_counts)
+            
+            if HAS_PLOTLY:
+                fig_levels = px.pie(names=list(level_counts.keys()), values=list(level_counts.values()), hole=0.3)
+                fig_levels.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+                st.plotly_chart(fig_levels, use_container_width=True)
+            else:
+                st.bar_chart(level_counts) # Plotly yüklü değilse çubuk grafiğe düş
             
         with c_graf2:
             st.markdown("### 📍 Üyelerin İlçe Dağılımı")
             ilce_list = [d.get('ilce', 'Belirtilmemiş') for e, d in users_db.items() if isinstance(d, dict)]
             ilce_counts = Counter(ilce_list)
-            st.bar_chart(ilce_counts)
+            
+            if HAS_PLOTLY:
+                fig_ilce = px.pie(names=list(ilce_counts.keys()), values=list(ilce_counts.values()), hole=0.3)
+                fig_ilce.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+                st.plotly_chart(fig_ilce, use_container_width=True)
+            else:
+                st.bar_chart(ilce_counts)
             
         st.markdown("---")
         
@@ -515,7 +565,13 @@ def admin_dashboard():
             st.markdown("### 🎾 İlan (Kort) Tercihleri")
             kort_list = [i.get('court', 'Diğer') for i in invites]
             kort_counts = Counter(kort_list)
-            st.bar_chart(kort_counts)
+            
+            if HAS_PLOTLY:
+                fig_kort = px.pie(names=list(kort_counts.keys()), values=list(kort_counts.values()))
+                fig_kort.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+                st.plotly_chart(fig_kort, use_container_width=True)
+            else:
+                st.bar_chart(kort_counts)
 
     elif secilen_admin_sekme == admin_menu[3]:
         st.subheader("Sistem Yedekleme ve Kurtarma")
@@ -572,14 +628,10 @@ def login_page():
             3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
             """)
             
+            # YENİ: Eşleşen Maçların Şeffaf Açılır Görünümü
             matched_invs = [i for i in invites if i.get('status') == 'matched']
-            if matched_invs:
-                st.markdown("#### 🤝 Son Eşleşen Maçlar")
-                for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:3]:
-                    st.markdown(f"<div style='background-color:#e8f5e9; color:#2e7d32; font-size:0.95em; padding: 8px; border: 1px solid #a5d6a7; border-radius: 6px; margin-bottom: 5px;'>✅ <b>{format_date_tr(m_inv.get('date'))}</b> | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
-                st.markdown("<br>", unsafe_allow_html=True)
+            render_matched_invites(matched_invs, invites, messages, users_db)
 
-            # --- DİKKAT ÇEKİCİ (PRIMARY) GİRİŞ BUTONU ---
             if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", type="primary", use_container_width=True):
                 st.session_state.show_login_form = True; st.rerun()
         else:
@@ -773,7 +825,6 @@ def main_app():
                 time.sleep(0.5)
             st.rerun()
 
-    # YENİ MOBİL ODAKLI ANA MENÜ GÖRSEL DÜZENLEMESİ (Raptiye Kaldırıldı)
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
     
     ana_menu_secenekleri = [
@@ -803,7 +854,6 @@ def main_app():
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
 
-        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 6px solid #39FF14; padding: 15px; border-radius: 8px; margin-top: 5px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="color: #ffffff; font-size: 1.15em; font-weight: bold; margin-bottom: 5px;">
@@ -851,12 +901,9 @@ def main_app():
             
         filtered_active_invites = active_only + expired_only
         
+        # YENİ: Eşleşen Maçların Şeffaf Açılır Görünümü
         matched_invs = [i for i in invites if i.get('status') == 'matched']
-        if matched_invs:
-            st.markdown("#### 🤝 Son Eşleşen Maçlar")
-            for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:3]:
-                st.markdown(f"<div style='background-color:#e8f5e9; color:#2e7d32; font-size:0.95em; padding: 8px; border: 1px solid #a5d6a7; border-radius: 6px; margin-bottom: 5px;'>✅ <b>{format_date_tr(m_inv.get('date'))}</b> | {m_inv.get('court')} | Seviye: {', '.join(m_inv.get('levels', []))} <i>(Eşleşti)</i></div>", unsafe_allow_html=True)
-            st.markdown("---")
+        render_matched_invites(matched_invs, invites, messages, users_db)
 
         if not filtered_active_invites: st.info("Kriterlere uygun aktif ilan bulunamadı.")
 
@@ -1022,7 +1069,6 @@ def main_app():
             "📜 Geçmiş & İptal Edilenler"
         ]
         
-        # AJANDA ALT MENÜSÜ GÖRSEL DÜZENLEMESİ (Raptiye Kaldırıldı)
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
             <span style="color: #39FF14; font-size: 1.1em; font-weight: bold;">İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜMÜ SEÇİN</span>
@@ -1286,7 +1332,9 @@ def main_app():
                         target_event.setdefault('rated_by', []).append(st.session_state.current_user)
                         
                         if save_data(USERS_FILE_PATH, users_db, 'db_users') and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
-                            st.session_state.show_toast = "Değerlendirmeniz kaydedildi! ⭐"
+                            # YENİ: Değerlendirme Mail Bildirimi
+                            send_email(p_email, "⭐ Yeni Bir Değerlendirme Aldınız!", f"Merhaba,\n\nSon oynadığınız maçın ardından partneriniz sizi değerlendirdi. Güvenilirlik ve oyun puanlarınız güncellendi.\n\nSisteme girerek profilinizdeki güncel puanınızı görebilirsiniz.")
+                            st.session_state.show_toast = "Değerlendirmeniz kaydedildi ve partnerinize bildirildi! ⭐"
                             st.rerun()
                         else: st.error("⚠️ Değerlendirme kaydedilemedi.")
 
