@@ -32,6 +32,13 @@ st.markdown("""
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} 
     footer {visibility: hidden;} 
+    
+    /* RADAR VURGUSU: Zehirli Yeşil (#39FF14) */
+    .radar-header p {
+        color: #39FF14 !important;
+        font-size: 1.1em !important;
+        font-weight: 700 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -199,7 +206,7 @@ def sidebar_pwa_guide():
         🤖 **Android:** Chrome sağ üstteki **Üç Nokta (⋮)** menüsünden **Ana Ekrana Ekle** seçin.
         """)
 
-# --- YENİ EKLENEN DİALOG PENCERELERİ (MADDE 9 ve MADDE 7) ---
+# --- DİALOG PENCERELERİ ---
 @st.dialog("⚠️ Maç İptal Onayı")
 def dialog_cancel_match(acc_id, republish=False):
     st.warning("Bu maçı iptal etmek istediğinize emin misiniz? Bu işlem geri alınamaz.")
@@ -215,7 +222,7 @@ def dialog_cancel_match(acc_id, republish=False):
                     m_dt = datetime.datetime.strptime(f"{acc.get('date')} {acc.get('time', '18:00').split('-')[0].strip()}", "%Y-%m-%d %H:%M")
                 now_dt = datetime.datetime.now()
                 hours_left = (m_dt - now_dt).total_seconds() / 3600
-                is_late = (0 < hours_left <= 3) # MADDE 7: Son dakika iptali
+                is_late = (0 < hours_left <= 3)
             except:
                 is_late = False
 
@@ -267,12 +274,10 @@ if 'db_users' not in st.session_state: st.session_state.db_users = load_data(USE
 if 'db_invites' not in st.session_state: st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
 if 'db_messages' not in st.session_state: st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
 
-# Toast Bildirim Yöneticisi
 if st.session_state.show_toast:
     st.toast(st.session_state.show_toast, icon="ℹ️")
     st.session_state.show_toast = None
 
-# Otomatik Giriş Kontrolü
 if cookie_manager and not st.session_state.logged_in:
     saved_user = cookie_manager.get(cookie="remember_user")
     if saved_user and saved_user in st.session_state.db_users:
@@ -427,7 +432,6 @@ def login_page():
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         if not st.session_state.show_login_form:
-            # MADDE 2: VİTRİN EKLENTİSİ
             st.info("""
             **Nasıl Çalışır?**
             1. **Profilinizi Oluşturun:** Seviyenizi ve bölgelerinizi belirleyerek sisteme katılın.
@@ -435,7 +439,6 @@ def login_page():
             3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
             """)
             
-            # MADDE 8: SOSYAL KANIT
             matched_invs = [i for i in invites if i.get('status') == 'matched']
             if matched_invs:
                 st.markdown("#### 🤝 Son Eşleşen Maçlar")
@@ -643,6 +646,23 @@ def main_app():
             sort_by = f_col1.selectbox("Sıralama Ölçütü", ["Tarihe Göre (En Yakın)", "Eklenme Zamanına Göre (En Yeni)"])
             filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
+
+        # RADAR ÖZELLİĞİNİN VİTRİNE EKLENMESİ (ZEHİRLİ YEŞİL VURGULU)
+        with st.expander("📡 Aradığınız ilanı bulamadınız mı? Radarı kurun, eşleşme anında haber verelim!"):
+            st.markdown("<div class='radar-header'></div>", unsafe_allow_html=True) 
+            st.caption("Aşağıdaki kriterlerinize uyan yeni bir ilan havuza eklendiğinde, sistem size otomatik e-posta gönderir.")
+            radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
+            with st.form("radar_form_main"):
+                r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
+                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
+                r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
+                r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
+                if st.form_submit_button("Radar Tercihlerini Kaydet"):
+                    me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
+                    users_db[st.session_state.current_user] = me
+                    if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
+                        st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
+                        st.rerun()
             
         active_invites = [i for i in invites if i.get('status') == 'active' and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
@@ -666,7 +686,6 @@ def main_app():
             
         filtered_active_invites = active_only + expired_only
         
-        # MADDE 8: SOSYAL KANIT
         matched_invs = [i for i in invites if i.get('status') == 'matched']
         if matched_invs:
             st.markdown("#### 🤝 Son Eşleşen Maçlar")
@@ -710,10 +729,11 @@ def main_app():
                         if s == "expired":
                             st.button("Teklif Gönder", key=f"inv_exp_{inv.get('id')}", disabled=True, use_container_width=True)
                         else:
-                            # MADDE 3: ÇİFT İSTEK (SPAM) ENGELİ
-                            btn_key = f"inv_req_{inv.get('id')}"
-                            if st.button("🎾 Teklif Gönder", key=btn_key, disabled=st.session_state.get(btn_key, False), use_container_width=True):
-                                st.session_state[btn_key] = True
+                            # HATA DÜZELTİLDİ: Widget Key ve State Kilit Key'i ayrıldı.
+                            w_key = f"btn_req_{inv.get('id')}"
+                            lock_key = f"lock_{inv.get('id')}"
+                            if st.button("🎾 Teklif Gönder", key=w_key, disabled=st.session_state.get(lock_key, False), use_container_width=True):
+                                st.session_state[lock_key] = True
                                 new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(datetime.datetime.now())}
                                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
                                     st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
@@ -745,7 +765,6 @@ def main_app():
         inv_note = st.text_area("İlan Notu / Açıklama (İsteğe bağlı)", key="inv_note")
         
         if st.button("📢 İlanı Yayınla", use_container_width=True):
-            # MADDE 4: MÜKERRER İLAN ENGELİ
             zaten_var = any(
                 i.get('creator') == st.session_state.current_user and 
                 i.get('date') == str(d) and 
@@ -919,7 +938,6 @@ def main_app():
                         st.session_state.edit_my_active = my_inv.get('id')
                         st.rerun()
                         
-                    # MADDE 9: SİLME ONAY DİYALOĞU
                     if col_i2.button("🗑️ İlanı Kaldır", key=f"del_myinv_{my_inv.get('id')}"):
                         dialog_delete_invite(my_inv.get('id'))
                             
@@ -981,11 +999,9 @@ def main_app():
                                 st.rerun()
 
                     c_opt1, c_opt2 = st.columns(2)
-                    # MADDE 9: İPTAL ONAY DİYALOĞU
                     if c_opt1.button("🗑️ Maçı İptal Et", key=f"btn_del_acc_{acc['id']}"): 
                         dialog_cancel_match(acc['id'], republish=False)
 
-                    # MADDE 5: YETKİ KONTROLÜ (Sadece İlan Sahibi veya Özel Maç Göndereni Yeniden Yayınlayabilir)
                     can_republish = False
                     if acc.get('type') == 'invite_request':
                         target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
@@ -1026,7 +1042,6 @@ def main_app():
         valid_unrated = []
         late_cancels = []
 
-        # MADDE 6 ve MADDE 7: Zaman Analizi
         for m in messages:
             if m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user:
                 if st.session_state.current_user not in m.get('rated_by', []):
@@ -1044,7 +1059,6 @@ def main_app():
                     elif m.get('status') == 'cancelled_late' and m.get('cancelled_by') != st.session_state.current_user:
                         late_cancels.append(m)
 
-        # MADDE 7: Son Dakika İptali Değerlendirme Formu
         if late_cancels:
             st.error("🚨 Son Dakika İptalleri (Cezai Değerlendirme Bekleyen)")
             for lc in late_cancels:
@@ -1060,7 +1074,6 @@ def main_app():
                             st.session_state.show_toast = "Değerlendirmeniz sisteme işlendi."
                             st.rerun()
 
-        # MADDE 6: Normal Değerlendirme Formu
         if not valid_unrated and not late_cancels: 
             st.info("Değerlendirebileceğiniz tamamlanmış maç bulunmuyor. (Maç saati geçene kadar değerlendirme yapılamaz).")
         elif valid_unrated:
@@ -1149,20 +1162,6 @@ def main_app():
                     me.setdefault("privacy", {})["ghost"] = ghost; me.setdefault("privacy", {})["show_rating"] = show_r
                     users_db[st.session_state.current_user] = me
                     if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Gizlilik tercihleri kaydedildi! ✅"; st.rerun()
-
-            st.markdown("---")
-            st.subheader("📡 Radar Ayarları")
-            st.caption("Aşağıdaki kriterlerinize uyan yeni bir ilan havuza eklendiğinde, sistem size otomatik olarak haberci e-posta gönderir.")
-            radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
-            with st.form("radar_form"):
-                r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
-                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
-                r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
-                r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
-                if st.form_submit_button("📡 Radar Tercihlerini Kaydet"):
-                    me["radar"] = {"active": r_active, "courts": r_courts, "levels": r_levels, "types": r_types}
-                    users_db[st.session_state.current_user] = me
-                    if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"; st.rerun()
 
     # --- TAB 7: KORT REHBERİ ---
     with tabs[6]:
