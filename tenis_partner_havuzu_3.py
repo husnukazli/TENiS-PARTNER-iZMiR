@@ -77,19 +77,30 @@ st.markdown("""
         box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 6px 10px rgba(0,0,0,0.25);
         transform: translateY(-1px);
     }
+    
+    /* Seçim kutusunun kapalıyken görünen kendi metnini netleştirme */
     div[data-baseweb="select"] span {
-        font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 18px !important;
+        font-weight: 700 !important;
     }
     
-    /* Açılan listedeki maddelerin arasını açma ve büyütme */
-    div[data-baseweb="popover"] ul {
-        font-size: 1.15rem !important;
+    /* Açılır Menü (Aşağı sarkan liste) İçindeki Elemanları Agresif Büyütme */
+    div[data-baseweb="popover"] ul[role="listbox"] li {
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+        border-bottom: 1px solid #e0e0e0 !important;
     }
-    div[data-baseweb="popover"] li {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        border-bottom: 1px solid #f0f0f0;
+    
+    div[data-baseweb="popover"] ul[role="listbox"] li span {
+        font-size: 18px !important;
+        font-weight: 600 !important;
+        color: #1b5e20 !important;
+    }
+
+    /* Streamlit'in versiyon farklarına karşı alternatif (garanti) yakalama */
+    ul[role="listbox"] li span {
+        font-size: 18px !important;
+        font-weight: 600 !important;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
@@ -647,10 +658,10 @@ def login_page():
     st.markdown("<p style='text-align: center; font-size: 1.1em; color: gray;'>Oynamak istediğiniz şehri seçin</p>", unsafe_allow_html=True)
     
     col_btn1, col_btn2 = st.columns(2)
-    if col_btn1.button("İzmir Ağı", type="primary" if st.session_state["active_city"] == "İzmir" else "secondary", use_container_width=True):
+    if col_btn1.button("İzmir", type="primary" if st.session_state["active_city"] == "İzmir" else "secondary", use_container_width=True):
         st.session_state["active_city"] = "İzmir"
         st.rerun()
-    if col_btn2.button("Zonguldak Ağı", type="primary" if st.session_state["active_city"] == "Zonguldak" else "secondary", use_container_width=True):
+    if col_btn2.button("Zonguldak", type="primary" if st.session_state["active_city"] == "Zonguldak" else "secondary", use_container_width=True):
         st.session_state["active_city"] = "Zonguldak"
         st.rerun()
         
@@ -1580,7 +1591,7 @@ def main_app():
     # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
     elif secilen_sayfa == ana_menu_secenekleri[7]:
         st.subheader("📊 NTRP Seviye Rehberi")
-        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
+        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
         
         st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır. *\"Tenis kıyafetlerim çok güzel ama topla henüz tam anlaştığımız söylenemez.\"*")
         st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
