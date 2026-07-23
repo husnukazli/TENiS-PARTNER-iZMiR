@@ -424,7 +424,7 @@
             "show_rating": true
         },
         "radar": {
-            "active": false,
+            "active": true,
             "courts": [],
             "levels": [],
             "types": []
