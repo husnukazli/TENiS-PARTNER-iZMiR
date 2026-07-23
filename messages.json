@@ -404,6 +404,7 @@
         "court_custom": "Soyak Siesta 1. Etap",
         "fee_status": "Ücretsiz Kort / Abonelik",
         "fee_amount": "",
-        "status": "pending"
+        "status": "accepted",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260723T210000%2F20260723T223000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+Partner+%C3%BCzerinden+ayarland%C4%B1."
     }
 ]
