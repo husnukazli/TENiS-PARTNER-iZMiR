@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- SAYFA AYARLARI (HER ŞEYDEN ÖNCE GELMELİDİR) ---
-st.set_page_config(page_title="İzmir Tenis Partner Ağı", page_icon="🎾", layout="wide")
+st.set_page_config(page_title="Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
 import json
 import datetime
@@ -17,6 +17,14 @@ import urllib.parse
 import time
 from collections import Counter
 
+# --- SAAT DİLİMİ DÜZELTMESİ (UTC+3) ---
+import pytz
+TURKEY_TZ = pytz.timezone("Europe/Istanbul")
+
+def get_now():
+    """Tüm sistemde zaman kaymasını önleyen Türkiye Saati fonksiyonu."""
+    return datetime.datetime.now(TURKEY_TZ).replace(tzinfo=None)
+
 # Çerez (Cookie) yönetimi için kütüphane
 try:
     import extra_streamlit_components as stx
@@ -25,7 +33,6 @@ except ImportError:
     HAS_STX = False
     st.sidebar.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' kurun.")
 
-# DİKKAT: BİR ÖNCEKİ KODDA YANLIŞLIKLA SİLİNEN KISIM BURASIYDI
 if HAS_STX:
     cookie_manager = stx.CookieManager(key="cm_izmir")
 else:
@@ -93,16 +100,6 @@ st.markdown("""
 
 # --- SABİT VERİLER ---
 NTRP_LEVELS = ["1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0"]
-IZMIR_KORTLARI = [
-    "Kültürpark Tenis Kulübü (KTK)", "İnciraltı Büyükşehir Kortları", "Bostanlı Suat Taşer Kortları",
-    "Fuar Alanı (Celal Atik) Kortları", "Buca Tenis Kulübü", "Ege Üniversitesi Tenis Kortları",
-    "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları",
-    "Aşık Veysel Rekreasyon Alanı Kortları", "Hasanağa Bahçesi Kortları", "Diğer"
-]
-IZMIR_ILCELER = [
-    "Belirtilmemiş", "Balçova", "Bayraklı", "Bornova", "Buca", "Çiğli", "Gaziemir", 
-    "Güzelbahçe", "Karabağlar", "Karşıyaka", "Konak", "Narlıdere", "Urla", "Diğer Merkez Dışı"
-]
 ACTIVITY_TYPES = ["Maç", "Antrenman", "Ralli", "Fark Etmez"]
 COURT_STATUS = [
     "✅ Kort Kesin Rezerve Edildi (Hazır)",
@@ -114,6 +111,29 @@ FEE_STATUS_OPTIONS = [
     "Ücreti Bölüşeceğiz (Yarı Yarıya)", 
     "Ücreti Ben Karşılayacağım", 
     "Davetlinin Karşılaması Beklenir"
+]
+
+# ŞEHİR LİSTELERİ
+IZMIR_KORTLARI = [
+    "Kültürpark Tenis Kulübü (KTK)", "İnciraltı Büyükşehir Kortları", "Bostanlı Suat Taşer Kortları",
+    "Fuar Alanı (Celal Atik) Kortları", "Buca Tenis Kulübü", "Ege Üniversitesi Tenis Kortları",
+    "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları",
+    "Aşık Veysel Rekreasyon Alanı Kortları", "Hasanağa Bahçesi Kortları", "Diğer"
+]
+IZMIR_ILCELER = [
+    "Belirtilmemiş", "Balçova", "Bayraklı", "Bornova", "Buca", "Çiğli", "Gaziemir", 
+    "Güzelbahçe", "Karabağlar", "Karşıyaka", "Konak", "Narlıdere", "Urla", "Diğer Merkez Dışı"
+]
+
+ZONGULDAK_KORTLARI = [
+    "Zonguldak Tenis Deniz Kulübü (ZTDK - Fener)", "GSİM Fener Tenis Kortları",
+    "Zonguldak TTK Site Spor Tesisleri", "BEÜ Farabi Kampüsü Kortu",
+    "Kdz. Ereğli Tenis İhtisas Kulübü (ETİK)", "Kdz. Ereğli GSİM Beyçayırı Kortları",
+    "Kdz. Ereğli Belediyesi Erdemir Tesisleri", "Çaycuma GSİM Tenis Kortu",
+    "Devrek GSİM Tenis Kortu", "Diğer"
+]
+ZONGULDAK_ILCELER = [
+    "Belirtilmemiş", "Merkez", "Kdz. Ereğli", "Çaycuma", "Devrek", "Alaplı", "Kozlu", "Kilimli", "Gökçebey", "Diğer Merkez Dışı"
 ]
 
 # --- AYARLAR ---
@@ -128,6 +148,18 @@ INVITES_FILE_PATH = "invites.json"
 USERS_FILE_PATH = "users.json"
 MESSAGES_FILE_PATH = "messages.json"
 
+# --- OTURUM YÖNETİMİ ---
+if "active_city" not in st.session_state: st.session_state["active_city"] = "İzmir"
+
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'main_menu_secim']:
+    if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
+if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
+
+CURRENT_CITY = st.session_state["active_city"]
+DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner Ağı"
+ACTIVE_COURTS = IZMIR_KORTLARI if CURRENT_CITY == "İzmir" else ZONGULDAK_KORTLARI
+ACTIVE_DISTRICTS = IZMIR_ILCELER if CURRENT_CITY == "İzmir" else ZONGULDAK_ILCELER
+
 # --- YARDIMCI FONKSİYONLAR ---
 def hash_password(password): return hashlib.sha256(password.encode()).hexdigest()
 def generate_temp_password(length=8): return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -135,10 +167,10 @@ def generate_temp_password(length=8): return ''.join(random.choices(string.ascii
 def send_email(to_address, subject, message):
     if not SMTP_USER or not SMTP_PASS: return False
     try:
-        full_message = f"<html><body><h3 style='color: #2E7D32;'>🎾 İzmir Tenis Ağı</h3><p>{message}</p></body></html>"
+        full_message = f"<html><body><h3 style='color: #2E7D32;'>🎾 {DYNAMIC_TITLE}</h3><p>{message}</p></body></html>"
         msg = MIMEText(full_message, 'html', 'utf-8')
-        msg['Subject'] = f"[İzmir Tenis Ağı] {subject}"
-        msg['From'] = f"İzmir Tenis Ağı <{SMTP_USER}>"
+        msg['Subject'] = f"[{DYNAMIC_TITLE}] {subject}"
+        msg['From'] = f"{DYNAMIC_TITLE} <{SMTP_USER}>"
         msg['To'] = to_address
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         server.login(SMTP_USER, SMTP_PASS)
@@ -165,14 +197,14 @@ def generate_gcal_link(title, date_str, time_str, court_name):
         dates = f"{s}/{e}"
     except:
         dates = f"{date_str.replace('-','')}/{date_str.replace('-','')}"
-    params = {"text": title, "dates": dates, "location": court_name, "details": "İzmir Tenis Ağı üzerinden ayarlandı."}
+    params = {"text": title, "dates": dates, "location": court_name, "details": f"{DYNAMIC_TITLE} üzerinden ayarlandı."}
     return "https://calendar.google.com/calendar/render?action=TEMPLATE&" + urllib.parse.urlencode(params)
 
 def get_invite_status(inv_date, inv_time_details):
     try:
         t_str = inv_time_details.split('-')[0].strip()
         inv_dt = datetime.datetime.strptime(f"{inv_date} {t_str}", "%Y-%m-%d %H:%M")
-        now = datetime.datetime.utcnow() + datetime.timedelta(hours=3)
+        now = get_now()
         if now > inv_dt + datetime.timedelta(hours=12):
             return "removed"
         elif now > inv_dt:
@@ -264,7 +296,7 @@ def dialog_cancel_match(acc_id, republish=False):
                     m_dt = datetime.datetime.strptime(f"{target_inv.get('date')} {target_inv.get('time_details', '18:00').split('-')[0].strip()}", "%Y-%m-%d %H:%M")
                 else:
                     m_dt = datetime.datetime.strptime(f"{acc.get('date')} {acc.get('time', '18:00').split('-')[0].strip()}", "%Y-%m-%d %H:%M")
-                now_dt = datetime.datetime.now()
+                now_dt = get_now()
                 hours_left = (m_dt - now_dt).total_seconds() / 3600
                 is_late = (0 < hours_left <= 3)
             except:
@@ -309,11 +341,7 @@ def dialog_delete_invite(inv_id):
         st.rerun()
 
 
-# --- OTURUM YÖNETİMİ ---
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'main_menu_secim']:
-    if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
-if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
-
+# --- VERİ TABANI YÜKLEMESİ ---
 if 'db_users' not in st.session_state: st.session_state.db_users = load_data(USERS_FILE_PATH, dict)
 if 'db_invites' not in st.session_state: st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
 if 'db_messages' not in st.session_state: st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
@@ -354,10 +382,12 @@ def render_popover_profile(user_email, user_data, messages_db):
 
 # EŞLEŞMİŞ MAÇLARI ŞEFFAF GÖSTEREN YARDIMCI FONKSİYON
 def render_matched_invites(matched_invs, invites, messages, users_db):
-    if matched_invs:
+    # Şehre Göre Filtrele
+    city_matched = [i for i in matched_invs if i.get('city', 'İzmir') == CURRENT_CITY]
+    if city_matched:
         st.markdown("#### 🤝 Son Eşleşen Maçlar")
         st.caption("Aşağıdaki saatler doludur, kort çakışması yaşamamak için kontrol ediniz.")
-        for m_inv in sorted(matched_invs, key=lambda x: x.get('date', ''), reverse=True)[:5]:
+        for m_inv in sorted(city_matched, key=lambda x: x.get('date', ''), reverse=True)[:5]:
             creator_name = users_db.get(m_inv.get('creator'), {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
             acc_msg = next((m for m in messages if m.get('type') == 'invite_request' and m.get('invite_id') == m_inv.get('id') and m.get('status') == 'accepted'), None)
             if acc_msg:
@@ -413,7 +443,7 @@ def admin_dashboard():
                 user_options = {email: data.get('ad_soyad', email) for email, data in users_db.items() if isinstance(data, dict)}
                 selected_users = st.multiselect("Belirli Alıcıları Seç", options=list(user_options.keys()), format_func=lambda x: f"{user_options[x]} ({x})")
                 
-                msg_title = st.text_input("Duyuru Başlığı", "İzmir Tenis Ağı Sistem Duyurusu")
+                msg_title = st.text_input("Duyuru Başlığı", "Tenis Ağı Sistem Duyurusu")
                 msg_content = st.text_area("Mesajınız", placeholder="Örn: Hafta sonu yapılacak turnuva hakkında...")
                 
                 if st.form_submit_button("🚀 Duyuruyu Gönder", type="primary"):
@@ -436,7 +466,7 @@ def admin_dashboard():
                                         "title": msg_title,
                                         "content": msg_content,
                                         "status": "pending",
-                                        "timestamp": str(datetime.datetime.now())
+                                        "timestamp": str(get_now())
                                     }
                                     messages.append(new_msg)
                                     success_count += 1
@@ -454,7 +484,7 @@ def admin_dashboard():
                 c1, c2, c3 = st.columns([4, 2, 2])
                 status = "🔴 Askıda" if u_data.get("suspended") else ("⏸️ Dondurulmuş" if u_data.get("frozen") else "🟢 Aktif")
                 del_req_badge = " 🚨 [SİLME TALEBİ]" if u_data.get("delete_requested") else ""
-                c1.write(f"**{u_data.get('ad_soyad')}{del_req_badge}** | {u_email} | Durum: {status}")
+                c1.write(f"**{u_data.get('ad_soyad')}{del_req_badge}** | {u_email} | Durum: {status} | Şehir: {u_data.get('city_registered', 'İzmir')}")
                 
                 if not st.session_state.get(f"conf_susp_{u_email}", False):
                     if c2.button("Kaldır / Askıya Al", key=f"btn_susp_{u_email}"):
@@ -612,7 +642,21 @@ def admin_dashboard():
 def login_page():
     sidebar_pwa_guide()
     
-    st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 İzmir Tenis Partner Ağı</h1>", unsafe_allow_html=True)
+    # --- YENİ: ANA KAPI ŞEHİR SEÇİMİ ---
+    st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 Tenis Partner Ağı</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: 1.1em; color: gray;'>Oynamak istediğiniz şehri seçin</p>", unsafe_allow_html=True)
+    
+    col_btn1, col_btn2 = st.columns(2)
+    if col_btn1.button("İzmir Ağı", type="primary" if st.session_state["active_city"] == "İzmir" else "secondary", use_container_width=True):
+        st.session_state["active_city"] = "İzmir"
+        st.rerun()
+    if col_btn2.button("Zonguldak Ağı", type="primary" if st.session_state["active_city"] == "Zonguldak" else "secondary", use_container_width=True):
+        st.session_state["active_city"] = "Zonguldak"
+        st.rerun()
+        
+    st.markdown("---")
+    
+    CURRENT_CITY = st.session_state["active_city"]
     
     users_db = st.session_state.db_users
     invites = st.session_state.db_invites
@@ -656,7 +700,7 @@ def login_page():
                                 st.session_state.logged_in = True
                                 st.session_state.current_user = email
                                 if remember and cookie_manager:
-                                    cookie_manager.set("remember_user", email, expires_at=datetime.datetime.now() + datetime.timedelta(days=30))
+                                    cookie_manager.set("remember_user", email, expires_at=get_now() + datetime.timedelta(days=30))
                                 st.rerun()
                         else: st.error("Hatalı e-posta veya şifre!")
             with t2:
@@ -666,7 +710,11 @@ def login_page():
                     reg_name = st.text_input("Ad Soyad (Zorunlu)", key="reg_name")
                     reg_level = st.selectbox("Seviyeniz (NTRP)", NTRP_LEVELS, index=5, key="reg_lvl")
                     
-                    reg_ilce_secim = st.selectbox("Yaşadığınız Bölge / İlçe", IZMIR_ILCELER, key="reg_ilce")
+                    # Şehir ve Dinamik İlçe Seçimi
+                    reg_city = st.selectbox("Bulunduğunuz Şehir (Ana Ağınız)", ["İzmir", "Zonguldak"], key="reg_city")
+                    districts_to_show = IZMIR_ILCELER if reg_city == "İzmir" else ZONGULDAK_ILCELER
+                    
+                    reg_ilce_secim = st.selectbox("Yaşadığınız Bölge / İlçe", districts_to_show, key="reg_ilce")
                     if reg_ilce_secim == "Diğer Merkez Dışı": 
                         reg_ilce_custom = st.text_input("Lütfen ilçe/bölge adını yazın:", key="reg_ilce_cust")
                     else: reg_ilce_custom = ""
@@ -680,7 +728,7 @@ def login_page():
                         else:
                             code = str(random.randint(100000, 999999))
                             st.session_state.reg_code = code
-                            st.session_state.reg_data = {"email": reg_email, "pass": hash_password(reg_pass), "name": reg_name.strip(), "level": reg_level, "ilce": final_ilce}
+                            st.session_state.reg_data = {"email": reg_email, "pass": hash_password(reg_pass), "name": reg_name.strip(), "level": reg_level, "city": reg_city, "ilce": final_ilce}
                             send_email(reg_email, "Hesap Doğrulama Kodu", f"Sisteme kayıt için doğrulama kodunuz: <b>{code}</b>")
                             st.session_state.reg_step = "verify"; st.rerun()
                 elif st.session_state.reg_step == "verify":
@@ -692,14 +740,15 @@ def login_page():
                                 d = st.session_state.reg_data
                                 users_db[d["email"]] = {
                                     "password_hash": d["pass"], "ad_soyad": d["name"], "level": d["level"],
-                                    "ilce": d.get("ilce", "Belirtilmemiş"), "suspended": False, "frozen": False, 
+                                    "city_registered": d.get("city", "İzmir"), "ilce": d.get("ilce", "Belirtilmemiş"),
+                                    "suspended": False, "frozen": False, 
                                     "delete_requested": False, "is_bot": False, "phone": "", "contact_visibility": "eslesince",
                                     "privacy": {"ghost": False, "show_rating": True},
                                     "radar": {"active": False, "courts": [], "levels": [], "types": []},
                                     "ratings": {"zaman": [], "seviye": [], "davranis": []}
                                 }
                                 if save_data(USERS_FILE_PATH, users_db, 'db_users'):
-                                    send_email(ADMIN_EMAIL, "🔔 Yeni Üye Kaydı", f"Sisteme yeni bir üye katıldı!<br><br><b>Ad Soyad:</b> {d['name']}<br><b>E-posta:</b> {d['email']}<br><b>Seviye:</b> {d['level']}<br><b>İlçe:</b> {d.get('ilce', 'Belirtilmemiş')}")
+                                    send_email(ADMIN_EMAIL, "🔔 Yeni Üye Kaydı", f"Sisteme yeni bir üye katıldı!<br><br><b>Ad Soyad:</b> {d['name']}<br><b>E-posta:</b> {d['email']}<br><b>Şehir:</b> {d.get('city', 'İzmir')}<br><b>Seviye:</b> {d['level']}<br><b>İlçe:</b> {d.get('ilce', 'Belirtilmemiş')}")
                                     st.session_state.reg_step = "form"
                                     st.session_state.show_toast = "Kayıt başarılı! 🎉 Giriş yapabilirsiniz."
                                     st.rerun()
@@ -721,10 +770,11 @@ def login_page():
                             else: st.error("⚠️ Veritabanı hatası.")
                         else: st.error("Sistemde böyle bir e-posta bulunamadı.")
     else:
-        st.markdown("### ☀️ Güncel İlanlar")
+        st.markdown(f"### ☀️ {CURRENT_CITY} Güncel İlanları")
         st.write("Aşağıdaki ilanlara teklif göndermek için yukarıdan giriş yapmalısınız.")
         
-        active_inv = [i for i in invites if i.get('status') == 'active' and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
+        # Seçili Şehre Göre Filtreleme
+        active_inv = [i for i in invites if i.get('status') == 'active' and i.get('city', 'İzmir') == CURRENT_CITY and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
         
         filtered_active = []
         for inv in active_inv:
@@ -740,7 +790,7 @@ def login_page():
         
         filtered_active = active_only + expired_only
         
-        if not filtered_active: st.info("Şu an havuzda aktif ilan bulunmuyor.")
+        if not filtered_active: st.info(f"Şu an {CURRENT_CITY} havuzunda aktif ilan bulunmuyor.")
         for inv, s in filtered_active[:8]:
             with st.container(border=True):
                 k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
@@ -800,8 +850,13 @@ def main_app():
     my_rating_display = f"{my_rating:.1f}" if me.get("privacy", {}).get("show_rating", True) else "Gizli"
     my_inbox_count = len([m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending'])
 
+    # Seçili Şehir Durumu
+    CURRENT_CITY = st.session_state["active_city"]
+    ACTIVE_COURTS = IZMIR_KORTLARI if CURRENT_CITY == "İzmir" else ZONGULDAK_KORTLARI
+    DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner Havuzu"
+
     c_head1, c_head2, c_head3 = st.columns([5, 2, 2])
-    c_head1.write("### 🎾 İzmir Tenis Partner Havuzu")
+    c_head1.write(f"### 🎾 {DYNAMIC_TITLE}")
     if me.get('frozen'): c_head1.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır.")
     
     c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {my_rating_display}")
@@ -850,7 +905,7 @@ def main_app():
         with st.expander("🔍 İlanları Filtrele ve Sırala"):
             f_col1, f_col2, f_col3 = st.columns(3)
             sort_by = f_col1.selectbox("Sıralama Ölçütü", ["Tarihe Göre (En Yakın)", "Eklenme Zamanına Göre (En Yeni)"])
-            filter_court = f_col2.multiselect("Kort Filtresi", IZMIR_KORTLARI)
+            filter_court = f_col2.multiselect("Kort Filtresi", ACTIVE_COURTS)
             filter_level = f_col3.multiselect("Seviye Filtresi", NTRP_LEVELS)
 
         st.markdown("""
@@ -868,7 +923,8 @@ def main_app():
             radar_data = me.get("radar", {"active": False, "courts": [], "levels": [], "types": []})
             with st.form("radar_form_main"):
                 r_active = st.toggle("📡 Radarı Aktif Et", value=radar_data.get("active", False))
-                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", IZMIR_KORTLARI, default=radar_data.get("courts", []))
+                # Radarda da seçili şehrin kortları görünsün
+                r_courts = st.multiselect("Kortlar (Boş bırakılırsa tümü)", ACTIVE_COURTS, default=[c for c in radar_data.get("courts", []) if c in ACTIVE_COURTS])
                 r_levels = st.multiselect("NTRP Seviyeleri (Boş bırakılırsa tümü)", NTRP_LEVELS, default=radar_data.get("levels", []))
                 r_types = st.multiselect("Etkinlik Tipleri", ACTIVITY_TYPES, default=radar_data.get("types", []))
                 if st.form_submit_button("Radar Tercihlerini Kaydet", type="primary"):
@@ -878,7 +934,8 @@ def main_app():
                         st.session_state.show_toast = "Radar ayarlarınız kaydedildi! 📡"
                         st.rerun()
             
-        active_invites = [i for i in invites if i.get('status') == 'active' and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
+        # Sadece Seçili Şehrin İlanları
+        active_invites = [i for i in invites if i.get('status') == 'active' and i.get('city', 'İzmir') == CURRENT_CITY and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
         if filter_court: active_invites = [i for i in active_invites if i.get('court') in filter_court]
         if filter_level: active_invites = [i for i in active_invites if any(l in filter_level for l in i.get('levels', []))]
         
@@ -943,7 +1000,7 @@ def main_app():
                             lock_key = f"lock_{inv.get('id')}"
                             if st.button("🎾 Teklif Gönder", key=w_key, type="primary", disabled=st.session_state.get(lock_key, False), use_container_width=True):
                                 st.session_state[lock_key] = True
-                                new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(datetime.datetime.now())}
+                                new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(get_now())}
                                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
                                     st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
                                     st.rerun()
@@ -951,7 +1008,7 @@ def main_app():
 
     # --- SAYFA 1: İLAN OLUŞTUR ---
     elif secilen_sayfa == ana_menu_secenekleri[1]:
-        st.subheader("➕ Yeni İlan Yayınla")
+        st.subheader(f"➕ {CURRENT_CITY} İçin Yeni İlan Yayınla")
         if me.get('frozen'): st.warning("⚠️ Hesabınız dondurulmuş. İlanınız vitrinde görünmez.")
             
         c1, c2 = st.columns(2)
@@ -960,7 +1017,8 @@ def main_app():
         t_start = c_t1.time_input("Başlangıç Saati", datetime.time(18, 0), key="inv_start")
         t_end = c_t2.time_input("Bitiş Saati", datetime.time(19, 30), key="inv_end")
         
-        court = c2.selectbox("Kort / Saha", IZMIR_KORTLARI, key="inv_court")
+        # Dinamik Şehir Kortları
+        court = c2.selectbox("Kort / Saha", ACTIVE_COURTS, key="inv_court")
         court_custom = c2.text_input("Diğer ise Kort Adını Yazın:", key="inv_court_cust") if court == "Diğer" else ""
         court_status = c2.selectbox("Kort Rezervasyon Durumu", COURT_STATUS, key="inv_c_status")
         
@@ -989,7 +1047,14 @@ def main_app():
             elif court == "Diğer" and not court_custom.strip(): st.error("Lütfen Kort Adı alanını doldurun.")
             elif t_start >= t_end: st.error("Bitiş saati başlangıç saatinden sonra olmalıdır.")
             else:
-                new_inv = {"id": str(uuid.uuid4()), "creator": st.session_state.current_user, "date": str(d), "time_details": f"{t_start.strftime('%H:%M')} - {t_end.strftime('%H:%M')}", "court": court, "court_custom": court_custom, "court_status": court_status, "fee_status": fee_status, "fee_amount": fee_amount.strip(), "type": act_type, "levels": levels, "status": "active", "note": inv_note, "created_at": str(datetime.datetime.now())}
+                new_inv = {
+                    "id": str(uuid.uuid4()), "creator": st.session_state.current_user, 
+                    "city": CURRENT_CITY, # Şehir parametresi ilana yazılıyor
+                    "date": str(d), "time_details": f"{t_start.strftime('%H:%M')} - {t_end.strftime('%H:%M')}", 
+                    "court": court, "court_custom": court_custom, "court_status": court_status, 
+                    "fee_status": fee_status, "fee_amount": fee_amount.strip(), "type": act_type, 
+                    "levels": levels, "status": "active", "note": inv_note, "created_at": str(get_now())
+                }
                 if save_data(INVITES_FILE_PATH, invites + [new_inv], 'db_invites'):
                     for u_email, u_data in users_db.items():
                         if u_email == st.session_state.current_user or not isinstance(u_data, dict) or u_data.get('frozen') or u_data.get('suspended'): continue
@@ -1006,7 +1071,8 @@ def main_app():
         c_title.subheader("👥 Oyuncu Listesi")
         sort_users = c_sort.selectbox("Üyeleri Sırala:", ["İsme Göre (A-Z)", "Seviyeye Göre (Yüksekten Düşüğe)", "Puana Göre (Popülerlik)", "Bölgeye Göre (İlçe)"])
         
-        user_list = [(e, d, calculate_rating(d.get('ratings')), float(d.get('level', '3.5')) if str(d.get('level')).replace('.','').isdigit() else 3.5) for e, d in users_db.items() if isinstance(d, dict) and e != st.session_state.current_user and not d.get("privacy", {}).get("ghost") and not d.get("frozen") and not d.get("suspended")]
+        # Seçili Şehrin Üyeleri
+        user_list = [(e, d, calculate_rating(d.get('ratings')), float(d.get('level', '3.5')) if str(d.get('level')).replace('.','').isdigit() else 3.5) for e, d in users_db.items() if isinstance(d, dict) and e != st.session_state.current_user and not d.get("privacy", {}).get("ghost") and not d.get("frozen") and not d.get("suspended") and d.get('city_registered', 'İzmir') == CURRENT_CITY]
         
         if sort_users == "İsme Göre (A-Z)": user_list.sort(key=lambda x: x[1].get('ad_soyad', '').lower())
         elif sort_users == "Seviyeye Göre (Yüksekten Düşüğe)": user_list.sort(key=lambda x: x[3], reverse=True)
@@ -1021,7 +1087,7 @@ def main_app():
             c_o1, c_o2 = st.columns(2)
             o_t1 = c_o1.time_input("Başlangıç", datetime.time(18, 0), key="do_t1")
             o_t2 = c_o2.time_input("Bitiş", datetime.time(19, 30), key="do_t2")
-            o_court = st.selectbox("Kort Önerisi", IZMIR_KORTLARI, key="do_court")
+            o_court = st.selectbox("Kort Önerisi", ACTIVE_COURTS, key="do_court")
             o_custom = st.text_input("Diğer ise belirtin:", key="do_cust") if o_court == "Diğer" else ""
             
             o_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, key="do_fee_stat")
@@ -1180,7 +1246,12 @@ def main_app():
                 st.subheader("✏️ İlanı Güncelle")
                 with st.form("edit_my_active_form"):
                     ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
-                    ed_court = st.selectbox("Yeni Kort", IZMIR_KORTLARI, index=IZMIR_KORTLARI.index(e_inv.get('court')) if e_inv.get('court') in IZMIR_KORTLARI else 0)
+                    
+                    # Düzenleme sırasında da dinamik kortlar (Kayıtlı olduğu şehre göre)
+                    city_for_edit = e_inv.get('city', 'İzmir')
+                    courts_for_edit = IZMIR_KORTLARI if city_for_edit == "İzmir" else ZONGULDAK_KORTLARI
+                    
+                    ed_court = st.selectbox("Yeni Kort", courts_for_edit, index=courts_for_edit.index(e_inv.get('court')) if e_inv.get('court') in courts_for_edit else 0)
                     ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
                     ed_fee_amount = st.text_input("Kort Ücreti Tutarı", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
                     ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
@@ -1229,7 +1300,7 @@ def main_app():
                                 st.write(chat["text"]); st.caption(chat["timestamp"])
                         
                         if new_msg := st.chat_input("Mesajınızı yazın...", key=f"chat_input_{acc['id']}"):
-                            acc.setdefault("chat_history", []).append({"sender": st.session_state.current_user, "text": new_msg, "timestamp": datetime.datetime.now().strftime("%d-%m %H:%M")})
+                            acc.setdefault("chat_history", []).append({"sender": st.session_state.current_user, "text": new_msg, "timestamp": get_now().strftime("%d-%m %H:%M")})
                             if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
                                 send_email(partner_e, f"💬 Yeni Mesaj: {m_date} Maçı", f"Partneriniz <b>{me.get('ad_soyad')}</b> mesaj gönderdi:<br>\"{new_msg}\"")
                                 st.rerun()
@@ -1274,7 +1345,7 @@ def main_app():
     elif secilen_sayfa == ana_menu_secenekleri[4]:
         st.subheader("⚖️ Maç Sonrası Değerlendirme")
         
-        now_dt = datetime.datetime.now()
+        now_dt = get_now()
         valid_unrated = []
         late_cancels = []
 
@@ -1343,7 +1414,12 @@ def main_app():
             st.text_input("E-Posta Adresi (Değiştirilemez)", value=st.session_state.current_user, disabled=True, key="prof_mail")
             ad = st.text_input("Ad Soyad", value=me.get("ad_soyad", ""), key="prof_ad")
             phone = st.text_input("Telefon Numarası", value=me.get("phone", ""), key="prof_tel")
-            ilce = st.selectbox("Bölge / İlçe", IZMIR_ILCELER, index=IZMIR_ILCELER.index(me.get("ilce", "Belirtilmemiş")) if me.get("ilce") in IZMIR_ILCELER else 0, key="prof_ilce")
+            
+            # Dinamik Şehir Seçimi Profilde de Görünmeli
+            city_reg = st.selectbox("Ana Şehir Ağı", ["İzmir", "Zonguldak"], index=0 if me.get("city_registered", "İzmir") == "İzmir" else 1, key="prof_city")
+            prof_districts = IZMIR_ILCELER if city_reg == "İzmir" else ZONGULDAK_ILCELER
+            
+            ilce = st.selectbox("Bölge / İlçe", prof_districts, index=prof_districts.index(me.get("ilce", "Belirtilmemiş")) if me.get("ilce") in prof_districts else 0, key="prof_ilce")
             level = st.selectbox("NTRP Oyuncu Seviyeniz", NTRP_LEVELS, index=NTRP_LEVELS.index(me.get("level", "3.5")) if me.get("level") in NTRP_LEVELS else 5, key="prof_lvl")
             
             me_style = me.get("style", "All-Rounder")
@@ -1352,7 +1428,7 @@ def main_app():
             style_custom = st.text_input("Diğer ise Oyun Tarzınızı Yazın:", value=me_style if me_style not in style_opts[:-1] else "", key="prof_style_cust") if style_sel == "Diğer" else ""
 
             if st.button("💾 Profili Güncelle", type="primary", use_container_width=True):
-                me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "ilce": ilce, "level": level, "style": style_custom.strip() if style_sel == "Diğer" else style_sel})
+                me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "city_registered": city_reg, "ilce": ilce, "level": level, "style": style_custom.strip() if style_sel == "Diğer" else style_sel})
                 users_db[st.session_state.current_user] = me
                 if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Profil güncellendi! ✅"; st.rerun()
 
@@ -1402,67 +1478,104 @@ def main_app():
 
     # --- SAYFA 6: KORT REHBERİ ---
     elif secilen_sayfa == ana_menu_secenekleri[6]:
-        st.subheader("📍 İzmir Kort ve Tesis Rehberi")
-        st.markdown("İzmir'deki popüler tenis kortlarının ve kulüplerinin güncel iletişim, adres ve rezervasyon bilgilerine buradan ulaşabilirsiniz.")
+        st.subheader(f"📍 {CURRENT_CITY} Kort ve Tesis Rehberi")
+        st.markdown("Popüler tenis kortlarının ve kulüplerinin güncel iletişim, adres ve rezervasyon bilgilerine buradan ulaşabilirsiniz.")
         
         c_rehber1, c_rehber2 = st.columns(2)
         
-        with c_rehber1:
-            st.markdown("### 🏛️ Belediye Kortları")
-            
-            with st.expander("Bostanlı Suat Taşer / Rekreasyon Kortları", expanded=True):
-                st.markdown("**📍 Adres:** Mavişehir / Bostanlı Sahil Şeridi, Karşıyaka")
-                st.markdown("**📞 Telefon:** 0(232) 362 48 28 - 0(232) 294 21 72")
-                st.markdown("**🌐 Rezervasyon:** online.izmir.bel.tr")
-                st.caption("Not: İzmir Büyükşehir Belediyesi'ne bağlıdır.")
-
-            with st.expander("İnciraltı Spor Tesisleri (İzmir BŞB)"):
-                st.markdown("**📍 Adres:** İnciraltı Açıkhava Tiyatrosu Altı, Balçova")
-                st.markdown("**📞 Telefon:** 0(232) 294 22 98 - 0(232) 425 04 21")
+        if CURRENT_CITY == "İzmir":
+            with c_rehber1:
+                st.markdown("### 🏛️ Belediye Kortları")
                 
-            with st.expander("Fuar Alanı (Celal Atik) Kortları"):
-                st.markdown("**📍 Adres:** Kültürpark İçi (Fuar Alanı), Konak")
-                st.markdown("**📞 Telefon:** 0(232) 425 04 21")
+                with st.expander("Bostanlı Suat Taşer / Rekreasyon Kortları", expanded=True):
+                    st.markdown("**📍 Adres:** Mavişehir / Bostanlı Sahil Şeridi, Karşıyaka")
+                    st.markdown("**📞 Telefon:** 0(232) 362 48 28 - 0(232) 294 21 72")
+                    st.markdown("**🌐 Rezervasyon:** online.izmir.bel.tr")
+                    st.caption("Not: İzmir Büyükşehir Belediyesi'ne bağlıdır.")
 
-            with st.expander("Aşık Veysel Rekreasyon Alanı Kortları"):
-                st.markdown("**📍 Adres:** Kızılay Mah., Aşık Veysel Rekreasyon Alanı İçi, Bornova")
-                st.caption("Not: Halka açık kortlardır. Çoğunlukla rezervasyon sistemi yoktur (gel-sıra bekle-oyna mantığıyla çalışır).")
+                with st.expander("İnciraltı Spor Tesisleri (İzmir BŞB)"):
+                    st.markdown("**📍 Adres:** İnciraltı Açıkhava Tiyatrosu Altı, Balçova")
+                    st.markdown("**📞 Telefon:** 0(232) 294 22 98 - 0(232) 425 04 21")
+                    
+                with st.expander("Fuar Alanı (Celal Atik) Kortları"):
+                    st.markdown("**📍 Adres:** Kültürpark İçi (Fuar Alanı), Konak")
+                    st.markdown("**📞 Telefon:** 0(232) 425 04 21")
 
-            with st.expander("Hasanağa Bahçesi Kortları"):
-                st.markdown("**📍 Adres:** Adatepe Mah., Hasanağa Bahçesi İçi, Buca")
-                st.caption("Not: Buca Belediyesi'ne bağlı halka açık kortlardır. Genellikle doğrudan gidilip müsaitlik durumuna göre kullanılır.")
+                with st.expander("Aşık Veysel Rekreasyon Alanı Kortları"):
+                    st.markdown("**📍 Adres:** Kızılay Mah., Aşık Veysel Rekreasyon Alanı İçi, Bornova")
+                    st.caption("Not: Halka açık kortlardır. Çoğunlukla rezervasyon sistemi yoktur.")
+
+                with st.expander("Hasanağa Bahçesi Kortları"):
+                    st.markdown("**📍 Adres:** Adatepe Mah., Hasanağa Bahçesi İçi, Buca")
+                    st.caption("Not: Buca Belediyesi'ne bağlı halka açık kortlardır.")
+                    
+                with st.expander("Buca Tenis Kulübü (Buca Belediyesi)"):
+                    st.markdown("**📍 Adres:** Şirinkapı Mah. Yavuz Sultan Selim Cad. No:78/1, Buca")
+                    st.markdown("**📞 Telefon:** 0(232) 442 61 61")
+
+                with st.expander("Gaziemir Belediyesi / Gaziemir Tenis Kulübü"):
+                    st.markdown("**📍 Adres:** Gazikent Mah. Gazi Atatürk Bulvarı No:14, Gaziemir")
+                    st.markdown("**📞 Telefon:** 0(232) 274 42 97 - 0(232) 252 48 27")
+                    
+            with c_rehber2:
+                st.markdown("### 🏆 Özel Tenis Kulüpleri")
                 
-            with st.expander("Buca Tenis Kulübü (Buca Belediyesi)"):
-                st.markdown("**📍 Adres:** Şirinkapı Mah. Yavuz Sultan Selim Cad. No:78/1, Buca")
-                st.markdown("**📞 Telefon:** 0(232) 442 61 61")
-                st.markdown("**🌐 Web:** bucatenis.com")
+                with st.expander("Kültürpark Tenis Kulübü (KTK)", expanded=True):
+                    st.markdown("**📍 Adres:** Mimar Sinan Mah. Fuar İçi No:103, Alsancak / Konak")
+                    st.markdown("**📞 Telefon:** 0(232) 483 33 52")
+                    st.caption("Not: Tesis içerisindeki korta giriş kuralları kulüp üyeliği durumuna göre değişebilir.")
 
-            with st.expander("Gaziemir Belediyesi / Gaziemir Tenis Kulübü"):
-                st.markdown("**📍 Adres:** Gazikent Mah. Gazi Atatürk Bulvarı No:14, Gaziemir")
-                st.markdown("**📞 Telefon:** 0(232) 274 42 97 - 0(232) 252 48 27")
+                with st.expander("Küçük Kulüp Alliance"):
+                    st.markdown("**📍 Adres:** Kültür Mah. 1383 Sokak No:18, Alsancak / Konak")
+                    st.markdown("**📞 Telefon:** 0(232) 463 87 47")
+
+                with st.expander("Göztepe Tenis Kulübü"):
+                    st.markdown("**📍 Adres:** İnciraltı Mah. Mustafa Kemal Sahil Blv. Balçova")
+                    
+                with st.expander("Ege Üniversitesi Tenis Kortları"):
+                    st.markdown("**📍 Adres:** Ege Üniversitesi Kampüsü İçi, Bornova")
+                    st.markdown("**📞 Rezervasyon SKSDB:** 0(232) 311 10 10 (Santral)")
+        else:
+            with c_rehber1:
+                st.markdown("### 🏛️ Belediye ve Kurum Kortları")
                 
-        with c_rehber2:
-            st.markdown("### 🏆 Özel Tenis Kulüpleri")
-            
-            with st.expander("Kültürpark Tenis Kulübü (KTK)", expanded=True):
-                st.markdown("**📍 Adres:** Mimar Sinan Mah. Fuar İçi No:103, Alsancak / Konak")
-                st.markdown("**📞 Telefon:** 0(232) 483 33 52 - 0(530) 370 30 25")
-                st.markdown("**🌐 Web:** kptk.org")
-                st.caption("Not: Tesis içerisindeki korta giriş kuralları kulüp üyeliği veya misafir oyuncu statüsüne göre değişiklik gösterebilir.")
+                with st.expander("GSİM Fener Tenis Kortları", expanded=True):
+                    st.markdown("**📍 Adres:** Fener Spor Kompleksi İçi, Merkez")
+                    st.markdown("**📞 Telefon:** 0(372) 253 10 03")
+                    st.caption("Not: Gençlik ve Spor İl Müdürlüğü'ne bağlı halka açık kortlardır.")
 
-            with st.expander("Küçük Kulüp Alliance"):
-                st.markdown("**📍 Adres:** Kültür Mah. 1383 Sokak No:18, Alsancak / Konak")
-                st.markdown("**📞 Telefon:** 0(232) 463 87 47 - 0(232) 421 39 70")
-                st.markdown("**🌐 Web:** kucukkulup.org")
+                with st.expander("Zonguldak TTK Site Spor Tesisleri"):
+                    st.markdown("**📍 Adres:** Site Mahallesi Sosyal Tesisleri, Merkez")
+                    
+                with st.expander("BEÜ Farabi Kampüsü Kortu"):
+                    st.markdown("**📍 Adres:** İncivez / Farabi Kampüsü İçi, Merkez")
+                    st.markdown("**📞 Telefon:** 0(372) 257 40 10")
+                    
+                with st.expander("Kdz. Ereğli GSİM Beyçayırı Kortları"):
+                    st.markdown("**📍 Adres:** Beyçayırı Stadyumu Yanı, Kdz. Ereğli")
+                    st.markdown("**📞 Telefon:** 0(372) 323 10 24")
 
-            with st.expander("Göztepe Tenis Kulübü"):
-                st.markdown("**📍 Adres:** İnciraltı Mah. Mustafa Kemal Sahil Blv. Balçova (Göztepe Spor Tesisleri)")
-                st.caption("Not: Özel rezervasyon ve turnuva günleri için kulüp sekreterliği ile görüşülmesi tavsiye edilir.")
+                with st.expander("Kdz. Ereğli Belediyesi Erdemir Tesisleri"):
+                    st.markdown("**📍 Adres:** Sahil Bandı, Kdz. Ereğli")
+
+            with c_rehber2:
+                st.markdown("### 🏆 Özel Tenis Kulüpleri")
                 
-            with st.expander("Ege Üniversitesi Tenis Kortları"):
-                st.markdown("**📍 Adres:** Ege Üniversitesi Kampüsü İçi, Bornova")
-                st.markdown("**📞 Rezervasyon SKSDB:** 0(232) 311 10 10 (Santral)")
-                st.caption("Not: SKS (Sağlık Kültür ve Spor Daire Başkanlığı) üzerinden öğrenci/mezun/sivil statüsüne göre saatlik kiralanabilir.")
+                with st.expander("Zonguldak Tenis Deniz Kulübü (ZTDK)", expanded=True):
+                    st.markdown("**📍 Adres:** Fener Mahallesi Sahil Kenarı, Merkez")
+                    st.markdown("**📞 Telefon:** 0(372) 251 22 10")
+                    st.caption("Not: 1951 yılında kurulan köklü kulübümüz. Üyelik veya misafir kurallarına tabidir.")
+
+                with st.expander("Kdz. Ereğli Tenis İhtisas Kulübü (ETİK)"):
+                    st.markdown("**📍 Adres:** Kdz. Ereğli Merkez")
+                    st.markdown("**📞 Telefon:** 0(372) 316 11 22")
+                    
+                with st.expander("Çaycuma GSİM Tenis Kortu"):
+                    st.markdown("**📍 Adres:** Çaycuma İlçe Stadyumu Yanı, Çaycuma")
+                    st.markdown("**📞 Telefon:** 0(372) 615 10 32")
+
+                with st.expander("Devrek GSİM Tenis Kortu"):
+                    st.markdown("**📍 Adres:** Devrek Spor Kompleksi İçi, Devrek")
 
     # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
     elif secilen_sayfa == ana_menu_secenekleri[7]:
