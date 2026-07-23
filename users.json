@@ -511,5 +511,33 @@
             "seviye": [],
             "davranis": []
         }
+    },
+    "myuksel77@hotmail.com": {
+        "password_hash": "bf4297fd401334710b9657f5ca16b676450c4f1c314bce3fcb2910d68aa3f16d",
+        "ad_soyad": "Mine Karadeniz",
+        "level": "2.5",
+        "city_registered": "Zonguldak",
+        "ilce": "Merkez",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
     }
 }
