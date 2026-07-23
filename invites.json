@@ -1,0 +1,78 @@
+[
+    {
+        "id": "a385ea35-e448-4152-9f8e-b9e39ee4f1af",
+        "creator": "matmen1976@hotmail.com",
+        "date": "2026-07-22",
+        "time_details": "18:00 - 19:30",
+        "court": "Hasanağa Bahçesi Kortları",
+        "court_custom": "",
+        "court_status": "✅ Kort Kesin Rezerve Edildi (Hazır)",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "type": "Antrenman",
+        "levels": [
+            "4.5"
+        ],
+        "status": "matched",
+        "note": "",
+        "created_at": "2026-07-21 19:28:23.399183"
+    },
+    {
+        "id": "72ce3b11-65d4-4229-a0e6-126b639f0cfd",
+        "creator": "hkazli72@hotmail.com",
+        "date": "2026-07-22",
+        "time_details": "21:00 - 22:00",
+        "court": "Diğer",
+        "court_custom": "Soyak Siesta 1. Etap ",
+        "court_status": "✅ Kort Kesin Rezerve Edildi (Hazır)",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "type": "Ralli",
+        "levels": [
+            "5.0",
+            "4.5",
+            "5.5"
+        ],
+        "status": "matched",
+        "note": "",
+        "created_at": "2026-07-22 09:49:32.798130"
+    },
+    {
+        "id": "a660c407-0960-4498-9f7c-eb463fa473a4",
+        "creator": "hkazli72@hotmail.com",
+        "date": "2026-07-22",
+        "time_details": "21:00 - 22:00",
+        "court": "Diğer",
+        "court_custom": "SOYAK SİESTA 1. ETAP ",
+        "court_status": "✅ Kort Kesin Rezerve Edildi (Hazır)",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "type": "Ralli",
+        "levels": [
+            "4.5",
+            "5.0",
+            "5.5"
+        ],
+        "status": "matched",
+        "note": "",
+        "created_at": "2026-07-22 10:56:49.563643"
+    },
+    {
+        "id": "f33e59ab-63a4-4ddb-a66d-bccf95387c81",
+        "creator": "pskl.omerfarukmeric@gmail.com",
+        "date": "2026-07-24",
+        "time_details": "10:00 - 11:00",
+        "court": "Diğer",
+        "court_custom": "Karşıyaka soyak siesta Oxygen",
+        "court_status": "✅ Kort Kesin Rezerve Edildi (Hazır)",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "type": "Maç",
+        "levels": [
+            "5.5"
+        ],
+        "status": "matched",
+        "note": "",
+        "created_at": "2026-07-22 16:28:56.216333"
+    }
+]
