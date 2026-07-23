@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- SAYFA AYARLARI (HER ŞEYDEN ÖNCE GELMELİDİR) ---
-st.set_page_config(page_title="Tenis Partner Ağı", page_icon="🎾", layout="wide")
+st.set_page_config(page_title="Tenis Partner", page_icon="🎾", layout="wide")
 
 import json
 import datetime
