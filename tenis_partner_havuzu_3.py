@@ -1429,6 +1429,6 @@ def main_app():
 if not st.session_state.logged_in: login_page()
 elif st.session_state.is_admin: admin_dashboard()
 else: main_app()
-```[cite: 1]
+
 
 Kodumuzu baştan aşağı incelediğinde, sence İzmir veya Zonguldak dışından bir kullanıcı tesadüfen uygulamaya girip kendi şehrini bulamadığında bu kullanıcılardan potansiyel olarak nasıl faydalanabiliriz? (Örn: "Şehrim Yok" butonuyla yeni ağ talepleri toplamak gibi?)
