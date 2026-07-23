@@ -462,5 +462,33 @@
             "seviye": [],
             "davranis": []
         }
+    },
+    "sayman37@gmail.com": {
+        "password_hash": "e1816aa2d62953cd242035e0279248137e731faa8e35cf8292f18be55efa6c5e",
+        "ad_soyad": "İlker Bülent yazıcı",
+        "level": "3.5",
+        "city_registered": "Zonguldak",
+        "ilce": "Merkez",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
     }
 }
