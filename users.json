@@ -463,10 +463,10 @@
             "davranis": []
         }
     },
-    "hulya6771@gmail.com": {
-        "password_hash": "266bdcd34e6c8d7f6fc84c2ac0b2671cf3b49c0719e7ae2e4e23e15536fc3ca5",
-        "ad_soyad": "Hülya Tosun",
-        "level": "5.0",
+    "sayman37@gmail.com": {
+        "password_hash": "6f66930d08bcaa3c2c4631ea57195a4c27aa5d183cdd72384c69761e2afeb457",
+        "ad_soyad": "İlker Bülent yazıcı",
+        "level": "3.5",
         "city_registered": "Zonguldak",
         "ilce": "Merkez",
         "suspended": false,
