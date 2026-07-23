@@ -1,0 +1,410 @@
+{
+    "hkazli72@hotmail.com": {
+        "ad_soyad": "HÜSNÜ KAZLI",
+        "cinsiyet": "Erkek",
+        "seviye": "5.0",
+        "el": "Sağ El",
+        "telefon": "5557013825",
+        "bolge": "Karşıyaka",
+        "gizlilik": "Sadece eşleştiğim kişiler görebilir",
+        "password_hash": "dca9646726f98a04cdebdda98ded9bb2fc364789bbf4b43397ac19470a0df38f",
+        "password": "0ef0500cfdafb61f45a6f6937de2b55c80b0479d445bf8d38367efb46d8675a1",
+        "notif_prefs": {
+            "active": true,
+            "levels": [
+                "5.0",
+                "4.5",
+                "5.5"
+            ],
+            "courts": [
+                "İnciraltı Büyükşehir Kortları",
+                "Ege Üniversitesi Tenis Kortları"
+            ],
+            "types": [
+                "Maç",
+                "Antrenman",
+                "Ralli",
+                "Fark Etmez"
+            ]
+        },
+        "age": "54",
+        "hand": "Sağ",
+        "style": "Agresif Baseline",
+        "bio": "",
+        "privacy": {
+            "ghost": false,
+            "show_age": true,
+            "show_style": true,
+            "show_rating": false
+        },
+        "contact_visibility": "eslesince",
+        "phone": "5557013825",
+        "level": "5.0",
+        "radar": {
+            "active": true,
+            "courts": [],
+            "levels": [
+                "4.5",
+                "5.0",
+                "5.5"
+            ],
+            "types": [
+                "Fark Etmez"
+            ]
+        },
+        "ilce": "Karşıyaka"
+    },
+    "harika.tuncer@gmail.com": {
+        "password_hash": "e541191b40205ecde219a2850b92973d8686b8391fbf5344c7db083928914d3d",
+        "ad_soyad": "Harika Tuncer",
+        "suspended": false,
+        "is_bot": false,
+        "privacy": {
+            "ghost": false,
+            "show_age": true,
+            "show_style": true,
+            "show_rating": true
+        },
+        "notif_prefs": {
+            "active": false,
+            "levels": [],
+            "courts": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [
+                5,
+                3
+            ],
+            "seviye": [
+                5,
+                3
+            ],
+            "davranis": [
+                5,
+                3
+            ]
+        },
+        "phone": "00000000",
+        "ilce": "Karşıyaka",
+        "level": "4.5",
+        "style": "Agresif Baseline",
+        "radar": {
+            "active": false,
+            "courts": [
+                "Bostanlı Suat Taşer Kortları"
+            ],
+            "levels": [
+                "3.5"
+            ],
+            "types": [
+                "Antrenman"
+            ]
+        },
+        "contact_visibility": "herkes"
+    },
+    "erhanuygun@gmail.com": {
+        "password_hash": "62c991398cba791562690455685e4d33e68fddea8f8e5508076e61b1e98af7c8",
+        "ad_soyad": "Erhan Uygun",
+        "level": "4.5",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "ozemreozturk@gmail.com": {
+        "password_hash": "727cc8624fb95cdd8376584ea4fd73f8644d0c3d2391b74cd8d95d72be6d3f5a",
+        "ad_soyad": "Emre Öztürk",
+        "level": "4.5",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "egurpnar@yahoo.com": {
+        "password_hash": "8f4ff4a3de6f062f102f3a6cc47be57931dcd83330958f3033424099332d208e",
+        "ad_soyad": "Emine Gürpınar",
+        "level": "3.0",
+        "ilce": "Yeni foça",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "tuncer_goze@icloud.com": {
+        "password_hash": "a034d44d2a26106f88c513f95d3bcaa129887eaf6626bfb2907e8dcbe96aa4ff",
+        "ad_soyad": "Tuncer Göze",
+        "level": "4.5",
+        "ilce": "Çiğli",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "matmen1976@hotmail.com": {
+        "password_hash": "0f94a1ebb7b52549cac24e7073b4130477c64962926163183ee21f24cc9b48eb",
+        "ad_soyad": "Deniz Yusuf Özben",
+        "level": "4.5",
+        "ilce": "Aliağa",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": true,
+            "courts": [
+                "Diğer"
+            ],
+            "levels": [
+                "5.0"
+            ],
+            "types": [
+                "Antrenman"
+            ]
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "cngzoktay35@hotmail.com": {
+        "password_hash": "29a43dbc52043c66da86ce2148ca2cf3b4f0b3d10a21d90d9012acb2c52c020f",
+        "ad_soyad": "Cengiz Oktay",
+        "level": "6.0",
+        "ilce": "Buca",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "1polatberkant@gmail.com": {
+        "password_hash": "ff6df3b08a8ac215adf04ba2050bb52220a1c25362d24d6a045ad744896761b8",
+        "ad_soyad": "Berkant polat",
+        "level": "3.5",
+        "ilce": "Torbalı",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "bercemayla@hotmail.com": {
+        "password_hash": "dd9312ae4db32178476d4ec47999b4657162f76d0a49cf6f583da97e604ca2dc",
+        "ad_soyad": "Ayçin Ayla",
+        "level": "4.0",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "seyma.atabay8353@gmail.com": {
+        "password_hash": "ed808588668f3b80f902e8dffcc92a9777d98bc4b32dc231696c6ca99a1a8d8b",
+        "ad_soyad": "Seyma Atabayizm",
+        "level": "2.5",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    },
+    "huseyinaydogan@live.com": {
+        "password_hash": "a83c956864df4661d79d7f50ed9a005f709cef9c9e43bfb03fb6904a060083ea",
+        "ad_soyad": "Hüseyin aydoğan",
+        "level": "5.0",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        },
+        "style": "All-Rounder"
+    },
+    "pskl.omerfarukmeric@gmail.com": {
+        "password_hash": "72eeba0b478f4767d6101dd7dc9f7c0f75ea88844b119dd79d5eb32e083d122f",
+        "ad_soyad": "Ömer Faruk meriç",
+        "level": "5.5",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
+    }
+}
