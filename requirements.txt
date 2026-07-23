@@ -1,3 +1,5 @@
 streamlit
-PyGithub
+pytz
 extra-streamlit-components
+plotly
+PyGithub
