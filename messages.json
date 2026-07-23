@@ -1,0 +1,396 @@
+[
+    {
+        "id": "d9d92846-e21a-4f2b-b01b-6f9abcdfcaec",
+        "type": "invite_request",
+        "invite_id": "abfa6ff5-417e-45e4-86b6-1f04c2a70bd0",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bot3@test.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-20 08:22:06.896145",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T180000%2F20260722T193000&location=K%C3%BC%C3%A7%C3%BCk+Kul%C3%BCp+Alliance&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "rated_by": [
+            "hkazli72@hotmail.com"
+        ],
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "7cd091cf-f286-432e-b31a-476e9307b028",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bot2@test.com",
+        "date": "2026-07-20",
+        "time": "22:30 - 23:45",
+        "court": "Kültürpark Tenis Kulübü (KTK)",
+        "note": "REZERVASYON HAZIR MAÇ YAPAR MISIN",
+        "status": "cancelled",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260720T223000%2F20260721T000000&location=K%C3%BClt%C3%BCrpark+Tenis+Kul%C3%BCb%C3%BC+%28KTK%29&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "rated_by": [
+            "hkazli72@hotmail.com"
+        ],
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "46d0f3d6-d4b1-49cd-b9e2-ab242021d8aa",
+        "type": "invite_request",
+        "invite_id": "258cc177-be91-4931-ad0d-0513ce19a1fd",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bot3@test.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-20 08:42:02.232038",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T180000%2F20260722T193000&location=Buca+Tenis+Kul%C3%BCb%C3%BC&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "abc90ca4-0361-466e-9ba0-a1a8a34956a4",
+        "type": "invite_request",
+        "invite_id": "868cb766-4deb-4f4e-a485-ff66f5c49f82",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bot1@test.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-20 08:43:08.460381",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T180000%2F20260722T193000&location=Mavi%C5%9Fehir+%C5%9Eemikler+Kortlar%C4%B1&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "62bbf8ad-3aa4-4fe0-9d26-dbd4a6aad75e",
+        "type": "invite_request",
+        "invite_id": "78b0d8e3-48ea-4ff8-9b3a-6415da82dee4",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-20 09:58:19.876223",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260720T180000%2F20260720T193000&location=Kort&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "26c4fba2-3918-4c8f-b2fe-c0c95a3990f3",
+        "type": "invite_request",
+        "invite_id": "78b0d8e3-48ea-4ff8-9b3a-6415da82dee4",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "rejected",
+        "timestamp": "2026-07-20 09:58:22.649066",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "0cb33ce6-4f90-4a14-9171-74cad0b7b8d5",
+        "type": "invite_request",
+        "invite_id": "78b0d8e3-48ea-4ff8-9b3a-6415da82dee4",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "rejected",
+        "timestamp": "2026-07-20 09:58:27.705345",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "bd35ca57-ca16-42f9-9229-4454374b031d",
+        "type": "invite_request",
+        "invite_id": "78b0d8e3-48ea-4ff8-9b3a-6415da82dee4",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "rejected",
+        "timestamp": "2026-07-20 09:58:30.804612",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "cd95f596-2c94-49b0-a489-67426ac70618",
+        "type": "invite_request",
+        "invite_id": "78b0d8e3-48ea-4ff8-9b3a-6415da82dee4",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "rejected",
+        "timestamp": "2026-07-20 09:59:20.140959",
+        "hidden_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "48fb66c8-6055-4715-b4b6-9b644a34c9c0",
+        "type": "direct_challenge",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "date": "2026-07-20",
+        "time": "18:00 - 19:30",
+        "court": "Kültürpark Tenis Kulübü (KTK)",
+        "note": "Gel canısı ",
+        "status": "cancelled",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260720T180000%2F20260720T193000&location=K%C3%BClt%C3%BCrpark+Tenis+Kul%C3%BCb%C3%BC+%28KTK%29&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "rated_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "640d584d-4f48-42cd-b83e-e81aabb7456b",
+        "type": "invite_request",
+        "invite_id": "9325a46f-d7a7-4fd4-abce-1ab6a633ec52",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-20 10:35:04.895886",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260720%2F20260720&location=Ege+%C3%9Cniversitesi+Tenis+Kortlar%C4%B1&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1."
+    },
+    {
+        "id": "509d29dd-fcd4-49ed-9f94-331f2ffe4b5b",
+        "type": "invite_request",
+        "invite_id": "42e8e4ce-127e-462c-ae60-77da9b6250d5",
+        "sender": "harika.tuncer@gmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "accepted",
+        "timestamp": "2026-07-20 10:35:11.775858",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260720T180000%2F20260720T193000&location=Bostanl%C4%B1+Suat+Ta%C5%9Fer+Kortlar%C4%B1&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "chat_history": [
+            {
+                "sender": "hkazli72@hotmail.com",
+                "text": "kaçta gidiyoruz sabah",
+                "timestamp": "20-07 19:42"
+            },
+            {
+                "sender": "hkazli72@hotmail.com",
+                "text": "mesajım sana geliyor mu canım ?",
+                "timestamp": "20-07 19:57"
+            },
+            {
+                "sender": "harika.tuncer@gmail.com",
+                "text": "Geliyor da bildirim gelmiuor",
+                "timestamp": "20-07 20:07"
+            }
+        ],
+        "rated_by": [
+            "hkazli72@hotmail.com"
+        ]
+    },
+    {
+        "id": "ab03815a-d502-49e6-b8e9-40a5ad2bf803",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "erhanuygun@gmail.com",
+        "date": "2026-08-03",
+        "time": "19:00 - 20:00",
+        "court": "Diğer",
+        "court_custom": "",
+        "status": "accepted",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260803T190000%2F20260803T203000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "chat_history": [
+            {
+                "sender": "erhanuygun@gmail.com",
+                "text": "Maç iptali nasıl oluyo",
+                "timestamp": "20-07 20:07"
+            },
+            {
+                "sender": "erhanuygun@gmail.com",
+                "text": "AA tamam alttaymış",
+                "timestamp": "20-07 20:07"
+            }
+        ]
+    },
+    {
+        "id": "c8e4d212-63d8-4d79-9f9d-88e0081e9350",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "matmen1976@hotmail.com",
+        "date": "2026-07-22",
+        "time": "19:00 - 20:00",
+        "court": "Diğer",
+        "court_custom": "SOYAK SİESTA 1 ÜCRETSİZ KORT",
+        "status": "cancelled",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T190000%2F20260722T203000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "hidden_by": [
+            "matmen1976@hotmail.com"
+        ]
+    },
+    {
+        "id": "fafca8c9-9f29-41ab-a52d-22c5e3ce58b2",
+        "type": "invite_request",
+        "invite_id": "95641880-9897-48cd-9aa5-ced58d81ea32",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "matmen1976@hotmail.com",
+        "status": "cancelled",
+        "timestamp": "2026-07-21 19:19:06.558907",
+        "cancelled_by": "hkazli72@hotmail.com"
+    },
+    {
+        "id": "4c88035c-8565-4dbd-aaa1-dfbef0b5ad8e",
+        "type": "invite_request",
+        "invite_id": "a385ea35-e448-4152-9f8e-b9e39ee4f1af",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "matmen1976@hotmail.com",
+        "status": "accepted",
+        "timestamp": "2026-07-21 19:30:42.532506",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T180000%2F20260722T193000&location=Hasana%C4%9Fa+Bah%C3%A7esi+Kortlar%C4%B1&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "chat_history": [
+            {
+                "sender": "matmen1976@hotmail.com",
+                "text": "Hasanağa uzak olmuş aliağa olsun😃",
+                "timestamp": "21-07 19:36"
+            },
+            {
+                "sender": "hkazli72@hotmail.com",
+                "text": "ne zaman dönüş başkan",
+                "timestamp": "21-07 19:45"
+            }
+        ]
+    },
+    {
+        "id": "4884ae2e-e314-4438-afe6-0cf35cabd56f",
+        "type": "invite_request",
+        "invite_id": "72ce3b11-65d4-4229-a0e6-126b639f0cfd",
+        "sender": "matmen1976@hotmail.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "accepted",
+        "timestamp": "2026-07-22 10:51:06.309076",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T210000%2F20260722T223000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1."
+    },
+    {
+        "id": "c32c426e-298f-4d47-8dec-ab445e68d8f6",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "hkazli72@hotmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "read",
+        "timestamp": "2026-07-22 12:51:28.971253"
+    },
+    {
+        "id": "4f66319a-6a70-41cf-9f33-1bed270c7187",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "harika.tuncer@gmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:29.807901"
+    },
+    {
+        "id": "9c3d11a8-6efa-4399-a6fb-7c133d4fad99",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "erhanuygun@gmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:30.893792"
+    },
+    {
+        "id": "37cd6239-1af3-4de6-9358-3c230a6ca374",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "ozemreozturk@gmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:31.689140"
+    },
+    {
+        "id": "a17150dc-afcd-4d9f-b4bc-6ba4dc674f8d",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "egurpnar@yahoo.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:32.574984"
+    },
+    {
+        "id": "e9e8c3b1-0f43-46ab-9ae6-32bc371c8b8f",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "tuncer_goze@icloud.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:33.526106"
+    },
+    {
+        "id": "333d774f-7f1c-4079-bb22-73d5a34a4d6a",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "matmen1976@hotmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:34.246138"
+    },
+    {
+        "id": "81c2e8e7-854e-494f-a7f3-5d21eb23c70a",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "cngzoktay35@hotmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:35.374998"
+    },
+    {
+        "id": "26df0baa-c8c8-412d-a511-1e2d16ae6dc2",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "1polatberkant@gmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:36.480634"
+    },
+    {
+        "id": "1f6d8900-5aac-4175-a58b-e9cdcf70101f",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "bercemayla@hotmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:37.314856"
+    },
+    {
+        "id": "aa58f20c-ed3f-48bc-967e-2d0603775ee3",
+        "type": "admin_announcement",
+        "sender": "admin",
+        "receiver": "seyma.atabay8353@gmail.com",
+        "title": "İzmir Tenis Ağı Sistem Duyurusu",
+        "content": "Uygulamaya hoş geldiniz, Geri dönüşlerinizin uygulama gelişimine büyük katkısı olacaktır. Keyifli ,sağlıklı günler dileriz.",
+        "status": "pending",
+        "timestamp": "2026-07-22 12:51:38.259647"
+    },
+    {
+        "id": "a81350e7-dcd8-4a29-8a98-fbb45a822991",
+        "type": "invite_request",
+        "invite_id": "a660c407-0960-4498-9f7c-eb463fa473a4",
+        "sender": "huseyinaydogan@live.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "accepted",
+        "timestamp": "2026-07-22 14:53:22.435823",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260722T210000%2F20260722T223000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1.",
+        "chat_history": [
+            {
+                "sender": "hkazli72@hotmail.com",
+                "text": "SİESTA 1 A7 D12",
+                "timestamp": "22-07 14:59"
+            }
+        ]
+    },
+    {
+        "id": "b11c7f84-0653-42ac-8c12-7439afdf2e89",
+        "type": "invite_request",
+        "invite_id": "f33e59ab-63a4-4ddb-a66d-bccf95387c81",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "pskl.omerfarukmeric@gmail.com",
+        "status": "accepted",
+        "timestamp": "2026-07-22 16:30:21.941829",
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260724T100000%2F20260724T113000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1."
+    }
+]
