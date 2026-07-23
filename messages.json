@@ -392,5 +392,18 @@
         "status": "accepted",
         "timestamp": "2026-07-22 16:30:21.941829",
         "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260724T100000%2F20260724T113000&location=Di%C4%9Fer&details=%C4%B0zmir+Tenis+A%C4%9F%C4%B1+%C3%BCzerinden+ayarland%C4%B1."
+    },
+    {
+        "id": "73434d9a-150c-49f0-a040-0af4919cc294",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "matmen1976@hotmail.com",
+        "date": "2026-07-23",
+        "time": "21:00 - 22:00",
+        "court": "Diğer",
+        "court_custom": "Soyak Siesta 1. Etap",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "status": "pending"
     }
 ]
