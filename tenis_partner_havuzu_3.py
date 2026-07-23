@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- SAYFA AYARLARI (HER ŞEYDEN ÖNCE GELMELİDİR) ---
-st.set_page_config(page_title="Tenis Partner", page_icon="🎾", layout="wide")
+st.set_page_config(page_title="Tenis Partner Ağı", page_icon="🎾", layout="wide")
 
 import json
 import datetime
@@ -176,6 +176,10 @@ def hash_password(password): return hashlib.sha256(password.encode()).hexdigest(
 def generate_temp_password(length=8): return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 def send_email(to_address, subject, message):
+    # DEMO KULLANICI KORUMASI: E-Posta atılıyormuş gibi yap, ama atma!
+    if st.session_state.get('current_user') == 'test@demo.com' or to_address == 'test@demo.com':
+        return True
+        
     if not SMTP_USER or not SMTP_PASS: return False
     try:
         full_message = f"<html><body><h3 style='color: #2E7D32;'>🎾 {DYNAMIC_TITLE}</h3><p>{message}</p></body></html>"
@@ -249,6 +253,14 @@ def load_data(file_path, default_type=list):
     return data
 
 def save_data(file_path, data, state_key=None):
+    # 🧪 DEMO KULLANICI KORUMASI: Verileri github/json dosyasına KESİNLİKLE yazma!
+    # Sadece test kullanıcısının anlık (session) hafızasında tut.
+    if st.session_state.get('current_user') == 'test@demo.com':
+        if state_key:
+            st.session_state[state_key] = data
+        return True # Gerçekten kaydetmiş gibi başarılı dön.
+
+    # NORMAL KAYIT İŞLEMİ (Gerçek kullanıcılar için)
     repo = get_github_repo()
     success = False
     if repo:
@@ -266,6 +278,7 @@ def save_data(file_path, data, state_key=None):
             with open(file_path, "w", encoding="utf-8") as f: json.dump(data, f, indent=4, ensure_ascii=False)
             success = True
         except: success = False
+    
     if success and state_key:
         st.session_state[state_key] = data
     return success
@@ -393,7 +406,6 @@ def render_popover_profile(user_email, user_data, messages_db):
 
 # EŞLEŞMİŞ MAÇLARI ŞEFFAF GÖSTEREN YARDIMCI FONKSİYON
 def render_matched_invites(matched_invs, invites, messages, users_db):
-    # Şehre Göre Filtrele
     city_matched = [i for i in matched_invs if i.get('city', 'İzmir') == CURRENT_CITY]
     if city_matched:
         st.markdown("#### 🤝 Son Eşleşen Maçlar")
@@ -451,7 +463,8 @@ def admin_dashboard():
         with st.expander("Yeni Duyuru / Toplu Mesaj Oluştur"):
             with st.form("admin_announcement_form"):
                 send_to_all = st.checkbox("Tüm Üyelere Gönder (Aşağıdaki seçimi yoksayar)", value=True)
-                user_options = {email: data.get('ad_soyad', email) for email, data in users_db.items() if isinstance(data, dict)}
+                # Test kullanıcısını admin listesinden gizle
+                user_options = {email: data.get('ad_soyad', email) for email, data in users_db.items() if isinstance(data, dict) and email != "test@demo.com"}
                 selected_users = st.multiselect("Belirli Alıcıları Seç", options=list(user_options.keys()), format_func=lambda x: f"{user_options[x]} ({x})")
                 
                 msg_title = st.text_input("Duyuru Başlığı", "Tenis Ağı Sistem Duyurusu")
@@ -490,7 +503,7 @@ def admin_dashboard():
         st.markdown("---")
         st.subheader("Kayıtlı Üyeler ve Silme Talepleri")
         for u_email, u_data in users_db.items():
-            if not isinstance(u_data, dict): continue 
+            if not isinstance(u_data, dict) or u_email == "test@demo.com": continue 
             with st.container(border=True):
                 c1, c2, c3 = st.columns([4, 2, 2])
                 status = "🔴 Askıda" if u_data.get("suspended") else ("⏸️ Dondurulmuş" if u_data.get("frozen") else "🟢 Aktif")
@@ -560,8 +573,8 @@ def admin_dashboard():
     elif secilen_admin_sekme == admin_menu[2]:
         st.subheader("📊 Sistem İstatistikleri ve Analizler")
         
-        total_users = len([e for e, d in users_db.items() if isinstance(d, dict)])
-        active_users = len([e for e, d in users_db.items() if isinstance(d, dict) and not d.get('frozen') and not d.get('suspended')])
+        total_users = len([e for e, d in users_db.items() if isinstance(d, dict) and e != "test@demo.com"])
+        active_users = len([e for e, d in users_db.items() if isinstance(d, dict) and not d.get('frozen') and not d.get('suspended') and e != "test@demo.com"])
         frozen_users = total_users - active_users
         
         total_invites = len(invites)
@@ -578,7 +591,7 @@ def admin_dashboard():
         c_graf1, c_graf2 = st.columns(2)
         with c_graf1:
             st.markdown("### 📈 Üyelerin Seviye Dağılımı")
-            levels_list = [d.get('level', '3.5') for e, d in users_db.items() if isinstance(d, dict)]
+            levels_list = [d.get('level', '3.5') for e, d in users_db.items() if isinstance(d, dict) and e != "test@demo.com"]
             level_counts = Counter(levels_list)
             
             if HAS_PLOTLY:
@@ -590,7 +603,7 @@ def admin_dashboard():
             
         with c_graf2:
             st.markdown("### 📍 Üyelerin İlçe Dağılımı")
-            ilce_list = [d.get('ilce', 'Belirtilmemiş') for e, d in users_db.items() if isinstance(d, dict)]
+            ilce_list = [d.get('ilce', 'Belirtilmemiş') for e, d in users_db.items() if isinstance(d, dict) and e != "test@demo.com"]
             ilce_counts = Counter(ilce_list)
             
             if HAS_PLOTLY:
@@ -653,7 +666,7 @@ def admin_dashboard():
 def login_page():
     sidebar_pwa_guide()
     
-    # --- YENİ: ANA KAPI ŞEHİR SEÇİMİ ---
+    # --- ANA KAPI ŞEHİR SEÇİMİ ---
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 Tenis Partner Ağı</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em; color: gray;'>Oynamak istediğiniz şehri seçin</p>", unsafe_allow_html=True)
     
@@ -677,10 +690,10 @@ def login_page():
     with c2:
         if not st.session_state.show_login_form:
             st.info("""
-            **Nasıl Çalışır?**
-            1. **Profilinizi Oluşturun:** Seviyenizi ve bölgelerinizi belirleyerek sisteme katılın.
-            2. **İlanları İnceleyin:** Açık maçlara istek gönderin veya kendi maçınızı oluşturun.
-            3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
+            **Sistemi Test Etmek İster Misiniz? 🧪**
+            - E-posta: `test@demo.com`
+            - Şifre: `demo`
+            Kullanarak sisteme kayıt olmadan giriş yapabilir, arayüzü inceleyebilirsiniz (Test kullanıcısının işlemleri gerçek üyelere yansıtılmaz).
             """)
             
             matched_invs = [i for i in invites if i.get('status') == 'matched']
@@ -705,7 +718,23 @@ def login_page():
                     remember = st.checkbox("Beni Hatırla", value=True)
                     if st.form_submit_button("Giriş Yap", type="primary"):
                         email = email.strip().lower()
-                        if email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
+                        # --- 🧪 DEMO KULLANICI GİRİŞ KONTROLÜ ---
+                        if email == "test@demo.com" and password == "demo":
+                            st.session_state.logged_in = True
+                            st.session_state.current_user = email
+                            # Demo kullanıcıyı o anki session belleğine ekle (Dosyaya gitmez)
+                            if "test@demo.com" not in st.session_state.db_users:
+                                st.session_state.db_users["test@demo.com"] = {
+                                    "password_hash": hash_password("demo"),
+                                    "ad_soyad": "Test Kullanıcısı (Demo)",
+                                    "level": "3.5", "city_registered": CURRENT_CITY, "ilce": "Belirtilmemiş",
+                                    "suspended": False, "frozen": False, "contact_visibility": "gizle",
+                                    "privacy": {"ghost": True, "show_rating": True},
+                                    "ratings": {"zaman": [], "seviye": [], "davranis": []}
+                                }
+                            st.rerun()
+                        # --- NORMAL KULLANICI GİRİŞİ ---
+                        elif email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                             if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
                             else:
                                 st.session_state.logged_in = True
@@ -866,6 +895,9 @@ def main_app():
     ACTIVE_COURTS = IZMIR_KORTLARI if CURRENT_CITY == "İzmir" else ZONGULDAK_KORTLARI
     DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner Havuzu"
 
+    if st.session_state.current_user == "test@demo.com":
+        st.warning("🧪 **DEMO MODU AKTİF:** Şu an test kullanıcısı olarak sistemdesiniz. Yaptığınız işlemler (ilan açma, mesaj gönderme vb.) arka planda kaydedilmez ve diğer gerçek kullanıcılara iletilmez.")
+
     c_head1, c_head2, c_head3 = st.columns([5, 2, 2])
     c_head1.write(f"### 🎾 {DYNAMIC_TITLE}")
     if me.get('frozen'): c_head1.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır.")
@@ -1013,7 +1045,11 @@ def main_app():
                                 st.session_state[lock_key] = True
                                 new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(get_now())}
                                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
-                                    st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
+                                    # Demo kullanıcı uyarısı
+                                    if st.session_state.current_user == "test@demo.com":
+                                        st.session_state.show_toast = "🧪 (Demo) Teklifiniz simüle edildi!"
+                                    else:
+                                        st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
                                     st.rerun()
                                 else: st.error("⚠️ Veri hatası: Teklifiniz kaydedilemedi.")
 
@@ -1067,12 +1103,16 @@ def main_app():
                     "levels": levels, "status": "active", "note": inv_note, "created_at": str(get_now())
                 }
                 if save_data(INVITES_FILE_PATH, invites + [new_inv], 'db_invites'):
-                    for u_email, u_data in users_db.items():
-                        if u_email == st.session_state.current_user or not isinstance(u_data, dict) or u_data.get('frozen') or u_data.get('suspended'): continue
-                        r = u_data.get("radar", {})
-                        if r.get("active", False) and (not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))) and (not r.get("levels") or any(l in r.get("levels") for l in levels)) and (not r.get("types") or act_type in r.get("types") or "Fark Etmez" in r.get("types")):
-                            send_email(u_email, "📡 Radar Alarmı: Uygun İlan Yayınlandı!", f"Merhaba <b>{u_data.get('ad_soyad')}</b>,<br><br>Radar kriterlerinize uygun tenis ilanı yayınlandı!<br><br>Kort: {court}<br>Sisteme giriş yaparak teklif gönderebilirsiniz.")
-                    st.session_state.show_toast = "İlanınız başarıyla yayınlandı! 🎉"
+                    # Demo kullanıcıya radar emaili atıyormuş gibi davranmasını engelliyoruz
+                    if st.session_state.current_user != "test@demo.com":
+                        for u_email, u_data in users_db.items():
+                            if u_email == st.session_state.current_user or not isinstance(u_data, dict) or u_data.get('frozen') or u_data.get('suspended'): continue
+                            r = u_data.get("radar", {})
+                            if r.get("active", False) and (not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))) and (not r.get("levels") or any(l in r.get("levels") for l in levels)) and (not r.get("types") or act_type in r.get("types") or "Fark Etmez" in r.get("types")):
+                                send_email(u_email, "📡 Radar Alarmı: Uygun İlan Yayınlandı!", f"Merhaba <b>{u_data.get('ad_soyad')}</b>,<br><br>Radar kriterlerinize uygun tenis ilanı yayınlandı!<br><br>Kort: {court}<br>Sisteme giriş yaparak teklif gönderebilirsiniz.")
+                        st.session_state.show_toast = "İlanınız başarıyla yayınlandı! 🎉"
+                    else:
+                        st.session_state.show_toast = "🧪 (Demo) İlanınız yayınlandı! (Sadece siz görebilirsiniz)"
                     st.rerun()
                 else: st.error("⚠️ Veri çakışması! İlanınız sisteme kaydedilemedi. Lütfen tekrar deneyin.")
 
@@ -1082,8 +1122,8 @@ def main_app():
         c_title.subheader("👥 Oyuncu Listesi")
         sort_users = c_sort.selectbox("Üyeleri Sırala:", ["İsme Göre (A-Z)", "Seviyeye Göre (Yüksekten Düşüğe)", "Puana Göre (Popülerlik)", "Bölgeye Göre (İlçe)"])
         
-        # Seçili Şehrin Üyeleri
-        user_list = [(e, d, calculate_rating(d.get('ratings')), float(d.get('level', '3.5')) if str(d.get('level')).replace('.','').isdigit() else 3.5) for e, d in users_db.items() if isinstance(d, dict) and e != st.session_state.current_user and not d.get("privacy", {}).get("ghost") and not d.get("frozen") and not d.get("suspended") and d.get('city_registered', 'İzmir') == CURRENT_CITY]
+        # 🧪 DEMO KULLANICI LİSTEDEN GİZLENDİ (e != "test@demo.com")
+        user_list = [(e, d, calculate_rating(d.get('ratings')), float(d.get('level', '3.5')) if str(d.get('level')).replace('.','').isdigit() else 3.5) for e, d in users_db.items() if isinstance(d, dict) and e != st.session_state.current_user and e != "test@demo.com" and not d.get("privacy", {}).get("ghost") and not d.get("frozen") and not d.get("suspended") and d.get('city_registered', 'İzmir') == CURRENT_CITY]
         
         if sort_users == "İsme Göre (A-Z)": user_list.sort(key=lambda x: x[1].get('ad_soyad', '').lower())
         elif sort_users == "Seviyeye Göre (Yüksekten Düşüğe)": user_list.sort(key=lambda x: x[3], reverse=True)
@@ -1108,7 +1148,11 @@ def main_app():
             if c_sub.button("🚀 Teklifi Gönder", type="primary", use_container_width=True):
                 new_msg = {"id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user, "receiver": st.session_state.offer_to, "date": str(o_date), "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}", "court": o_court, "court_custom": o_custom, "fee_status": o_fee_status, "fee_amount": o_fee_amount.strip(), "status": "pending"}
                 if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
-                    st.session_state.offer_to = None; st.session_state.show_toast = "Teklif iletildi!"
+                    st.session_state.offer_to = None
+                    if st.session_state.current_user == "test@demo.com":
+                        st.session_state.show_toast = "🧪 (Demo) Özel teklifiniz simüle edildi!"
+                    else:
+                        st.session_state.show_toast = "Teklif iletildi!"
                     st.rerun()
                 else: st.error("⚠️ Veri hatası: Özel teklifiniz kaydedilemedi.")
             if c_can.button("İptal", use_container_width=True): st.session_state.offer_to = None; st.rerun()
@@ -1258,7 +1302,6 @@ def main_app():
                 with st.form("edit_my_active_form"):
                     ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
                     
-                    # Düzenleme sırasında da dinamik kortlar (Kayıtlı olduğu şehre göre)
                     city_for_edit = e_inv.get('city', 'İzmir')
                     courts_for_edit = IZMIR_KORTLARI if city_for_edit == "İzmir" else ZONGULDAK_KORTLARI
                     
@@ -1426,7 +1469,6 @@ def main_app():
             ad = st.text_input("Ad Soyad", value=me.get("ad_soyad", ""), key="prof_ad")
             phone = st.text_input("Telefon Numarası", value=me.get("phone", ""), key="prof_tel")
             
-            # Dinamik Şehir Seçimi Profilde de Görünmeli
             city_reg = st.selectbox("Ana Şehir Ağı", ["İzmir", "Zonguldak"], index=0 if me.get("city_registered", "İzmir") == "İzmir" else 1, key="prof_city")
             prof_districts = IZMIR_ILCELER if city_reg == "İzmir" else ZONGULDAK_ILCELER
             
@@ -1441,7 +1483,12 @@ def main_app():
             if st.button("💾 Profili Güncelle", type="primary", use_container_width=True):
                 me.update({"ad_soyad": ad.strip(), "phone": phone.strip(), "city_registered": city_reg, "ilce": ilce, "level": level, "style": style_custom.strip() if style_sel == "Diğer" else style_sel})
                 users_db[st.session_state.current_user] = me
-                if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Profil güncellendi! ✅"; st.rerun()
+                if save_data(USERS_FILE_PATH, users_db, 'db_users'): 
+                    if st.session_state.current_user == "test@demo.com":
+                        st.session_state.show_toast = "🧪 (Demo) Profil güncellendi!"
+                    else:
+                        st.session_state.show_toast = "Profil güncellendi! ✅"
+                    st.rerun()
 
             with st.expander("🔑 Şifre Değiştir"):
                 with st.form("change_pass_form"):
