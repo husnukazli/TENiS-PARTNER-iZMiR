@@ -1,7 +1,7 @@
 import streamlit as st
 
 # --- SAYFA AYARLARI (HER ŞEYDEN ÖNCE GELMELİDİR) ---
-st.set_page_config(page_title="Tenis Partner Ağı", page_icon="🎾", layout="wide")
+st.set_page_config(page_title="Tenis Partner", page_icon="🎾", layout="wide")
 
 import json
 import datetime
@@ -167,7 +167,7 @@ for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 're
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
 
 CURRENT_CITY = st.session_state["active_city"]
-DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner Ağı"
+DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner"
 ACTIVE_COURTS = IZMIR_KORTLARI if CURRENT_CITY == "İzmir" else ZONGULDAK_KORTLARI
 ACTIVE_DISTRICTS = IZMIR_ILCELER if CURRENT_CITY == "İzmir" else ZONGULDAK_ILCELER
 
@@ -467,7 +467,7 @@ def admin_dashboard():
                 user_options = {email: data.get('ad_soyad', email) for email, data in users_db.items() if isinstance(data, dict) and email != "test@demo.com"}
                 selected_users = st.multiselect("Belirli Alıcıları Seç", options=list(user_options.keys()), format_func=lambda x: f"{user_options[x]} ({x})")
                 
-                msg_title = st.text_input("Duyuru Başlığı", "Tenis Ağı Sistem Duyurusu")
+                msg_title = st.text_input("Duyuru Başlığı", "Tenis Partner Sistem Duyurusu")
                 msg_content = st.text_area("Mesajınız", placeholder="Örn: Hafta sonu yapılacak turnuva hakkında...")
                 
                 if st.form_submit_button("🚀 Duyuruyu Gönder", type="primary"):
@@ -667,7 +667,7 @@ def login_page():
     sidebar_pwa_guide()
     
     # --- ANA KAPI ŞEHİR SEÇİMİ ---
-    st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 Tenis Partner Ağı</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 Tenis Partner</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em; color: gray;'>Oynamak istediğiniz şehri seçin</p>", unsafe_allow_html=True)
     
     col_btn1, col_btn2 = st.columns(2)
@@ -690,10 +690,10 @@ def login_page():
     with c2:
         if not st.session_state.show_login_form:
             st.info("""
-            **Sistemi Test Etmek İster Misiniz? 🧪**
-            - E-posta: `test@demo.com`
-            - Şifre: `demo`
-            Kullanarak sisteme kayıt olmadan giriş yapabilir, arayüzü inceleyebilirsiniz (Test kullanıcısının işlemleri gerçek üyelere yansıtılmaz).
+            **Nasıl Çalışır?**
+            1. **Profilinizi Oluşturun:** Seviyenizi ve bölgelerinizi belirleyerek sisteme katılın.
+            2. **İlanları İnceleyin:** Açık maçlara istek gönderin veya kendi maçınızı oluşturun.
+            3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
             """)
             
             matched_invs = [i for i in invites if i.get('status') == 'matched']
@@ -718,7 +718,7 @@ def login_page():
                     remember = st.checkbox("Beni Hatırla", value=True)
                     if st.form_submit_button("Giriş Yap", type="primary"):
                         email = email.strip().lower()
-                        # --- 🧪 DEMO KULLANICI GİRİŞ KONTROLÜ ---
+                        # --- 🧪 GİZLİ DEMO KULLANICI GİRİŞ KONTROLÜ ---
                         if email == "test@demo.com" and password == "demo":
                             st.session_state.logged_in = True
                             st.session_state.current_user = email
@@ -893,7 +893,7 @@ def main_app():
     # Seçili Şehir Durumu
     CURRENT_CITY = st.session_state["active_city"]
     ACTIVE_COURTS = IZMIR_KORTLARI if CURRENT_CITY == "İzmir" else ZONGULDAK_KORTLARI
-    DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner Havuzu"
+    DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner"
 
     if st.session_state.current_user == "test@demo.com":
         st.warning("🧪 **DEMO MODU AKTİF:** Şu an test kullanıcısı olarak sistemdesiniz. Yaptığınız işlemler (ilan açma, mesaj gönderme vb.) arka planda kaydedilmez ve diğer gerçek kullanıcılara iletilmez.")
@@ -1638,7 +1638,7 @@ def main_app():
     # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
     elif secilen_sayfa == ana_menu_secenekleri[7]:
         st.subheader("📊 NTRP Seviye Rehberi")
-        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
+        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
         
         st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır. *\"Tenis kıyafetlerim çok güzel ama topla henüz tam anlaştığımız söylenemez.\"*")
         st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
