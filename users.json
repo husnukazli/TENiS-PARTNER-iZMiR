@@ -434,5 +434,33 @@
             "seviye": [],
             "davranis": []
         }
+    },
+    "hayozcan35@gmail.com": {
+        "password_hash": "0bb5644c968402db7264b638c58bccd2436bcd0ace8755043eb0a1479d9b27ef",
+        "ad_soyad": "Hayrullah Özcan",
+        "level": "4.5",
+        "city_registered": "Zonguldak",
+        "ilce": "Merkez",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        }
     }
 }
