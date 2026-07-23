@@ -473,7 +473,7 @@
         "frozen": false,
         "delete_requested": false,
         "is_bot": false,
-        "phone": "",
+        "phone": "542 573 33 71",
         "contact_visibility": "eslesince",
         "privacy": {
             "ghost": false,
@@ -510,7 +510,8 @@
             "zaman": [],
             "seviye": [],
             "davranis": []
-        }
+        },
+        "style": "All-Rounder"
     },
     "myuksel77@hotmail.com": {
         "password_hash": "bf4297fd401334710b9657f5ca16b676450c4f1c314bce3fcb2910d68aa3f16d",
