@@ -1580,7 +1580,7 @@ def main_app():
     # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
     elif secilen_sayfa == ana_menu_secenekleri[7]:
         st.subheader("📊 NTRP Seviye Rehberi")
-        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Hakem gözüyle hazırlanmış bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
+        st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
         
         st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır. *\"Tenis kıyafetlerim çok güzel ama topla henüz tam anlaştığımız söylenemez.\"*")
         st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir. *\"Vuruyorum ama bazen tellere, bazen fileye... Yine de çok eğleniyorum!\"*")
