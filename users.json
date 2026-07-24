@@ -408,9 +408,15 @@
             "types": []
         },
         "ratings": {
-            "zaman": [],
-            "seviye": [],
-            "davranis": []
+            "zaman": [
+                5
+            ],
+            "seviye": [
+                5
+            ],
+            "davranis": [
+                5
+            ]
         }
     },
     "kyal_gulay@hotmail.com": {
