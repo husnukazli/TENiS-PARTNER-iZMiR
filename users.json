@@ -383,9 +383,15 @@
             "types": []
         },
         "ratings": {
-            "zaman": [],
-            "seviye": [],
-            "davranis": []
+            "zaman": [
+                5
+            ],
+            "seviye": [
+                5
+            ],
+            "davranis": [
+                5
+            ]
         },
         "style": "All-Rounder"
     },
