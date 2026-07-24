@@ -239,9 +239,15 @@
             ]
         },
         "ratings": {
-            "zaman": [],
-            "seviye": [],
-            "davranis": []
+            "zaman": [
+                4
+            ],
+            "seviye": [
+                5
+            ],
+            "davranis": [
+                5
+            ]
         }
     },
     "cngzoktay35@hotmail.com": {
