@@ -437,5 +437,14 @@
         "status": "accepted",
         "timestamp": "2026-08-02 12:45:35.341136",
         "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260803T100000%2F20260803T113000&location=Soyak+Siesta+1.+Etap&details=%C4%B0zmir+Tenis+Partner+%C3%BCzerinden+ayarland%C4%B1."
+    },
+    {
+        "id": "13b15903-bf21-4ef0-bc26-ff59a429532f",
+        "type": "invite_request",
+        "invite_id": "7e496ab3-5ff3-4788-8c01-446dce81981b",
+        "sender": "huseyinaydogan@live.com",
+        "receiver": "hkazli72@hotmail.com",
+        "status": "pending",
+        "timestamp": "2026-08-02 15:33:41.469400"
     }
 ]
