@@ -446,5 +446,18 @@
         "receiver": "hkazli72@hotmail.com",
         "status": "pending",
         "timestamp": "2026-08-02 15:33:41.469400"
+    },
+    {
+        "id": "60783efb-88bd-4afa-9e70-ea4bd05030b5",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bercemayla@hotmail.com",
+        "date": "2026-08-03",
+        "time": "20:00 - 21:00",
+        "court": "Soyak Siesta 1. Etap",
+        "court_custom": "",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "status": "pending"
     }
 ]
