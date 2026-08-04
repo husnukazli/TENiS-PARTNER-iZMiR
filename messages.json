@@ -462,5 +462,18 @@
         "fee_amount": "",
         "status": "accepted",
         "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260803T200000%2F20260803T213000&location=Soyak+Siesta+1.+Etap&details=%C4%B0zmir+Tenis+Partner+%C3%BCzerinden+ayarland%C4%B1."
+    },
+    {
+        "id": "490b994c-785b-4639-b05b-41c2521b22a4",
+        "type": "direct_challenge",
+        "sender": "hkazli72@hotmail.com",
+        "receiver": "bercemayla@hotmail.com",
+        "date": "2026-08-04",
+        "time": "18:00 - 19:30",
+        "court": "Kültürpark Tenis Kulübü (KTK)",
+        "court_custom": "",
+        "fee_status": "Ücretsiz Kort / Abonelik",
+        "fee_amount": "",
+        "status": "pending"
     }
 ]
