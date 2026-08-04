@@ -25,19 +25,6 @@ def get_now():
     """Tüm sistemde zaman kaymasını önleyen Türkiye Saati fonksiyonu."""
     return datetime.datetime.now(TURKEY_TZ).replace(tzinfo=None)
 
-# Çerez (Cookie) yönetimi için kütüphane
-try:
-    import extra_streamlit_components as stx
-    HAS_STX = True
-except ImportError:
-    HAS_STX = False
-    st.sidebar.warning("Beni Hatırla özelliğinin çalışması için 'pip install extra-streamlit-components' kurun.")
-
-if HAS_STX:
-    cookie_manager = stx.CookieManager(key="cm_izmir")
-else:
-    cookie_manager = None
-
 # Pasta Grafik için Plotly Kütüphanesi
 try:
     import plotly.express as px
@@ -57,7 +44,7 @@ st.markdown("""
         width: 100%; border-radius: 12px; font-weight: 700; 
         padding-top: 0.6rem; padding-bottom: 0.6rem; 
         transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
-        margin-bottom: 2px !important; /* Butonları birbirine yaklaştırdık */
+        margin-bottom: 2px !important; 
     }
     .stButton > button:active {
         transform: scale(0.95) !important;
@@ -65,7 +52,7 @@ st.markdown("""
     }
     button[kind="primary"] p { font-size: 1.3rem !important; }
     
-    /* EN ÜSTTEKİ 3'LÜ HIZLI İŞLEM BUTONLARINI (İLK SATIR) RENKLENDİRME */
+    /* EN ÜSTTEKİ 3'LÜ HIZLI İŞLEM BUTONLARINI RENKLENDİRME */
     div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-of-type(1) button {
         background-color: #ffffff !important; color: #d32f2f !important; border: 2px solid #d32f2f !important;
     }
@@ -88,28 +75,17 @@ FEE_STATUS_OPTIONS = ["Ücretsiz Kort / Abonelik", "Ücreti Bölüşeceğiz (Yar
 
 NTRP_HELP_TEXT = """
 **Özet NTRP Rehberi:**
-- **1.0 - 2.5:** Başlangıç (Topu oyunda tutmaya ve temel vuruşları öğrenmeye çalışanlar)
-- **3.0 - 3.5:** Orta (Düzenli ralli yapabilen, taktik geliştirmeye başlayanlar)
-- **4.0 - 4.5:** İleri (Güvenilir, sert vuruşları ve maç tecrübesi olanlar)
-- **5.0 +:** Üst Düzey (Kusursuz istikrara sahip turnuva oyuncuları)
+- **1.0 - 2.5:** Başlangıç
+- **3.0 - 3.5:** Orta 
+- **4.0 - 4.5:** İleri 
+- **5.0 +:** Üst Düzey 
 """
 
 # ŞEHİR LİSTELERİ
-IZMIR_KORTLARI = [
-    "Kültürpark Tenis Kulübü (KTK)", "İnciraltı Büyükşehir Kortları", "Bostanlı Suat Taşer Kortları",
-    "Fuar Alanı (Celal Atik) Kortları", "Buca Tenis Kulübü", "Ege Üniversitesi Tenis Kortları",
-    "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları",
-    "Aşık Veysel Rekreasyon Alanı Kortları", "Hasanağa Bahçesi Kortları", "Diğer"
-]
+IZMIR_KORTLARI = ["Kültürpark Tenis Kulübü (KTK)", "İnciraltı Büyükşehir Kortları", "Bostanlı Suat Taşer Kortları", "Fuar Alanı (Celal Atik) Kortları", "Buca Tenis Kulübü", "Ege Üniversitesi Tenis Kortları", "Gaziemir Belediyesi Kortları", "Göztepe Tenis Kulübü", "Küçük Kulüp Alliance", "Mavişehir Şemikler Kortları", "Aşık Veysel Rekreasyon Alanı Kortları", "Hasanağa Bahçesi Kortları", "Diğer"]
 IZMIR_ILCELER = ["Belirtilmemiş", "Balçova", "Bayraklı", "Bornova", "Buca", "Çiğli", "Gaziemir", "Güzelbahçe", "Karabağlar", "Karşıyaka", "Konak", "Narlıdere", "Urla", "Diğer Merkez Dışı"]
 
-ZONGULDAK_KORTLARI = [
-    "Zonguldak Tenis Deniz Kulübü (ZTDK - Fener)", "GSİM Fener Tenis Kortları",
-    "Site Tenis Kortları (Gençlik ve Spor)", "BEÜ Farabi Kampüsü Kortu",
-    "Kdz. Ereğli Tenis İhtisas Kulübü (ETİK)", "Kdz. Ereğli GSİM Beyçayırı Kortları",
-    "Kdz. Ereğli Belediyesi Erdemir Tesisleri", "Çaycuma GSİM Tenis Kortu",
-    "Devrek GSİM Tenis Kortu", "Diğer"
-]
+ZONGULDAK_KORTLARI = ["Zonguldak Tenis Deniz Kulübü (ZTDK - Fener)", "GSİM Fener Tenis Kortları", "Site Tenis Kortları (Gençlik ve Spor)", "BEÜ Farabi Kampüsü Kortu", "Kdz. Ereğli Tenis İhtisas Kulübü (ETİK)", "Kdz. Ereğli GSİM Beyçayırı Kortları", "Kdz. Ereğli Belediyesi Erdemir Tesisleri", "Çaycuma GSİM Tenis Kortu", "Devrek GSİM Tenis Kortu", "Diğer"]
 ZONGULDAK_ILCELER = ["Belirtilmemiş", "Merkez", "Kdz. Ereğli", "Çaycuma", "Devrek", "Alaplı", "Kozlu", "Kilimli", "Gökçebey", "Diğer Merkez Dışı"]
 
 # --- AYARLAR ---
@@ -238,25 +214,37 @@ def calculate_rating(ratings_dict):
     all_scores = ratings_dict.get("zaman", []) + ratings_dict.get("seviye", []) + ratings_dict.get("davranis", [])
     return sum(all_scores) / len(all_scores) if all_scores else 5.0
 
-def sidebar_pwa_guide():
-    st.sidebar.markdown("### 🔄 Canlı Senkronizasyon")
-    if st.sidebar.button("Verileri Yenile", use_container_width=True):
-        with st.spinner("Güncel veriler sunucudan çekiliyor..."):
-            st.session_state.db_users = load_data(USERS_FILE_PATH, dict)
-            st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
-            st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
-            st.session_state.db_custom_courts = load_data(CUSTOM_COURTS_FILE_PATH, list)
-            st.session_state.db_pending_courts = load_data(PENDING_COURTS_FILE_PATH, list)
-        st.success("Veriler güncellendi! ✅")
-        time.sleep(1)
-        st.rerun()
+# --- VERİ TABANI YÜKLEMESİ ---
+if 'db_users' not in st.session_state: st.session_state.db_users = load_data(USERS_FILE_PATH, dict)
+if 'db_invites' not in st.session_state: st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
+if 'db_messages' not in st.session_state: st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
+if 'db_custom_courts' not in st.session_state: st.session_state.db_custom_courts = load_data(CUSTOM_COURTS_FILE_PATH, list)
+if 'db_pending_courts' not in st.session_state: st.session_state.db_pending_courts = load_data(PENDING_COURTS_FILE_PATH, list)
 
-    with st.sidebar.expander("📲 Ana Ekrana Kısayol Ekle", expanded=True):
-        st.markdown("""
-        **Mobil Uygulama Gibi Kullanın!**
-        🍎 **iOS:** Safari alt menüsündeki **Paylaş** ikonundan **Ana Ekrana Ekle** seçin.
-        🤖 **Android:** Chrome sağ üstteki **Üç Nokta (⋮)** menüsünden **Ana Ekrana Ekle** seçin.
-        """)
+if st.session_state.show_toast:
+    st.toast(st.session_state.show_toast, icon="ℹ️")
+    st.session_state.show_toast = None
+
+# --- SİHİRLİ LİNK (TOKEN) İLE OTOMATİK GİRİŞ KONTROLÜ ---
+if not st.session_state.logged_in and "token" in st.query_params:
+    url_token = st.query_params["token"]
+    for email, u_data in st.session_state.db_users.items():
+        if isinstance(u_data, dict) and u_data.get("login_token") == url_token:
+            if not u_data.get("suspended"):
+                st.session_state.logged_in = True
+                st.session_state.current_user = email
+            break
+
+# DİNAMİK KORT LİSTELERİ HAZIRLAMA
+CURRENT_CITY = st.session_state["active_city"]
+DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner"
+ACTIVE_DISTRICTS = IZMIR_ILCELER if CURRENT_CITY == "İzmir" else ZONGULDAK_ILCELER
+
+_custom_courts_city = [c['name'] for c in st.session_state.db_custom_courts if c.get('city') == CURRENT_CITY]
+if CURRENT_CITY == "İzmir":
+    ACTIVE_COURTS = IZMIR_KORTLARI[:-1] + _custom_courts_city + ["Diğer"]
+else:
+    ACTIVE_COURTS = ZONGULDAK_KORTLARI[:-1] + _custom_courts_city + ["Diğer"]
 
 # --- DİALOG PENCERELERİ ---
 @st.dialog("⚠️ Maç İptal Onayı")
@@ -316,35 +304,6 @@ def dialog_delete_invite(inv_id):
     if c2.button("Vazgeç"):
         st.rerun()
 
-# --- VERİ TABANI YÜKLEMESİ ---
-if 'db_users' not in st.session_state: st.session_state.db_users = load_data(USERS_FILE_PATH, dict)
-if 'db_invites' not in st.session_state: st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
-if 'db_messages' not in st.session_state: st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
-if 'db_custom_courts' not in st.session_state: st.session_state.db_custom_courts = load_data(CUSTOM_COURTS_FILE_PATH, list)
-if 'db_pending_courts' not in st.session_state: st.session_state.db_pending_courts = load_data(PENDING_COURTS_FILE_PATH, list)
-
-if st.session_state.show_toast:
-    st.toast(st.session_state.show_toast, icon="ℹ️")
-    st.session_state.show_toast = None
-
-if cookie_manager and not st.session_state.logged_in:
-    saved_user = cookie_manager.get(cookie="remember_user")
-    if saved_user and saved_user in st.session_state.db_users:
-        st.session_state.logged_in = True
-        st.session_state.current_user = saved_user
-        st.rerun()
-
-# DİNAMİK KORT LİSTELERİ HAZIRLAMA
-CURRENT_CITY = st.session_state["active_city"]
-DYNAMIC_TITLE = f"{CURRENT_CITY} Tenis Partner"
-ACTIVE_DISTRICTS = IZMIR_ILCELER if CURRENT_CITY == "İzmir" else ZONGULDAK_ILCELER
-
-_custom_courts_city = [c['name'] for c in st.session_state.db_custom_courts if c.get('city') == CURRENT_CITY]
-if CURRENT_CITY == "İzmir":
-    ACTIVE_COURTS = IZMIR_KORTLARI[:-1] + _custom_courts_city + ["Diğer"]
-else:
-    ACTIVE_COURTS = ZONGULDAK_KORTLARI[:-1] + _custom_courts_city + ["Diğer"]
-
 # --- YARDIMCI GÖRSEL FONKSİYONLAR ---
 def render_popover_profile(user_email, user_data, messages_db):
     if not isinstance(user_data, dict): return
@@ -398,13 +357,17 @@ def render_matched_invites(matched_invs, invites, messages, users_db):
                     st.caption(f"📝 Not: {m_inv.get('note')}")
         st.markdown("<br>", unsafe_allow_html=True)
 
+def render_back_button(key_suffix):
+    if st.button("🔙 Geri Dön", key=f"btn_back_{key_suffix}", use_container_width=True):
+        st.session_state.current_page = "Ana Menü"
+        st.rerun()
+
 # --- YÖNETİCİ KONTROL MERKEZİ ---
 def admin_dashboard():
-    sidebar_pwa_guide()
     st.markdown("<h1 style='color: #D32F2F;'>Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
     if st.button("🚪 Yönetici Panelinden Çık"):
         st.session_state.logged_in = False; st.session_state.is_admin = False
-        if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
+        st.query_params.clear()
         st.rerun()
     
     users_db = st.session_state.db_users
@@ -414,19 +377,8 @@ def admin_dashboard():
     active_inv_count = len([i for i in invites if i.get('status') == 'active'])
     del_req_count = len([u for u, d in users_db.items() if isinstance(d, dict) and d.get('delete_requested')])
 
-    admin_menu = [
-        f"👥 Üye Yönetimi 🚨 ({del_req_count})" if del_req_count > 0 else "👥 Üye Yönetimi",
-        f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi",
-        f"🎾 Tesis Onay Havuzu 🟢 ({len(pending_courts)})" if pending_courts else "🎾 Tesis Onay Havuzu",
-        "📊 Sistem İstatistikleri", "💾 Yedekleme & Kurtarma"
-    ]
-    
-    st.markdown("""
-    <div style="background-color: #2b0808; border-left: 5px solid #ff4b4b; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
-        <span style="color: #ff4b4b; font-size: 1.15em; font-weight: bold;">YÖNETİCİ MENÜSÜ: İşlem Seçin</span>
-    </div>
-    """, unsafe_allow_html=True)
-    secilen_admin_sekme = st.selectbox("", admin_menu, label_visibility="collapsed")
+    admin_menu = [f"👥 Üye Yönetimi 🚨 ({del_req_count})" if del_req_count > 0 else "👥 Üye Yönetimi", f"📅 İlan Yönetimi 🟢 ({active_inv_count})" if active_inv_count > 0 else "📅 İlan Yönetimi", f"🎾 Tesis Onay Havuzu 🟢 ({len(pending_courts)})" if pending_courts else "🎾 Tesis Onay Havuzu", "📊 Sistem İstatistikleri", "💾 Yedekleme & Kurtarma"]
+    secilen_admin_sekme = st.selectbox("YÖNETİCİ MENÜSÜ", admin_menu)
 
     if secilen_admin_sekme == admin_menu[0]:
         st.subheader("📢 Üyelere Sistem Duyurusu Gönder")
@@ -435,13 +387,11 @@ def admin_dashboard():
                 send_to_all = st.checkbox("Tüm Üyelere Gönder (Aşağıdaki seçimi yoksayar)", value=True)
                 user_options = {email: data.get('ad_soyad', email) for email, data in users_db.items() if isinstance(data, dict) and email != "test@demo.com"}
                 selected_users = st.multiselect("Belirli Alıcıları Seç", options=list(user_options.keys()), format_func=lambda x: f"{user_options[x]} ({x})")
-                
                 msg_title = st.text_input("Duyuru Başlığı", "Tenis Partner Sistem Duyurusu")
                 msg_content = st.text_area("Mesajınız", placeholder="Örn: Hafta sonu yapılacak turnuva hakkında...")
                 
                 if st.form_submit_button("🚀 Duyuruyu Gönder", type="primary"):
-                    if not msg_content.strip():
-                        st.error("Mesaj içeriği boş olamaz.")
+                    if not msg_content.strip(): st.error("Mesaj içeriği boş olamaz.")
                     else:
                         targets = list(user_options.keys()) if send_to_all else selected_users
                         if not targets: st.error("Lütfen en az bir alıcı seçin.")
@@ -454,7 +404,6 @@ def admin_dashboard():
                                     messages.append(new_msg)
                                     success_count += 1
                                 if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'): st.success(f"Duyuru {success_count} kişiye başarıyla gönderildi!")
-                                else: st.error("Duyuru gönderildi ancak veritabanına kaydedilemedi.")
 
         st.markdown("---")
         st.subheader("Kayıtlı Üyeler ve Silme Talepleri")
@@ -530,10 +479,9 @@ def admin_dashboard():
         st.subheader("Sistem Yedekleme ve Kurtarma")
         st.download_button("Üyeler Yedeği", data=json.dumps(users_db, indent=4, ensure_ascii=False), file_name="users_backup.json", mime="application/json")
 
+
 # --- GİRİŞ VE GÜNCEL İLANLAR SAYFASI ---
 def login_page():
-    sidebar_pwa_guide()
-    
     st.markdown("<h1 style='text-align: center; color: #2E7D32;'>🎾 Tenis Partner</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; font-size: 1.1em; color: gray;'>Oynamak istediğiniz şehri seçin</p>", unsafe_allow_html=True)
     
@@ -548,6 +496,7 @@ def login_page():
     invites = st.session_state.db_invites
     messages = st.session_state.db_messages
     
+    # 1. GİRİŞ YAP BUTONU VE FORMU 
     c1, c2, c3 = st.columns([1, 4, 1])
     with c2:
         if not st.session_state.show_login_form:
@@ -565,7 +514,6 @@ def login_page():
                 with st.form("login"):
                     email = st.text_input("E-posta")
                     password = st.text_input("Şifre", type="password")
-                    remember = st.checkbox("Beni Hatırla", value=True)
                     if st.form_submit_button("Giriş Yap", type="primary"):
                         email = email.strip().lower()
                         if email == "test@demo.com" and password == "demo":
@@ -575,15 +523,20 @@ def login_page():
                                     "password_hash": hash_password("demo"), "ad_soyad": "Test Kullanıcısı (Demo)",
                                     "level": "3.5", "city_registered": CURRENT_CITY, "ilce": "Belirtilmemiş",
                                     "suspended": False, "frozen": False, "contact_visibility": "gizle",
-                                    "privacy": {"ghost": True, "show_rating": True}, "ratings": {"zaman": [], "seviye": [], "davranis": []}
+                                    "privacy": {"ghost": True, "show_rating": True}, "ratings": {"zaman": [], "seviye": [], "davranis": []},
+                                    "login_token": uuid.uuid4().hex
                                 }
+                            st.query_params["token"] = st.session_state.db_users["test@demo.com"]["login_token"]
                             st.rerun()
                         elif email in users_db and isinstance(users_db[email], dict) and users_db[email].get("password_hash") == hash_password(password):
                             if users_db[email].get("suspended"): st.error("Hesabınız geçici olarak durdurulmuştur.")
                             else:
                                 st.session_state.logged_in = True; st.session_state.current_user = email
-                                if remember and cookie_manager:
-                                    cookie_manager.set("remember_user", email, expires_at=get_now() + datetime.timedelta(days=30))
+                                # SİHİRLİ LİNK TOKEN ÜRETİMİ
+                                if "login_token" not in users_db[email] or not users_db[email]["login_token"]:
+                                    users_db[email]["login_token"] = uuid.uuid4().hex
+                                    save_data(USERS_FILE_PATH, users_db, 'db_users')
+                                st.query_params["token"] = users_db[email]["login_token"]
                                 st.rerun()
                         else: st.error("Hatalı e-posta veya şifre!")
             with t2:
@@ -626,7 +579,8 @@ def login_page():
                                     "suspended": False, "frozen": False, "delete_requested": False, "is_bot": False, "phone": "", "contact_visibility": "eslesince",
                                     "privacy": {"ghost": False, "show_rating": True},
                                     "radar": {"active": False, "courts": [], "levels": [], "types": []},
-                                    "ratings": {"zaman": [], "seviye": [], "davranis": []}
+                                    "ratings": {"zaman": [], "seviye": [], "davranis": []},
+                                    "login_token": uuid.uuid4().hex
                                 }
                                 if save_data(USERS_FILE_PATH, users_db, 'db_users'):
                                     st.session_state.reg_step = "form"
@@ -722,16 +676,8 @@ def login_page():
                 st.session_state.logged_in = True; st.session_state.is_admin = True; st.rerun()
             else: st.error("Hatalı Parola!")
 
-# --- ANA UYGULAMA İÇİ GERİ DÖN BUTONU YARDIMCISI ---
-def render_back_button(key_suffix):
-    if st.button("🔙 Geri Dön", key=f"btn_back_{key_suffix}", use_container_width=True):
-        st.session_state.current_page = "Ana Menü"
-        st.rerun()
-
 # --- ANA UYGULAMA ---
 def main_app():
-    sidebar_pwa_guide()
-    
     users_db = st.session_state.db_users
     invites = st.session_state.db_invites
     messages = st.session_state.db_messages
@@ -783,7 +729,7 @@ def main_app():
         if st.button("📊 Seviye Rehberi", use_container_width=True): st.session_state.current_page = "Seviye Rehberi"; st.rerun()
         if st.button("🚪 Çıkış Yap", use_container_width=True):
             st.session_state.logged_in = False
-            if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
+            st.query_params.clear()
             st.rerun()
 
     # --- AJANDAM İÇ MENÜSÜ ---
@@ -1219,6 +1165,17 @@ def main_app():
                                 st.rerun()
 
         elif st.session_state.current_page == "Profil & Ayarlar":
+            # SİHİRLİ LİNK BİLGİLENDİRME PANOSU
+            st.markdown("""
+            <div style="background-color: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h4 style="color: #2e7d32; margin-top: 0;">🪄 Otomatik Giriş (Sihirli Link)</h4>
+                <p style="color: #1b5e20; margin-bottom: 0;">
+                Telefonunuzdan her seferinde şifre girmekle uğraşmamak için <b>şu an en üstteki adres çubuğunda yazan linki kopyalayın</b> (sonunda <i>?token=...</i> yazar). 
+                Bu linki Notlarınıza veya Chrome/Safari Yer İmlerinize kaydederseniz tek tıkla hesabınıza girebilirsiniz.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
             colL, colR = st.columns(2)
             with colL:
                 st.subheader("👤 Profil Bilgilerim")
