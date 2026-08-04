@@ -333,7 +333,8 @@
             "zaman": [],
             "seviye": [],
             "davranis": []
-        }
+        },
+        "login_token": "80dba823e17346c88a87cb21dec67b68"
     },
     "seyma.atabay8353@gmail.com": {
         "password_hash": "ed808588668f3b80f902e8dffcc92a9777d98bc4b32dc231696c6ca99a1a8d8b",
