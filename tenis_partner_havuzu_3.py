@@ -46,7 +46,7 @@ except ImportError:
     HAS_PLOTLY = False
     st.sidebar.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
 
-# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE FAB DÜZENLEMELERİ
+# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI
 st.markdown("""
 <style>
     html, body, [class*="css"] { font-size: 1.05rem !important; }
@@ -71,32 +71,6 @@ st.markdown("""
     ul[role="listbox"] li span { font-size: 18px !important; font-weight: 600 !important; }
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} 
-    
-    /* Yüzen Butonlar (Floating Action Buttons - FAB) CSS */
-    div:has(> #fab-right) {
-        position: fixed; bottom: 25px; right: 25px; z-index: 9999; width: auto;
-    }
-    div:has(> #fab-left) {
-        position: fixed; bottom: 25px; left: 25px; z-index: 9999; width: auto;
-    }
-    div:has(> #fab-right) button {
-        background-color: #FF5722 !important;
-        color: white !important;
-        border-radius: 50px !important;
-        box-shadow: 0 4px 10px rgba(255, 87, 34, 0.4) !important;
-        padding: 10px 20px !important;
-        font-size: 1.1rem !important;
-        border: none !important;
-    }
-    div:has(> #fab-left) button {
-        background-color: #1b5e20 !important;
-        color: white !important;
-        border-radius: 50px !important;
-        box-shadow: 0 4px 10px rgba(27, 94, 32, 0.4) !important;
-        padding: 10px 20px !important;
-        font-size: 1.1rem !important;
-        border: none !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -868,37 +842,32 @@ def main_app():
     if st.session_state.current_user == "test@demo.com":
         st.warning("🧪 **DEMO MODU AKTİF:** Şu an test kullanıcısı olarak sistemdesiniz. Yaptığınız işlemler (ilan açma, mesaj gönderme vb.) arka planda kaydedilmez ve diğer gerçek kullanıcılara iletilmez.")
 
-    c_head1, c_head2, c_head3 = st.columns([5, 2, 2])
-    c_head1.write(f"### 🎾 {DYNAMIC_TITLE}")
-    if me.get('frozen'): c_head1.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır.")
+    # --- HIZLI İŞLEM ÇUBUĞU VE YENİ BAŞLIK YAPISI ---
+    st.markdown(f"<h2 style='text-align: center; color: #2E7D32; margin-bottom: 0;'>🎾 {DYNAMIC_TITLE}</h2>", unsafe_allow_html=True)
+    if me.get('frozen'): st.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır.")
     
-    c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {my_rating_display}")
+    st.markdown(f"<p style='text-align: center; color: gray; font-size: 1.1em;'>👤 <b>{me.get('ad_soyad', 'Kullanıcı')}</b> ({me.get('level', '3.5')}) | ⭐ {my_rating_display}</p>", unsafe_allow_html=True)
     
     kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
-    ana_menu_secenekleri = ["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"]
+    ana_menu_secenekleri = ["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi", "🚪 Çıkış Yap"]
 
-    with c_head3:
-        with st.popover(f"🔔 Bildirimler ({my_inbox_count})", use_container_width=True):
-            if my_inbox_count == 0: st.info("Yeni bildiriminiz yok.")
-            else:
-                for n in [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']:
-                    if n.get('type') == 'admin_announcement':
-                        if st.button(f"📢 Yönetici Duyurusu: {n.get('title')}", key=f"btn_notif_{n['id']}", use_container_width=True):
-                            st.session_state.main_menu_secim = kontrol_sekme_adi
-                            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})"
-                            st.rerun()
-                    else:
-                        sender_name = users_db.get(n['sender'], {}).get('ad_soyad', 'Biri')
-                        btn_text = f"🎾 {sender_name} ilanına katılmak istiyor!" if n['type'] == 'invite_request' else f"⚔️ {sender_name} özel maç teklif etti!"
-                        if st.button(btn_text, key=f"btn_notif_{n['id']}", use_container_width=True):
-                            st.session_state.main_menu_secim = kontrol_sekme_adi
-                            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})"
-                            st.rerun()
-                st.caption("👉 Bildirime tıklayarak doğrudan teklife gidebilirsiniz.")
-        if st.button("🚪 Çıkış Yap", use_container_width=True): 
-            st.session_state.logged_in = False
-            if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
-            st.rerun()
+    # 3'LÜ HIZLI İŞLEM BUTONLARI (QUICK ACTIONS)
+    q1, q2, q3 = st.columns(3)
+    
+    if q1.button(f"🔔 Bildirim ({my_inbox_count})", type="primary" if my_inbox_count > 0 else "secondary", use_container_width=True):
+        st.session_state.main_menu_secim = kontrol_sekme_adi
+        st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
+        st.rerun()
+        
+    if q2.button("➕ Yeni İlan", type="primary", use_container_width=True):
+        st.session_state.main_menu_secim = "➕ İlan Oluştur"
+        st.rerun()
+        
+    if q3.button("🎾 Ajandam", use_container_width=True):
+        st.session_state.main_menu_secim = kontrol_sekme_adi
+        st.rerun()
+
+    st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px;'>", unsafe_allow_html=True)
 
     # Dynamic Menu Routing based on State Updates
     if st.session_state.get("main_menu_secim") and "Tenis Ajandam" in st.session_state.main_menu_secim:
@@ -920,6 +889,12 @@ def main_app():
         st.rerun()
         
     st.markdown("---")
+
+    # Çıkış Yapma İşlemi Kontrolü
+    if secilen_sayfa == "🚪 Çıkış Yap":
+        st.session_state.logged_in = False
+        if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
+        st.rerun()
 
     # --- SAYFA 0: İLAN HAVUZU ---
     if secilen_sayfa == ana_menu_secenekleri[0]:
@@ -1499,20 +1474,6 @@ def main_app():
         st.warning("**5.0 - 5.5 (Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa koleksiyonerleri. Vuruşlarınızda hem ciddi bir güç hem de kusursuz bir istikrar var. Eğer bu seviyedeki biriyle eşleştiyseniz, kortta muhtemelen nefes nefese kalacaksınız ve topu sadece yanınızdan geçerken göreceksiniz.")
         st.warning("**6.0 (Ulusal Gururumuz)**\n\nBölgesel ve ulusal düzeyde turnuva oynayan, dereceleri olan oyuncular. Bu seviyeyle maç yapmak, bir amatör için tenis dersi almak gibidir.")
         st.error("**6.5 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller, Grand Slam oyuncuları ve dünya sıralamasındakiler.")
-
-    # --- MOBİL YÜZEN BUTONLARIN (FAB) UYGULANMASI ---
-    with st.container():
-        st.markdown('<div id="fab-right"></div>', unsafe_allow_html=True)
-        if st.button("➕ Yeni İlan", key="fab_right_btn"):
-            st.session_state.main_menu_secim = "➕ İlan Oluştur"
-            st.rerun()
-            
-    with st.container():
-        st.markdown('<div id="fab-left"></div>', unsafe_allow_html=True)
-        if st.button("🎾 Ajandam", key="fab_left_btn"):
-            st.session_state.main_menu_secim = kontrol_sekme_adi
-            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
-            st.rerun()
 
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
