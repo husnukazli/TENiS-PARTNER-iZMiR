@@ -362,6 +362,18 @@ def render_back_button(key_suffix):
         st.session_state.current_page = "Ana Menü"
         st.rerun()
 
+def render_data_refresh_button():
+    if st.button("🔄 Verileri Yenile", use_container_width=True):
+        with st.spinner("Güncel veriler sunucudan çekiliyor..."):
+            st.session_state.db_users = load_data(USERS_FILE_PATH, dict)
+            st.session_state.db_invites = load_data(INVITES_FILE_PATH, list)
+            st.session_state.db_messages = load_data(MESSAGES_FILE_PATH, list)
+            st.session_state.db_custom_courts = load_data(CUSTOM_COURTS_FILE_PATH, list)
+            st.session_state.db_pending_courts = load_data(PENDING_COURTS_FILE_PATH, list)
+        st.success("Veriler güncellendi! ✅")
+        time.sleep(1)
+        st.rerun()
+
 # --- YÖNETİCİ KONTROL MERKEZİ ---
 def admin_dashboard():
     st.markdown("<h1 style='color: #D32F2F;'>Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
@@ -721,6 +733,21 @@ def main_app():
 
     # --- ANA MENÜ (DİKEY LİSTE) ---
     if st.session_state.current_page == "Ana Menü":
+        
+        # SİHİRLİ LİNK BİLGİLENDİRME PANOSU (ANA MENÜNÜN TEPESİ)
+        st.markdown("""
+        <div style="background-color: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #2e7d32; margin-top: 0;">🪄 Otomatik Giriş (Sihirli Link)</h4>
+            <p style="color: #1b5e20; margin-bottom: 0;">
+            Her seferinde şifre girmemek için tarayıcınızın menüsünden (⋮ veya ok işareti) <b>"Ana Ekrana Ekle"</b> seçeneğini kullanın. Sistem, şu an adres çubuğundaki size özel linki kaydedecektir.<br><br>
+            <i>💡 İpucu: Ana ekrana eklerken ismini <b>"🎾 İzmir Tenis"</b> veya <b>"🎾 Zonguldak"</b> olarak değiştirirseniz kısayollar karışmaz. (O gördüğünüz kağıt kayık resmi Streamlit altyapısının kendi logosudur).</i>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        render_data_refresh_button()
+        st.markdown("<br>", unsafe_allow_html=True)
+
         if st.button("☀️ Güncel İlanlar", use_container_width=True): st.session_state.current_page = "Güncel İlanlar"; st.rerun()
         if st.button("👥 Üyeler", use_container_width=True): st.session_state.current_page = "Üyeler"; st.rerun()
         if st.button("⚖️ Değerlendirme", use_container_width=True): st.session_state.current_page = "Değerlendirme"; st.rerun()
@@ -1165,17 +1192,6 @@ def main_app():
                                 st.rerun()
 
         elif st.session_state.current_page == "Profil & Ayarlar":
-            # SİHİRLİ LİNK BİLGİLENDİRME PANOSU
-            st.markdown("""
-            <div style="background-color: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <h4 style="color: #2e7d32; margin-top: 0;">🪄 Otomatik Giriş (Sihirli Link)</h4>
-                <p style="color: #1b5e20; margin-bottom: 0;">
-                Telefonunuzdan her seferinde şifre girmekle uğraşmamak için <b>şu an en üstteki adres çubuğunda yazan linki kopyalayın</b> (sonunda <i>?token=...</i> yazar). 
-                Bu linki Notlarınıza veya Chrome/Safari Yer İmlerinize kaydederseniz tek tıkla hesabınıza girebilirsiniz.
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-            
             colL, colR = st.columns(2)
             with colL:
                 st.subheader("👤 Profil Bilgilerim")
