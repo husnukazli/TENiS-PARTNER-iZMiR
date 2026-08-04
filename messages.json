@@ -474,7 +474,8 @@
         "court_custom": "",
         "fee_status": "Ücretsiz Kort / Abonelik",
         "fee_amount": "",
-        "status": "pending",
-        "is_read": true
+        "status": "accepted",
+        "is_read": true,
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260804T180000%2F20260804T193000&location=K%C3%BClt%C3%BCrpark+Tenis+Kul%C3%BCb%C3%BC+%28KTK%29&details=%C4%B0zmir+Tenis+Partner+%C3%BCzerinden+ayarland%C4%B1."
     }
 ]
