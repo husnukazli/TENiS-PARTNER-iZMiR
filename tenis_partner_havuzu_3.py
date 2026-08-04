@@ -46,17 +46,18 @@ except ImportError:
     HAS_PLOTLY = False
     st.sidebar.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
 
-# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE BUTON HİSSİYATLARI
+# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE RENKLİ BUTONLAR
 st.markdown("""
 <style>
     html, body, [class*="css"] { font-size: 1.05rem !important; }
     .block-container { padding-top: 3.5rem; padding-bottom: 2rem; }
     
-    /* BUTON TIKLAMA (ACTIVE) HİSSİYATI VE ORTAK AYARLAR */
+    /* BUTON TIKLAMA HİSSİYATI VE ORTAK AYARLAR */
     .stButton > button { 
         width: 100%; border-radius: 12px; font-weight: 700; 
         padding-top: 0.6rem; padding-bottom: 0.6rem; 
         transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+        margin-bottom: 2px !important; /* Butonları birbirine yaklaştırdık */
     }
     .stButton > button:active {
         transform: scale(0.95) !important;
@@ -64,47 +65,17 @@ st.markdown("""
     }
     button[kind="primary"] p { font-size: 1.3rem !important; }
     
-    /* HIZLI İŞLEM BUTONLARI ÖZEL RENKLERİ */
-    div.neon-btn .stButton > button {
-        background-color: #39FF14 !important;
-        color: #0b3d16 !important;
-        border: 2px solid #0b3d16 !important;
-        box-shadow: 0 4px 10px rgba(57, 255, 20, 0.4);
+    /* EN ÜSTTEKİ 3'LÜ HIZLI İŞLEM BUTONLARINI (İLK SATIR) RENKLENDİRME */
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-of-type(1) button {
+        background-color: #ffffff !important; color: #d32f2f !important; border: 2px solid #d32f2f !important;
     }
-    div.dark-btn .stButton > button {
-        background-color: #1b5e20 !important;
-        color: white !important;
-        border: none !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-of-type(2) button {
+        background-color: #39FF14 !important; color: #0b3d16 !important; border: 2px solid #0b3d16 !important; box-shadow: 0 4px 6px rgba(57, 255, 20, 0.3);
     }
-    div.notif-btn .stButton > button {
-        background-color: #ffffff !important;
-        color: #d32f2f !important;
-        border: 2px solid #d32f2f !important;
-    }
-    
-    /* AJANDA İÇ MENÜ ALT ALTA DİZİLİMİ */
-    div.ajanda-menu .stButton > button {
-        background-color: #ffffff !important;
-        color: #1b5e20 !important;
-        border: 1px solid #c8e6c9 !important;
-        margin-bottom: 10px !important;
-        font-size: 1.15rem !important;
-        text-align: left !important;
-        justify-content: flex-start !important;
-        padding-left: 20px !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"]:nth-of-type(3) button {
+        background-color: #1b5e20 !important; color: white !important; border: none !important; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }
 
-    div[data-baseweb="select"] > div {
-        background-color: #f8f9fa; border: 2px solid #2e7d32 !important; border-radius: 12px;
-        box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 4px 6px rgba(0,0,0,0.15); padding: 5px;
-        cursor: pointer; transition: all 0.2s ease-in-out;
-    }
-    div[data-baseweb="select"] > div:hover {
-        box-shadow: inset 0px 1px 0px rgba(255,255,255,1), 0px 6px 10px rgba(0,0,0,0.25); transform: translateY(-1px);
-    }
-    div[data-baseweb="select"] span { font-size: 18px !important; font-weight: 700 !important; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} 
 </style>
 """, unsafe_allow_html=True)
@@ -158,10 +129,10 @@ PENDING_COURTS_FILE_PATH = "pending_courts.json"
 # --- OTURUM YÖNETİMİ ---
 if "active_city" not in st.session_state: st.session_state["active_city"] = "İzmir"
 
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'current_page', 'in_ajanda', 'ajanda_sub']:
-    if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form', 'in_ajanda'] else None
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'current_page']:
+    if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
-if not st.session_state.current_page: st.session_state.current_page = "☀️ Güncel İlanlar"
+if not st.session_state.current_page: st.session_state.current_page = "Ana Menü"
 
 # --- YARDIMCI FONKSİYONLAR ---
 def hash_password(password): return hashlib.sha256(password.encode()).hexdigest()
@@ -427,7 +398,7 @@ def render_matched_invites(matched_invs, invites, messages, users_db):
                     st.caption(f"📝 Not: {m_inv.get('note')}")
         st.markdown("<br>", unsafe_allow_html=True)
 
-# --- YÖNETİCİ KONTROL MERKEZİ (Değişmedi) ---
+# --- YÖNETİCİ KONTROL MERKEZİ ---
 def admin_dashboard():
     sidebar_pwa_guide()
     st.markdown("<h1 style='color: #D32F2F;'>Yönetici Kontrol Merkezi</h1>", unsafe_allow_html=True)
@@ -577,7 +548,6 @@ def login_page():
     invites = st.session_state.db_invites
     messages = st.session_state.db_messages
     
-    # 1. GİRİŞ YAP BUTONU VE FORMU (HEMEN SEÇİCİNİN ALTINDA)
     c1, c2, c3 = st.columns([1, 4, 1])
     with c2:
         if not st.session_state.show_login_form:
@@ -682,7 +652,6 @@ def login_page():
 
     st.markdown("---")
     
-    # 2. GÜNCEL İLANLAR
     st.markdown(f"### ☀️ {CURRENT_CITY} Güncel İlanları")
     st.write("Aşağıdaki ilanlara teklif göndermek için sisteme giriş yapmalısınız.")
     
@@ -735,8 +704,6 @@ def login_page():
                     st.session_state.show_login_form = True; st.rerun()
                     
     st.markdown("---")
-    
-    # 3. NASIL ÇALIŞIR & SON EŞLEŞMELER (SAYFA EN ALTI)
     with st.expander("❓ Sistem Nasıl Çalışır?"):
         st.info("""
         1. **Profilinizi Oluşturun:** Seviyenizi ve bölgelerinizi belirleyerek sisteme katılın.
@@ -755,6 +722,11 @@ def login_page():
                 st.session_state.logged_in = True; st.session_state.is_admin = True; st.rerun()
             else: st.error("Hatalı Parola!")
 
+# --- ANA UYGULAMA İÇİ GERİ DÖN BUTONU YARDIMCISI ---
+def render_back_button(key_suffix):
+    if st.button("🔙 Geri Dön", key=f"btn_back_{key_suffix}", use_container_width=True):
+        st.session_state.current_page = "Ana Menü"
+        st.rerun()
 
 # --- ANA UYGULAMA ---
 def main_app():
@@ -769,249 +741,73 @@ def main_app():
     my_rating = calculate_rating(me.get('ratings'))
     my_rating_display = f"{my_rating:.1f}" if me.get("privacy", {}).get("show_rating", True) else "Gizli"
     
-    # Bildirim Sayacı (Sadece okunmamış ve bekleyenleri sayar)
+    # Okunmamış Bildirim Sayacı
     my_pending_msgs = [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']
     my_unread_count = len([m for m in my_pending_msgs if not m.get('is_read', False)])
 
     if st.session_state.current_user == "test@demo.com":
-        st.warning("🧪 **DEMO MODU AKTİF:** Şu an test kullanıcısı olarak sistemdesiniz. Yaptığınız işlemler (ilan açma, mesaj gönderme vb.) arka planda kaydedilmez ve diğer gerçek kullanıcılara iletilmez.")
+        st.warning("🧪 **DEMO MODU AKTİF:** Yaptığınız işlemler arka planda kaydedilmez.")
 
+    # --- SABİT ÜST BAŞLIK ---
     st.markdown(f"<h2 style='text-align: center; color: #2E7D32; margin-bottom: 0;'>🎾 {DYNAMIC_TITLE}</h2>", unsafe_allow_html=True)
     if me.get('frozen'): st.warning("⚠️ Hesabınız şu an **Dondurulmuş (Pasif)** durumdadır.")
     st.markdown(f"<p style='text-align: center; color: gray; font-size: 1.1em;'>👤 <b>{me.get('ad_soyad', 'Kullanıcı')}</b> ({me.get('level', '3.5')}) | ⭐ {my_rating_display}</p>", unsafe_allow_html=True)
     
-    # --- 3'LÜ HIZLI İŞLEM BUTONLARI (QUICK ACTIONS) ---
-    q1, q2, q3 = st.columns(3)
+    # --- HER ZAMAN GÖRÜNEN 3'LÜ HIZLI İŞLEM BUTONLARI ---
+    c1, c2, c3 = st.columns(3)
     
-    with q1:
-        st.markdown('<div class="notif-btn">', unsafe_allow_html=True)
-        btn_text = f"🔔 Bildirim ({my_unread_count})" if my_unread_count > 0 else "🔔 Bildirim"
-        if st.button(btn_text, key="btn_quick_notif", use_container_width=True):
-            # Tıklandığı an okundu olarak işaretle
+    btn_notif_text = f"🔔 Bildirim ({my_unread_count})" if my_unread_count > 0 else "🔔 Bildirim"
+    if c1.button(btn_notif_text, key="btn_top_notif", use_container_width=True):
+        for m in my_pending_msgs: m['is_read'] = True
+        save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
+        st.session_state.current_page = "Gelen Teklifler"
+        st.rerun()
+        
+    if c2.button("➕ Yeni İlan", key="btn_top_yeni", use_container_width=True):
+        st.session_state.current_page = "İlan Oluştur"
+        st.rerun()
+        
+    if c3.button("🎾 Ajandam", key="btn_top_ajanda", use_container_width=True):
+        st.session_state.current_page = "Ajandam Ana"
+        st.rerun()
+
+    st.markdown("<hr style='margin-top: 5px; margin-bottom: 10px;'>", unsafe_allow_html=True)
+
+    # --- ANA MENÜ (DİKEY LİSTE) ---
+    if st.session_state.current_page == "Ana Menü":
+        if st.button("☀️ Güncel İlanlar", use_container_width=True): st.session_state.current_page = "Güncel İlanlar"; st.rerun()
+        if st.button("👥 Üyeler", use_container_width=True): st.session_state.current_page = "Üyeler"; st.rerun()
+        if st.button("⚖️ Değerlendirme", use_container_width=True): st.session_state.current_page = "Değerlendirme"; st.rerun()
+        if st.button("⚙️ Profil & Ayarlar", use_container_width=True): st.session_state.current_page = "Profil & Ayarlar"; st.rerun()
+        if st.button("📍 Kort Rehberi", use_container_width=True): st.session_state.current_page = "Kort Rehberi"; st.rerun()
+        if st.button("📊 Seviye Rehberi", use_container_width=True): st.session_state.current_page = "Seviye Rehberi"; st.rerun()
+        if st.button("🚪 Çıkış Yap", use_container_width=True):
+            st.session_state.logged_in = False
+            if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
+            st.rerun()
+
+    # --- AJANDAM İÇ MENÜSÜ ---
+    elif st.session_state.current_page == "Ajandam Ana":
+        render_back_button("ajanda_top")
+        st.subheader("🎾 Tenis Ajandam Kategorileri")
+        
+        if st.button("📥 Gelen Teklifler", use_container_width=True):
             for m in my_pending_msgs: m['is_read'] = True
             save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
-            st.session_state.in_ajanda = True
-            st.session_state.ajanda_sub = "Gelen Teklifler"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.session_state.current_page = "Gelen Teklifler"; st.rerun()
+        if st.button("📤 Gönderdiğim Teklifler", use_container_width=True): st.session_state.current_page = "Gönderdiğim Teklifler"; st.rerun()
+        if st.button("📢 Yayındaki İlanlarım", use_container_width=True): st.session_state.current_page = "Yayındaki İlanlarım"; st.rerun()
+        if st.button("📅 Onaylanmış Maçlarım", use_container_width=True): st.session_state.current_page = "Onaylanmış Maçlarım"; st.rerun()
+        if st.button("📜 Geçmiş & İptal Edilenler", use_container_width=True): st.session_state.current_page = "Geçmiş"; st.rerun()
         
-    with q2:
-        st.markdown('<div class="neon-btn">', unsafe_allow_html=True)
-        if st.button("➕ Yeni İlan", key="btn_quick_yeni", use_container_width=True):
-            st.session_state.in_ajanda = False
-            st.session_state.current_page = "➕ İlan Oluştur"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    with q3:
-        st.markdown('<div class="dark-btn">', unsafe_allow_html=True)
-        if st.button("🎾 Ajandam", key="btn_quick_ajanda", use_container_width=True):
-            st.session_state.in_ajanda = True
-            st.session_state.ajanda_sub = None
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        render_back_button("ajanda_bottom")
 
-    st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px;'>", unsafe_allow_html=True)
-
-    # --- MENÜ YÖNLENDİRMESİ VE GÖSTERİMİ ---
-    ana_menu_secenekleri = ["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi", "🚪 Çıkış Yap"]
-    if st.session_state.current_page not in ana_menu_secenekleri:
-        st.session_state.current_page = ana_menu_secenekleri[0]
-
-    if st.session_state.in_ajanda:
-        # Ajanda İçi Navigasyon (Selectbox gizlendi, butonlar devrede)
-        if not st.session_state.ajanda_sub:
-            if st.button("🔙 Ana Menüye Dön", use_container_width=True):
-                st.session_state.in_ajanda = False
-                st.rerun()
-            st.subheader("🎾 Tenis Ajandam")
-            st.markdown('<div class="ajanda-menu">', unsafe_allow_html=True)
-            if st.button("📥 Gelen Teklifler", use_container_width=True): 
-                # Gelen tekliflere girildiğinde de okunmamışları okundu yap
-                for m in my_pending_msgs: m['is_read'] = True
-                save_data(MESSAGES_FILE_PATH, messages, 'db_messages')
-                st.session_state.ajanda_sub = "Gelen Teklifler"; st.rerun()
-            if st.button("📤 Gönderdiğim Teklifler", use_container_width=True): st.session_state.ajanda_sub = "Gönderdiğim Teklifler"; st.rerun()
-            if st.button("📢 Yayındaki İlanlarım", use_container_width=True): st.session_state.ajanda_sub = "Yayındaki İlanlarım"; st.rerun()
-            if st.button("📅 Onaylanmış Maçlarım", use_container_width=True): st.session_state.ajanda_sub = "Onaylanmış Maçlarım"; st.rerun()
-            if st.button("📜 Geçmiş & İptal Edilenler", use_container_width=True): st.session_state.ajanda_sub = "Geçmiş"; st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            if st.button("🔙 Ajanda Kategorilerine Dön", use_container_width=True):
-                st.session_state.ajanda_sub = None
-                st.rerun()
-            st.markdown("---")
-            
-            # --- AJANDA İÇ SAYFALARI ---
-            if st.session_state.ajanda_sub == "Gelen Teklifler":
-                if not my_pending_msgs: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
-                for msg in my_pending_msgs:
-                    with st.container(border=True):
-                        if msg.get('type') == 'admin_announcement':
-                            st.markdown(f"📢 <span style='color:#D32F2F; font-size:1.1em; font-weight:bold;'>YÖNETİCİ DUYURUSU: {msg.get('title')}</span>", unsafe_allow_html=True)
-                            st.info(msg.get('content'))
-                            if st.button("✅ Okudum / Kapat", key=f"read_{msg['id']}", type="primary"):
-                                msg['status'] = 'read'; save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
-                        else:
-                            s_user = users_db.get(msg['sender'], {})
-                            if msg.get('type') == 'invite_request':
-                                inv_data = next((i for i in invites if i.get('id') == msg.get('invite_id')), {})
-                                st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** sizin **{format_date_tr(inv_data.get('date'))}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
-                            else:
-                                fee_info = f" | 💰 {msg.get('fee_status')}" if msg.get('fee_status') and msg.get('fee_status') != 'Belirtilmedi' else ""
-                                st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{format_date_tr(msg.get('date'))}** | Kort: **{msg.get('court')}**{fee_info}")
-        
-                            render_popover_profile(msg['sender'], s_user, messages)
-        
-                            c_acc, c_rej = st.columns(2)
-                            if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}", type="primary"):
-                                msg['status'] = 'accepted'
-                                inv_kayit_basarili = True
-                                if msg.get('type') == 'invite_request':
-                                    for i in invites:
-                                        if i.get('id') == msg.get('invite_id'):
-                                            i['status'] = 'matched'
-                                            msg['calendar_link'] = generate_gcal_link("Tenis Maçı", i.get('date'), i.get('time_details', '18:00'), i.get('court'))
-                                            break
-                                    inv_kayit_basarili = save_data(INVITES_FILE_PATH, invites, 'db_invites')
-                                else: msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', ''), msg.get('time', '18:00'), msg.get('court', ''))
-                                    
-                                if inv_kayit_basarili and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
-                                    send_email(msg['sender'], "Teklifiniz Kabul Edildi!", f"<b>{me.get('ad_soyad')}</b> teklifinizi kabul etti!")
-                                    st.session_state.show_toast = "Teklif kabul edildi! 🎉"; st.rerun()
-        
-                            if not st.session_state.get(f"conf_rej_{msg['id']}", False):
-                                if c_rej.button("❌ Reddet / Gizle", key=f"btn_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = True; st.rerun()
-                            else:
-                                c_rej.warning("Reddedilsin mi?")
-                                if c_rej.button("Evet, Reddet", key=f"yes_rej_{msg['id']}"):
-                                    msg['status'] = 'rejected'
-                                    if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'): st.session_state[f"conf_rej_{msg['id']}"] = False; st.rerun()
-                                if c_rej.button("Vazgeç", key=f"no_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = False; st.rerun()
-            
-            elif st.session_state.ajanda_sub == "Gönderdiğim Teklifler":
-                my_sent = [m for m in messages if m.get('sender') == st.session_state.current_user]
-                if not my_sent: st.info("Henüz kimseye teklif göndermediniz.")
-                for msg in reversed(my_sent):
-                    with st.container(border=True):
-                        r_user = users_db.get(msg.get('receiver'), {})
-                        st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi", "cancelled_late": "🚫 İptal Edildi"}
-                        st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
-                        if msg.get('status') == 'pending':
-                            if not st.session_state.get(f"conf_with_{msg['id']}", False):
-                                if st.button("🗑️ Teklifi Geri Çek", key=f"btn_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = True; st.rerun()
-                            else:
-                                cw1, cw2 = st.columns(2)
-                                if cw1.button("Evet, Geri Çek", key=f"yes_with_{msg['id']}"):
-                                    if save_data(MESSAGES_FILE_PATH, [m for m in messages if m['id'] != msg['id']], 'db_messages'): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
-                                if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
-                                
-            elif st.session_state.ajanda_sub == "Yayındaki İlanlarım":
-                my_active_invs = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'active']
-                if not my_active_invs: st.info("Şu an yayında olan aktif bir ilanınız bulunmuyor.")
-                for my_inv in my_active_invs:
-                    with st.container(border=True):
-                        s = get_invite_status(my_inv.get('date'), my_inv.get('time_details', ''))
-                        if s in ["expired", "removed"]: st.error("⏳ Bu ilanın süresi dolmuştur.")
-                        st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {format_date_tr(my_inv.get('date'))} | ⏰ {my_inv.get('time_details')}")
-                        col_i1, col_i2 = st.columns(2)
-                        if col_i1.button("✏️ Düzenle", key=f"edit_myinv_{my_inv.get('id')}"): st.session_state.edit_my_active = my_inv.get('id'); st.rerun()
-                        if col_i2.button("🗑️ İlanı Kaldır", key=f"del_myinv_{my_inv.get('id')}"): dialog_delete_invite(my_inv.get('id'))
-                                
-                if st.session_state.get('edit_my_active') and any(i.get('id') == st.session_state.edit_my_active for i in my_active_invs):
-                    e_inv = next(i for i in invites if i.get('id') == st.session_state.edit_my_active)
-                    st.markdown("---")
-                    st.subheader("✏️ İlanı Güncelle")
-                    with st.form("edit_my_active_form"):
-                        ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
-                        city_for_edit = e_inv.get('city', 'İzmir')
-                        courts_for_edit = ACTIVE_COURTS if city_for_edit == CURRENT_CITY else (IZMIR_KORTLARI if city_for_edit=="İzmir" else ZONGULDAK_KORTLARI)
-                        ed_court = st.selectbox("Yeni Kort", courts_for_edit, index=courts_for_edit.index(e_inv.get('court')) if e_inv.get('court') in courts_for_edit else 0)
-                        ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
-                        ed_fee_amount = st.text_input("Kort Ücreti Tutarı", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
-                        ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
-                        
-                        c_btn1, c_btn2 = st.columns(2)
-                        if c_btn1.form_submit_button("Güncelle ve Kaydet", type="primary"):
-                            e_inv.update({'date': str(ed_d), 'court': ed_court, 'fee_status': ed_fee_status, 'fee_amount': ed_fee_amount.strip(), 'note': ed_note})
-                            if save_data(INVITES_FILE_PATH, invites, 'db_invites'): st.session_state.edit_my_active = None; st.rerun()
-                        if c_btn2.form_submit_button("Vazgeç"): st.session_state.edit_my_active = None; st.rerun()
-                        
-            elif st.session_state.ajanda_sub == "Onaylanmış Maçlarım":
-                my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('hidden_by', [])]
-                if not my_acc: st.info("Yaklaşan veya görüntülenen onaylanmış bir maçınız yok.")
-                for acc in reversed(my_acc):
-                    with st.container(border=True):
-                        partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
-                        partner_u = users_db.get(partner_e, {})
-                        if acc.get('type') == 'invite_request':
-                            inv_data = next((i for i in invites if i.get('id') == acc.get('invite_id')), {})
-                            m_date, m_time, m_court = inv_data.get('date', '-'), inv_data.get('time_details', '-'), inv_data.get('court', '-')
-                        else:
-                            m_date, m_time, m_court = acc.get('date', '-'), acc.get('time', '-'), acc.get('court', '-')
-    
-                        st.markdown(f"🤝 **Partner:** {partner_u.get('ad_soyad', 'Partner')} *(NTRP {partner_u.get('level', '3.5')})*")
-                        st.markdown(f"🗓️ **Tarih & Saat:** {format_date_tr(m_date)} | {m_time} | 📍 **Kort:** {m_court}")
-                        if partner_u.get('contact_visibility', 'eslesince') in ['eslesince', 'herkes']:
-                            st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
-                        
-                        with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
-                            for chat in acc.get("chat_history", []):
-                                with st.chat_message("user" if chat["sender"] == st.session_state.current_user else "assistant"):
-                                    st.write(chat["text"]); st.caption(chat["timestamp"])
-                            if new_msg := st.chat_input("Mesajınızı yazın...", key=f"chat_input_{acc['id']}"):
-                                acc.setdefault("chat_history", []).append({"sender": st.session_state.current_user, "text": new_msg, "timestamp": get_now().strftime("%d-%m %H:%M")})
-                                if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
-                                    send_email(partner_e, f"💬 Yeni Mesaj: {m_date} Maçı", f"Partneriniz <b>{me.get('ad_soyad')}</b> mesaj gönderdi:<br>\"{new_msg}\"")
-                                    st.rerun()
-    
-                        c_opt1, c_opt2 = st.columns(2)
-                        if c_opt1.button("🗑️ Maçı İptal Et", key=f"btn_del_acc_{acc['id']}"): dialog_cancel_match(acc['id'], False)
-                        can_republish = True if acc.get('sender') == st.session_state.current_user else False
-                        if acc.get('type') == 'invite_request':
-                            target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
-                            if target_inv and target_inv.get('creator') == st.session_state.current_user: can_republish = True
-                        if can_republish and acc.get('type') == 'invite_request':
-                            if c_opt2.button("✏️ İptal Et & Yeniden Yayınla", key=f"btn_edit_acc_{acc['id']}"): dialog_cancel_match(acc['id'], True)
-                        
-                        if get_invite_status(m_date, m_time) in ["expired", "removed"]:
-                            st.markdown("---")
-                            if st.button("🗑️ Geçmiş Maçı Listemden Gizle", key=f"hide_past_acc_{acc['id']}", use_container_width=True):
-                                acc.setdefault('hidden_by', []).append(st.session_state.current_user)
-                                save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
-                                
-            elif st.session_state.ajanda_sub == "Geçmiş":
-                past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'cancelled_late', 'rejected'] and st.session_state.current_user not in m.get('hidden_by', [])]
-                if not past_m: st.info("Geçmiş iptal veya red kaydı bulunmuyor.")
-                for pm in past_m: 
-                    col_txt, col_btn = st.columns([4,1])
-                    col_txt.write(f"⚪ Kayıt | ID: {pm['id'][:8]} | Durum: **{pm['status']}**")
-                    if col_btn.button("🗑️ Listemden Gizle", key=f"hide_{pm['id']}"):
-                        pm.setdefault('hidden_by', []).append(st.session_state.current_user)
-                        save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
-
+    # --- ALT SAYFALAR ---
     else:
-        # --- ANA SAYFA DİĞER MENÜLER (Ajanda harici) ---
-        m_idx = ana_menu_secenekleri.index(st.session_state.current_page)
-        st.markdown("""
-        <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
-            <span style="color: #39FF14; font-size: 1.15em; font-weight: bold;">MENÜ: Görüntülemek İstediğiniz Sayfayı Seçin</span>
-        </div>
-        """, unsafe_allow_html=True)
-        secilen_sayfa = st.selectbox("", ana_menu_secenekleri, index=m_idx, key="menu_select_widget", label_visibility="collapsed")
-        
-        if secilen_sayfa != st.session_state.current_page:
-            if secilen_sayfa == "🚪 Çıkış Yap":
-                st.session_state.logged_in = False
-                if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
-                st.rerun()
-            st.session_state.current_page = secilen_sayfa
-            st.rerun()
-            
+        render_back_button(f"top_{st.session_state.current_page}")
         st.markdown("---")
 
-        # --- SAYFA 0: İLAN HAVUZU ---
-        if secilen_sayfa == ana_menu_secenekleri[0]:
+        if st.session_state.current_page == "Güncel İlanlar":
             with st.expander("🔍 İlanları Filtrele ve Sırala"):
                 f_col1, f_col2, f_col3 = st.columns(3)
                 sort_by = f_col1.selectbox("Sıralama Ölçütü", ["Tarihe Göre (En Yakın)", "Eklenme Zamanına Göre (En Yeni)"])
@@ -1107,13 +903,11 @@ def main_app():
                                     st.session_state[lock_key] = True
                                     new_msg = {"id": str(uuid.uuid4()), "type": "invite_request", "invite_id": inv.get('id'), "sender": st.session_state.current_user, "receiver": inv.get('creator'), "status": "pending", "timestamp": str(get_now())}
                                     if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
-                                        if st.session_state.current_user == "test@demo.com": st.session_state.show_toast = "🧪 (Demo) Teklifiniz simüle edildi!"
-                                        else: st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
+                                        st.session_state.show_toast = "Teklifiniz iletildi! 🎉"
                                         st.rerun()
                                     else: st.error("⚠️ Veri hatası: Teklifiniz kaydedilemedi.")
     
-        # --- SAYFA 1: İLAN OLUŞTUR ---
-        elif secilen_sayfa == ana_menu_secenekleri[1]:
+        elif st.session_state.current_page == "İlan Oluştur":
             st.subheader(f"➕ {CURRENT_CITY} İçin Yeni İlan Yayınla")
             if me.get('frozen'): st.warning("⚠️ Hesabınız dondurulmuş. İlanınız vitrinde görünmez.")
                 
@@ -1162,22 +956,14 @@ def main_app():
                         new_pending = {"id": str(uuid.uuid4()), "name": court_custom.strip(), "city": CURRENT_CITY, "added_by": st.session_state.current_user}
                         st.session_state.db_pending_courts.append(new_pending)
                         save_data(PENDING_COURTS_FILE_PATH, st.session_state.db_pending_courts, "db_pending_courts")
-                        send_email(ADMIN_EMAIL, "🎾 Yeni Kort Önerisi", f"{users_db.get(st.session_state.current_user, {}).get('ad_soyad')} yeni bir kort ekledi: {court_custom.strip()} ({CURRENT_CITY})")
-    
+                    
                     if save_data(INVITES_FILE_PATH, invites + [new_inv], 'db_invites'):
-                        if st.session_state.current_user != "test@demo.com":
-                            for u_email, u_data in users_db.items():
-                                if u_email == st.session_state.current_user or not isinstance(u_data, dict) or u_data.get('frozen') or u_data.get('suspended'): continue
-                                r = u_data.get("radar", {})
-                                if r.get("active", False) and (not r.get("courts") or court in r.get("courts") or (court == "Diğer" and "Diğer" in r.get("courts"))) and (not r.get("levels") or any(l in r.get("levels") for l in levels)) and (not r.get("types") or act_type in r.get("types") or "Fark Etmez" in r.get("types")):
-                                    send_email(u_email, "📡 Radar Alarmı: Uygun İlan Yayınlandı!", f"Merhaba <b>{u_data.get('ad_soyad')}</b>,<br><br>Radar kriterlerinize uygun tenis ilanı yayınlandı!<br><br>Kort: {court}<br>Sisteme giriş yaparak teklif gönderebilirsiniz.")
-                            st.session_state.show_toast = "İlanınız başarıyla yayınlandı! 🎉"
-                        else: st.session_state.show_toast = "🧪 (Demo) İlanınız yayınlandı! (Sadece siz görebilirsiniz)"
+                        st.session_state.show_toast = "İlanınız başarıyla yayınlandı! 🎉"
+                        st.session_state.current_page = "Güncel İlanlar"
                         st.rerun()
                     else: st.error("⚠️ Veri çakışması! İlanınız sisteme kaydedilemedi. Lütfen tekrar deneyin.")
     
-        # --- SAYFA 2: ÜYELER ---
-        elif secilen_sayfa == ana_menu_secenekleri[2]:
+        elif st.session_state.current_page == "Üyeler":
             c_title, c_sort = st.columns([3, 2])
             c_title.subheader("👥 Oyuncu Listesi")
             sort_users = c_sort.selectbox("Üyeleri Sırala:", ["İsme Göre (A-Z)", "Seviyeye Göre (Yüksekten Düşüğe)", "Puana Göre (Popülerlik)", "Bölgeye Göre (İlçe)"])
@@ -1208,8 +994,7 @@ def main_app():
                     new_msg = {"id": str(uuid.uuid4()), "type": "direct_challenge", "sender": st.session_state.current_user, "receiver": st.session_state.offer_to, "date": str(o_date), "time": f"{o_t1.strftime('%H:%M')} - {o_t2.strftime('%H:%M')}", "court": o_court, "court_custom": o_custom, "fee_status": o_fee_status, "fee_amount": o_fee_amount.strip(), "status": "pending"}
                     if save_data(MESSAGES_FILE_PATH, messages + [new_msg], 'db_messages'):
                         st.session_state.offer_to = None
-                        if st.session_state.current_user == "test@demo.com": st.session_state.show_toast = "🧪 (Demo) Özel teklifiniz simüle edildi!"
-                        else: st.session_state.show_toast = "Teklif iletildi!"
+                        st.session_state.show_toast = "Teklif iletildi!"
                         st.rerun()
                     else: st.error("⚠️ Veri hatası: Özel teklifiniz kaydedilemedi.")
                 if c_can.button("İptal", use_container_width=True): st.session_state.offer_to = None; st.rerun()
@@ -1231,11 +1016,155 @@ def main_app():
                         colC.button("✅ Teklif Gönderildi", key=f"dir_sent_{u_email}", disabled=True)
                     else:
                         if colC.button("🎾 Özel Teklif Et", key=f"chall_{u_email}", type="primary"): st.session_state.offer_to = u_email; st.rerun()
+
+        elif st.session_state.current_page == "Gelen Teklifler":
+            if not my_pending_msgs: st.info("Bekleyen gelen bir teklifiniz bulunmuyor.")
+            for msg in my_pending_msgs:
+                with st.container(border=True):
+                    if msg.get('type') == 'admin_announcement':
+                        st.markdown(f"📢 <span style='color:#D32F2F; font-size:1.1em; font-weight:bold;'>YÖNETİCİ DUYURUSU: {msg.get('title')}</span>", unsafe_allow_html=True)
+                        st.info(msg.get('content'))
+                        if st.button("✅ Okudum / Kapat", key=f"read_{msg['id']}", type="primary"):
+                            msg['status'] = 'read'; save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
+                    else:
+                        s_user = users_db.get(msg['sender'], {})
+                        if msg.get('type') == 'invite_request':
+                            inv_data = next((i for i in invites if i.get('id') == msg.get('invite_id')), {})
+                            st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** sizin **{format_date_tr(inv_data.get('date'))}** tarihli **{inv_data.get('court')}** ilanınıza katılmak istiyor!")
+                        else:
+                            fee_info = f" | 💰 {msg.get('fee_status')}" if msg.get('fee_status') and msg.get('fee_status') != 'Belirtilmedi' else ""
+                            st.write(f"🔔 **{s_user.get('ad_soyad', 'Anonim')}** size özel maç teklif etti! Tarih: **{format_date_tr(msg.get('date'))}** | Kort: **{msg.get('court')}**{fee_info}")
     
-        # --- SAYFA 4: DEĞERLENDİRME ---
-        elif secilen_sayfa == ana_menu_secenekleri[3]: # Note: This index shifts because Ajandam is skipped
-            pass # Moved to Ajandam index 3 earlier, so index 3 here is Değerlendirme
-        elif secilen_sayfa == ana_menu_secenekleri[4]:
+                        render_popover_profile(msg['sender'], s_user, messages)
+    
+                        c_acc, c_rej = st.columns(2)
+                        if c_acc.button("✅ Kabul Et", key=f"acc_{msg['id']}", type="primary"):
+                            msg['status'] = 'accepted'
+                            inv_kayit_basarili = True
+                            if msg.get('type') == 'invite_request':
+                                for i in invites:
+                                    if i.get('id') == msg.get('invite_id'):
+                                        i['status'] = 'matched'
+                                        msg['calendar_link'] = generate_gcal_link("Tenis Maçı", i.get('date'), i.get('time_details', '18:00'), i.get('court'))
+                                        break
+                                inv_kayit_basarili = save_data(INVITES_FILE_PATH, invites, 'db_invites')
+                            else: msg['calendar_link'] = generate_gcal_link("Tenis Maçı", msg.get('date', ''), msg.get('time', '18:00'), msg.get('court', ''))
+                                
+                            if inv_kayit_basarili and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
+                                send_email(msg['sender'], "Teklifiniz Kabul Edildi!", f"<b>{me.get('ad_soyad')}</b> teklifinizi kabul etti!")
+                                st.session_state.show_toast = "Teklif kabul edildi! 🎉"; st.rerun()
+    
+                        if not st.session_state.get(f"conf_rej_{msg['id']}", False):
+                            if c_rej.button("❌ Reddet / Gizle", key=f"btn_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = True; st.rerun()
+                        else:
+                            c_rej.warning("Reddedilsin mi?")
+                            if c_rej.button("Evet, Reddet", key=f"yes_rej_{msg['id']}"):
+                                msg['status'] = 'rejected'
+                                if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'): st.session_state[f"conf_rej_{msg['id']}"] = False; st.rerun()
+                            if c_rej.button("Vazgeç", key=f"no_rej_{msg['id']}"): st.session_state[f"conf_rej_{msg['id']}"] = False; st.rerun()
+
+        elif st.session_state.current_page == "Gönderdiğim Teklifler":
+            my_sent = [m for m in messages if m.get('sender') == st.session_state.current_user]
+            if not my_sent: st.info("Henüz kimseye teklif göndermediniz.")
+            for msg in reversed(my_sent):
+                with st.container(border=True):
+                    r_user = users_db.get(msg.get('receiver'), {})
+                    st_map = {"pending": "⏳ Onay Bekliyor", "accepted": "✅ Kabul Edildi", "rejected": "❌ Reddedildi", "cancelled": "🚫 İptal Edildi", "cancelled_late": "🚫 İptal Edildi"}
+                    st.write(f"📤 Alıcı: **{r_user.get('ad_soyad', 'Bilinmeyen')}** | Durum: **{st_map.get(msg.get('status'), 'Bilinmiyor')}**")
+                    if msg.get('status') == 'pending':
+                        if not st.session_state.get(f"conf_with_{msg['id']}", False):
+                            if st.button("🗑️ Teklifi Geri Çek", key=f"btn_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = True; st.rerun()
+                        else:
+                            cw1, cw2 = st.columns(2)
+                            if cw1.button("Evet, Geri Çek", key=f"yes_with_{msg['id']}"):
+                                if save_data(MESSAGES_FILE_PATH, [m for m in messages if m['id'] != msg['id']], 'db_messages'): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
+                            if cw2.button("Vazgeç", key=f"no_with_{msg['id']}"): st.session_state[f"conf_with_{msg['id']}"] = False; st.rerun()
+
+        elif st.session_state.current_page == "Yayındaki İlanlarım":
+            my_active_invs = [i for i in invites if i.get('creator') == st.session_state.current_user and i.get('status') == 'active']
+            if not my_active_invs: st.info("Şu an yayında olan aktif bir ilanınız bulunmuyor.")
+            for my_inv in my_active_invs:
+                with st.container(border=True):
+                    s = get_invite_status(my_inv.get('date'), my_inv.get('time_details', ''))
+                    if s in ["expired", "removed"]: st.error("⏳ Bu ilanın süresi dolmuştur.")
+                    st.write(f"📍 **{my_inv.get('court')}** | 🗓️ {format_date_tr(my_inv.get('date'))} | ⏰ {my_inv.get('time_details')}")
+                    col_i1, col_i2 = st.columns(2)
+                    if col_i1.button("✏️ Düzenle", key=f"edit_myinv_{my_inv.get('id')}"): st.session_state.edit_my_active = my_inv.get('id'); st.rerun()
+                    if col_i2.button("🗑️ İlanı Kaldır", key=f"del_myinv_{my_inv.get('id')}"): dialog_delete_invite(my_inv.get('id'))
+                            
+            if st.session_state.get('edit_my_active') and any(i.get('id') == st.session_state.edit_my_active for i in my_active_invs):
+                e_inv = next(i for i in invites if i.get('id') == st.session_state.edit_my_active)
+                st.markdown("---")
+                st.subheader("✏️ İlanı Güncelle")
+                with st.form("edit_my_active_form"):
+                    ed_d = st.date_input("Yeni Tarih", value=datetime.datetime.strptime(e_inv.get('date'), "%Y-%m-%d").date(), format="DD.MM.YYYY")
+                    city_for_edit = e_inv.get('city', 'İzmir')
+                    courts_for_edit = ACTIVE_COURTS if city_for_edit == CURRENT_CITY else (IZMIR_KORTLARI if city_for_edit=="İzmir" else ZONGULDAK_KORTLARI)
+                    ed_court = st.selectbox("Yeni Kort", courts_for_edit, index=courts_for_edit.index(e_inv.get('court')) if e_inv.get('court') in courts_for_edit else 0)
+                    ed_fee_status = st.selectbox("💰 Kort Ücret Durumu", FEE_STATUS_OPTIONS, index=FEE_STATUS_OPTIONS.index(e_inv.get('fee_status')) if e_inv.get('fee_status') in FEE_STATUS_OPTIONS else 0)
+                    ed_fee_amount = st.text_input("Kort Ücreti Tutarı", value=e_inv.get('fee_amount', '')) if ed_fee_status != "Ücretsiz Kort / Abonelik" else ""
+                    ed_note = st.text_area("İlan Notu", value=e_inv.get('note', ''))
+                    
+                    c_btn1, c_btn2 = st.columns(2)
+                    if c_btn1.form_submit_button("Güncelle ve Kaydet", type="primary"):
+                        e_inv.update({'date': str(ed_d), 'court': ed_court, 'fee_status': ed_fee_status, 'fee_amount': ed_fee_amount.strip(), 'note': ed_note})
+                        if save_data(INVITES_FILE_PATH, invites, 'db_invites'): st.session_state.edit_my_active = None; st.rerun()
+                    if c_btn2.form_submit_button("Vazgeç"): st.session_state.edit_my_active = None; st.rerun()
+
+        elif st.session_state.current_page == "Onaylanmış Maçlarım":
+            my_acc = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') == 'accepted' and st.session_state.current_user not in m.get('hidden_by', [])]
+            if not my_acc: st.info("Yaklaşan veya görüntülenen onaylanmış bir maçınız yok.")
+            for acc in reversed(my_acc):
+                with st.container(border=True):
+                    partner_e = acc['sender'] if acc['receiver'] == st.session_state.current_user else acc['receiver']
+                    partner_u = users_db.get(partner_e, {})
+                    if acc.get('type') == 'invite_request':
+                        inv_data = next((i for i in invites if i.get('id') == acc.get('invite_id')), {})
+                        m_date, m_time, m_court = inv_data.get('date', '-'), inv_data.get('time_details', '-'), inv_data.get('court', '-')
+                    else:
+                        m_date, m_time, m_court = acc.get('date', '-'), acc.get('time', '-'), acc.get('court', '-')
+    
+                    st.markdown(f"🤝 **Partner:** {partner_u.get('ad_soyad', 'Partner')} *(NTRP {partner_u.get('level', '3.5')})*")
+                    st.markdown(f"🗓️ **Tarih & Saat:** {format_date_tr(m_date)} | {m_time} | 📍 **Kort:** {m_court}")
+                    if partner_u.get('contact_visibility', 'eslesince') in ['eslesince', 'herkes']:
+                        st.success(f"📞 İletişim: {partner_u.get('phone', 'Belirtilmedi')} | ✉️ {partner_e}")
+                    
+                    with st.expander(f"💬 {partner_u.get('ad_soyad', 'Partner')} ile Mesajlaş"):
+                        for chat in acc.get("chat_history", []):
+                            with st.chat_message("user" if chat["sender"] == st.session_state.current_user else "assistant"):
+                                st.write(chat["text"]); st.caption(chat["timestamp"])
+                        if new_msg := st.chat_input("Mesajınızı yazın...", key=f"chat_input_{acc['id']}"):
+                            acc.setdefault("chat_history", []).append({"sender": st.session_state.current_user, "text": new_msg, "timestamp": get_now().strftime("%d-%m %H:%M")})
+                            if save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
+                                send_email(partner_e, f"💬 Yeni Mesaj: {m_date} Maçı", f"Partneriniz <b>{me.get('ad_soyad')}</b> mesaj gönderdi:<br>\"{new_msg}\"")
+                                st.rerun()
+    
+                    c_opt1, c_opt2 = st.columns(2)
+                    if c_opt1.button("🗑️ Maçı İptal Et", key=f"btn_del_acc_{acc['id']}"): dialog_cancel_match(acc['id'], False)
+                    can_republish = True if acc.get('sender') == st.session_state.current_user else False
+                    if acc.get('type') == 'invite_request':
+                        target_inv = next((i for i in invites if i.get('id') == acc.get('invite_id')), None)
+                        if target_inv and target_inv.get('creator') == st.session_state.current_user: can_republish = True
+                    if can_republish and acc.get('type') == 'invite_request':
+                        if c_opt2.button("✏️ İptal Et & Yeniden Yayınla", key=f"btn_edit_acc_{acc['id']}"): dialog_cancel_match(acc['id'], True)
+                    
+                    if get_invite_status(m_date, m_time) in ["expired", "removed"]:
+                        st.markdown("---")
+                        if st.button("🗑️ Geçmiş Maçı Listemden Gizle", key=f"hide_past_acc_{acc['id']}", use_container_width=True):
+                            acc.setdefault('hidden_by', []).append(st.session_state.current_user)
+                            save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
+
+        elif st.session_state.current_page == "Geçmiş":
+            past_m = [m for m in messages if (m.get('receiver') == st.session_state.current_user or m.get('sender') == st.session_state.current_user) and m.get('status') in ['cancelled', 'cancelled_late', 'rejected'] and st.session_state.current_user not in m.get('hidden_by', [])]
+            if not past_m: st.info("Geçmiş iptal veya red kaydı bulunmuyor.")
+            for pm in past_m: 
+                col_txt, col_btn = st.columns([4,1])
+                col_txt.write(f"⚪ Kayıt | ID: {pm['id'][:8]} | Durum: **{pm['status']}**")
+                if col_btn.button("🗑️ Listemden Gizle", key=f"hide_{pm['id']}"):
+                    pm.setdefault('hidden_by', []).append(st.session_state.current_user)
+                    save_data(MESSAGES_FILE_PATH, messages, 'db_messages'); st.rerun()
+                    
+        elif st.session_state.current_page == "Değerlendirme":
             st.subheader("⚖️ Maç Sonrası Değerlendirme")
             now_dt = get_now()
             valid_unrated = []
@@ -1288,9 +1217,8 @@ def main_app():
                             if save_data(USERS_FILE_PATH, users_db, 'db_users') and save_data(MESSAGES_FILE_PATH, messages, 'db_messages'):
                                 send_email(p_email, "⭐ Yeni Değerlendirme!", "Partneriniz sizi değerlendirdi. Puanınız güncellendi.")
                                 st.rerun()
-    
-        # --- SAYFA 5: PROFİL & AYARLAR ---
-        elif secilen_sayfa == ana_menu_secenekleri[5]:
+
+        elif st.session_state.current_page == "Profil & Ayarlar":
             colL, colR = st.columns(2)
             with colL:
                 st.subheader("👤 Profil Bilgilerim")
@@ -1334,14 +1262,12 @@ def main_app():
                         me.setdefault("privacy", {})["ghost"] = ghost; me.setdefault("privacy", {})["show_rating"] = show_r
                         users_db[st.session_state.current_user] = me
                         if save_data(USERS_FILE_PATH, users_db, 'db_users'): st.session_state.show_toast = "Gizlilik tercihleri kaydedildi! ✅"; st.rerun()
-    
-        # --- SAYFA 6: KORT REHBERİ ---
-        elif secilen_sayfa == ana_menu_secenekleri[6]:
+
+        elif st.session_state.current_page == "Kort Rehberi":
             st.subheader(f"📍 {CURRENT_CITY} Kort ve Tesis Rehberi")
             st.markdown("Popüler tenis kortlarının ve kulüplerinin güncel iletişim, adres ve rezervasyon bilgilerine buradan ulaşabilirsiniz.")
             
             c_rehber1, c_rehber2 = st.columns(2)
-            
             if CURRENT_CITY == "İzmir":
                 with c_rehber1:
                     st.markdown("### 🏛️ Belediye Kortları")
@@ -1357,7 +1283,6 @@ def main_app():
                         st.markdown("**📍 Adres:** Mimar Sinan Mah. Fuar İçi No:103, Alsancak / Konak\n**📞 Telefon:** 0(232) 483 33 52")
                     with st.expander("Küçük Kulüp Alliance"):
                         st.markdown("**📍 Adres:** Kültür Mah. 1383 Sokak No:18, Alsancak / Konak\n**📞 Telefon:** 0(232) 463 87 47")
-                    
             else:
                 with c_rehber1:
                     st.markdown("### 🏛️ Belediye ve Kurum Kortları")
@@ -1394,25 +1319,24 @@ def main_app():
                          new_pending = {"id": str(uuid.uuid4()), "name": ac_name.strip(), "city": CURRENT_CITY, "district": ac_dist, "phone": ac_phone.strip(), "added_by": st.session_state.current_user}
                          st.session_state.db_pending_courts.append(new_pending)
                          save_data(PENDING_COURTS_FILE_PATH, st.session_state.db_pending_courts, "db_pending_courts")
-                         send_email(ADMIN_EMAIL, "🎾 Yeni Tesis Önerisi", f"{users_db.get(st.session_state.current_user, {}).get('ad_soyad')} rehbere yeni bir tesis ekledi: {ac_name.strip()} ({CURRENT_CITY})")
                          st.success("Tesis başarıyla sisteme eklendi! Katkınız için teşekkürler.")
-                     else:
-                         st.error("Tesis adı boş bırakılamaz.")
-    
-        # --- SAYFA 7: NTRP SEVİYE REHBERİ ---
-        elif secilen_sayfa == ana_menu_secenekleri[7]:
+                     else: st.error("Tesis adı boş bırakılamaz.")
+
+        elif st.session_state.current_page == "Seviye Rehberi":
             st.subheader("📊 NTRP Seviye Rehberi")
-            st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir. Bu ufak rehber, kendinizi bulmanıza yardımcı olacaktır:")
-            
+            st.markdown("Kortlarda tartışma çıkmaması, maçların zevkli geçmesi ve kimsenin kortta can çekişmemesi için kendi seviyenizi seçerken dürüst olmanız çok önemlidir.")
             st.info("**1.0 - 1.5 (Korta İlk Adım)**\n\nRaketi tavadan yeni ayırt etmeye başladığınız dönem. Topu korta düşürmek sizin için şampiyonluk sevinci yaratır.")
-            st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir. Çift hatalar kortun tuzu biberidir.")
-            st.info("**3.0 (İstikrar Arayışı / Geçiş Dönemi)**\n\nArtık fena ralli yapmıyorsunuz ama 4. veya 5. vuruşta top illa ki bir yere uçuyor. Gelen topun hızına ve yönüne göre pozisyon almakta bazen zorlanıyorsunuz.")
-            st.success("**3.5 (Klasik Hafta Sonu Savaşçısı)**\n\nKortların en kalabalık grubu! Temel taktikleri biliyor, kortu kullanıyor ve güzel terliyorsunuz. Harika bir *winner* vuruşunun hemen ardından, en basit topu dışarı atabilme yeteneğine de sahipsiniz.")
-            st.success("**4.0 (Taktiksel Uyanış)**\n\nArtık oyunun sadece topa sert vurmak olmadığını çözdünüz. Güvenilir bir ilk servisiniz var, rakibin zayıf yönünü analiz edip oraya oynayabiliyorsunuz. Kendi hatalarınızdan kaybettiğiniz puanlar epey azaldı.")
-            st.success("**4.5 (Kortların Ustası)**\n\nGüçlü silahlarınız var (spin, slice, nokta atışı servisler). Baskı altındayken bile zor durumlardan kurtulabiliyor ve kendi oyun planınızı rakibe dikte edebiliyorsunuz. İzlemesi son derece keyifli bir oyuncusunuz.")
-            st.warning("**5.0 - 5.5 (Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa koleksiyonerleri. Vuruşlarınızda hem ciddi bir güç hem de kusursuz bir istikrar var. Eğer bu seviyedeki biriyle eşleştiyseniz, kortta muhtemelen nefes nefese kalacaksınız ve topu sadece yanınızdan geçerken göreceksiniz.")
-            st.warning("**6.0 (Ulusal Gururumuz)**\n\nBölgesel ve ulusal düzeyde turnuva oynayan, dereceleri olan oyuncular. Bu seviyeyle maç yapmak, bir amatör için tenis dersi almak gibidir.")
-            st.error("**6.5 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller, Grand Slam oyuncuları ve dünya sıralamasındakiler.")
+            st.info("**2.0 - 2.5 (Hayatta Kalma Mücadelesi)**\n\nTopa vurabiliyorsunuz ama nereye gideceğine çoğunlukla top kendi karar veriyor. Ralli yapmak bir rüya, maç yapmak ise cesaret işidir.")
+            st.info("**3.0 (İstikrar Arayışı / Geçiş Dönemi)**\n\nArtık fena ralli yapmıyorsunuz ama 4. veya 5. vuruşta top illa ki bir yere uçuyor.")
+            st.success("**3.5 (Klasik Hafta Sonu Savaşçısı)**\n\nKortların en kalabalık grubu! Temel taktikleri biliyor, kortu kullanıyor ve güzel terliyorsunuz.")
+            st.success("**4.0 (Taktiksel Uyanış)**\n\nArtık oyunun sadece topa sert vurmak olmadığını çözdünüz. Güvenilir bir ilk servisiniz var.")
+            st.success("**4.5 (Kortların Ustası)**\n\nGüçlü silahlarınız var (spin, slice, nokta atışı servisler). Baskı altındayken bile zor durumlardan kurtulabiliyorsunuz.")
+            st.warning("**5.0 - 5.5 (Turnuva Avcısı)**\n\nTurnuvaların gediklisi, kupa koleksiyonerleri. Vuruşlarınızda hem ciddi bir güç hem de kusursuz bir istikrar var.")
+            st.warning("**6.0 (Ulusal Gururumuz)**\n\nBölgesel ve ulusal düzeyde turnuva oynayan, dereceleri olan oyuncular.")
+            st.error("**6.5 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller, Grand Slam oyuncuları.")
+
+        st.markdown("---")
+        render_back_button(f"bottom_{st.session_state.current_page}")
 
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
