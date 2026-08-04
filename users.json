@@ -52,7 +52,8 @@
                 "Fark Etmez"
             ]
         },
-        "ilce": "Karşıyaka"
+        "ilce": "Karşıyaka",
+        "login_token": "ce4242888faa4ee5926c7c9f10d85959"
     },
     "harika.tuncer@gmail.com": {
         "password_hash": "e541191b40205ecde219a2850b92973d8686b8391fbf5344c7db083928914d3d",
