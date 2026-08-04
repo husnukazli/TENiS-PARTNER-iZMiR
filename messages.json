@@ -426,7 +426,8 @@
         "sender": "huseyinaydogan@live.com",
         "receiver": "hkazli72@hotmail.com",
         "status": "pending",
-        "timestamp": "2026-07-26 14:49:31.050709"
+        "timestamp": "2026-07-26 14:49:31.050709",
+        "is_read": true
     },
     {
         "id": "f86c59c8-315e-41e5-bc80-aa6336c78afa",
@@ -445,7 +446,8 @@
         "sender": "huseyinaydogan@live.com",
         "receiver": "hkazli72@hotmail.com",
         "status": "pending",
-        "timestamp": "2026-08-02 15:33:41.469400"
+        "timestamp": "2026-08-02 15:33:41.469400",
+        "is_read": true
     },
     {
         "id": "60783efb-88bd-4afa-9e70-ea4bd05030b5",
