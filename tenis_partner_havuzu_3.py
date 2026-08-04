@@ -46,7 +46,7 @@ except ImportError:
     HAS_PLOTLY = False
     st.sidebar.warning("Yönetici istatistiklerinde pasta grafikleri görebilmek için terminale 'pip install plotly' yazıp yükleyin.")
 
-# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI
+# MOBİL ODAKLI ARAYÜZ (UI) GÜVENLİ CSS KODLARI VE FAB DÜZENLEMELERİ
 st.markdown("""
 <style>
     html, body, [class*="css"] { font-size: 1.05rem !important; }
@@ -71,6 +71,32 @@ st.markdown("""
     ul[role="listbox"] li span { font-size: 18px !important; font-weight: 600 !important; }
     div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 16px; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} 
+    
+    /* Yüzen Butonlar (Floating Action Buttons - FAB) CSS */
+    div:has(> #fab-right) {
+        position: fixed; bottom: 25px; right: 25px; z-index: 9999; width: auto;
+    }
+    div:has(> #fab-left) {
+        position: fixed; bottom: 25px; left: 25px; z-index: 9999; width: auto;
+    }
+    div:has(> #fab-right) button {
+        background-color: #FF5722 !important;
+        color: white !important;
+        border-radius: 50px !important;
+        box-shadow: 0 4px 10px rgba(255, 87, 34, 0.4) !important;
+        padding: 10px 20px !important;
+        font-size: 1.1rem !important;
+        border: none !important;
+    }
+    div:has(> #fab-left) button {
+        background-color: #1b5e20 !important;
+        color: white !important;
+        border-radius: 50px !important;
+        box-shadow: 0 4px 10px rgba(27, 94, 32, 0.4) !important;
+        padding: 10px 20px !important;
+        font-size: 1.1rem !important;
+        border: none !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,7 +149,7 @@ PENDING_COURTS_FILE_PATH = "pending_courts.json"
 # --- OTURUM YÖNETİMİ ---
 if "active_city" not in st.session_state: st.session_state["active_city"] = "İzmir"
 
-for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'main_menu_secim']:
+for key in ['logged_in', 'is_admin', 'current_user', 'offer_to', 'reg_step', 'reg_data', 'reg_code', 'editing_invite', 'show_login_form', 'edit_my_active', 'show_toast', 'main_menu_secim', 'ajanda_secim_state']:
     if key not in st.session_state: st.session_state[key] = False if key in ['logged_in', 'is_admin', 'show_login_form'] else None
 if 'reg_step' not in st.session_state or st.session_state.reg_step is None: st.session_state.reg_step = "form"
 
@@ -364,10 +390,21 @@ def render_popover_profile(user_email, user_data, messages_db):
 
 def render_matched_invites(matched_invs, invites, messages, users_db):
     city_matched = [i for i in matched_invs if i.get('city', 'İzmir') == CURRENT_CITY]
-    if city_matched:
-        st.markdown("#### 🤝 Son Eşleşen Maçlar")
+    
+    # Eşleşmeleri SADECE son 7 gün ile sınırla
+    recent_matched = []
+    for i in city_matched:
+        try:
+            m_date = datetime.datetime.strptime(i.get('date'), "%Y-%m-%d")
+            if (get_now() - m_date).days <= 7:
+                recent_matched.append(i)
+        except:
+            recent_matched.append(i)
+            
+    if recent_matched:
+        st.markdown("#### 🤝 Son Eşleşen Maçlar (Son 7 Gün)")
         st.caption("Aşağıdaki saatler doludur, kort çakışması yaşamamak için kontrol ediniz.")
-        for m_inv in sorted(city_matched, key=lambda x: x.get('date', ''), reverse=True)[:5]:
+        for m_inv in sorted(recent_matched, key=lambda x: x.get('date', ''), reverse=True)[:5]:
             creator_name = users_db.get(m_inv.get('creator'), {}).get('ad_soyad', 'Bilinmeyen Kullanıcı')
             acc_msg = next((m for m in messages if m.get('type') == 'invite_request' and m.get('invite_id') == m_inv.get('id') and m.get('status') == 'accepted'), None)
             if acc_msg:
@@ -633,6 +670,61 @@ def login_page():
     invites = st.session_state.db_invites
     messages = st.session_state.db_messages
     
+    # 1. GÜNCEL İLANLAR - HER ZAMAN EN ÜSTTE
+    st.markdown(f"### ☀️ {CURRENT_CITY} Güncel İlanları")
+    st.write("Aşağıdaki ilanlara teklif göndermek için sisteme giriş yapmalısınız.")
+    
+    active_inv = [i for i in invites if i.get('status') == 'active' and i.get('city', 'İzmir') == CURRENT_CITY and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
+    
+    filtered_active = []
+    for inv in active_inv:
+        s = get_invite_status(inv.get('date'), inv.get('time_details', ''))
+        if s != "removed": filtered_active.append((inv, s))
+            
+    active_only = [x for x in filtered_active if x[1] == 'active']
+    expired_only = [x for x in filtered_active if x[1] == 'expired']
+    
+    active_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')))
+    expired_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')), reverse=True)
+    filtered_active = active_only + expired_only
+    
+    if not filtered_active: st.info(f"Şu an {CURRENT_CITY} havuzunda aktif ilan bulunmuyor.")
+    for inv, s in filtered_active[:8]:
+        with st.container(border=True):
+            k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
+            c_user = users_db.get(inv.get('creator'), {})
+            if not isinstance(c_user, dict): c_user = {}
+
+            if s == "expired":
+                st.markdown(f"#### <span style='color:gray'>🗓️ {format_date_tr(inv.get('date'))} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
+                st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
+            else:
+                st.markdown(f"#### 🗓️ {format_date_tr(inv.get('date'))}  |  ⏰ {inv.get('time_details')}")
+                st.markdown(f"### 📍 {k_isim}")
+                st.info(f"**Kort Durumu:** {inv.get('court_status')}")
+                fee_str = inv.get('fee_status', 'Belirtilmedi')
+                if fee_str != 'Belirtilmedi':
+                    if fee_str == "Ücretsiz Kort / Abonelik": st.success("💰 **Ücret:** Ücretsiz Kort / Abonelik")
+                    else:
+                        amt_str = f" ({inv.get('fee_amount')})" if inv.get('fee_amount') else ""
+                        st.warning(f"💰 **Ücret:** {fee_str}{amt_str}")
+                
+            st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
+            if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
+            
+            render_popover_profile(inv.get('creator'), c_user, messages)
+
+            if s == "expired":
+                st.button("Teklif Gönder", key=f"pub_exp_{inv.get('id')}", disabled=True, use_container_width=True)
+            else:
+                if st.button("🎾 Teklif Gönder", key=f"pub_{inv.get('id')}", type="primary", use_container_width=True):
+                    st.session_state.show_toast = "Teklif göndermek için aşağıdan giriş yapmalısın! 🎾"
+                    st.session_state.show_login_form = True; st.rerun()
+                    
+    st.markdown("---")
+    
+    # 2. GİRİŞ FORMU VE SON EŞLEŞENLER
     c1, c2, c3 = st.columns([1, 2, 1])
     with c2:
         if not st.session_state.show_login_form:
@@ -643,11 +735,12 @@ def login_page():
             3. **Korta Çıkın:** Eşleştiğiniz oyuncuyla iletişime geçip maçınızı yapın.
             """)
             
-            matched_invs = [i for i in invites if i.get('status') == 'matched']
-            render_matched_invites(matched_invs, invites, messages, users_db)
-
             if st.button("🔑 Sisteme Giriş Yap veya Kayıt Ol", type="primary", use_container_width=True):
                 st.session_state.show_login_form = True; st.rerun()
+                
+            st.markdown("<br>", unsafe_allow_html=True)
+            matched_invs = [i for i in invites if i.get('status') == 'matched']
+            render_matched_invites(matched_invs, invites, messages, users_db)
         else:
             if st.button("🔙 İlanlara Geri Dön", use_container_width=True):
                 st.session_state.show_login_form = False; st.rerun()
@@ -749,57 +842,6 @@ def login_page():
                                 st.success("Yeni şifreniz gönderildi! ✅")
                             else: st.error("⚠️ Veritabanı hatası.")
                         else: st.error("Sistemde böyle bir e-posta bulunamadı.")
-    else:
-        st.markdown(f"### ☀️ {CURRENT_CITY} Güncel İlanları")
-        st.write("Aşağıdaki ilanlara teklif göndermek için yukarıdan giriş yapmalısınız.")
-        
-        active_inv = [i for i in invites if i.get('status') == 'active' and i.get('city', 'İzmir') == CURRENT_CITY and isinstance(users_db.get(i.get('creator'), {}), dict) and not users_db.get(i.get('creator'), {}).get('suspended') and not users_db.get(i.get('creator'), {}).get('frozen')]
-        
-        filtered_active = []
-        for inv in active_inv:
-            s = get_invite_status(inv.get('date'), inv.get('time_details', ''))
-            if s != "removed": filtered_active.append((inv, s))
-                
-        active_only = [x for x in filtered_active if x[1] == 'active']
-        expired_only = [x for x in filtered_active if x[1] == 'expired']
-        
-        active_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')))
-        expired_only.sort(key=lambda x: (x[0].get('date', '9999-12-31'), x[0].get('time_details', '23:59')), reverse=True)
-        filtered_active = active_only + expired_only
-        
-        if not filtered_active: st.info(f"Şu an {CURRENT_CITY} havuzunda aktif ilan bulunmuyor.")
-        for inv, s in filtered_active[:8]:
-            with st.container(border=True):
-                k_isim = f"{inv.get('court')} ({inv.get('court_custom')})" if inv.get('court') == 'Diğer' else inv.get('court')
-                c_user = users_db.get(inv.get('creator'), {})
-                if not isinstance(c_user, dict): c_user = {}
-
-                if s == "expired":
-                    st.markdown(f"#### <span style='color:gray'>🗓️ {format_date_tr(inv.get('date'))} | ⏰ {inv.get('time_details')}</span>", unsafe_allow_html=True)
-                    st.markdown(f"<h3 style='color:gray'>📍 {k_isim}</h3>", unsafe_allow_html=True)
-                    st.error("⏳ Bu ilanın maç saati geçtiği için süresi dolmuştur.")
-                else:
-                    st.markdown(f"#### 🗓️ {format_date_tr(inv.get('date'))}  |  ⏰ {inv.get('time_details')}")
-                    st.markdown(f"### 📍 {k_isim}")
-                    st.info(f"**Kort Durumu:** {inv.get('court_status')}")
-                    fee_str = inv.get('fee_status', 'Belirtilmedi')
-                    if fee_str != 'Belirtilmedi':
-                        if fee_str == "Ücretsiz Kort / Abonelik": st.success("💰 **Ücret:** Ücretsiz Kort / Abonelik")
-                        else:
-                            amt_str = f" ({inv.get('fee_amount')})" if inv.get('fee_amount') else ""
-                            st.warning(f"💰 **Ücret:** {fee_str}{amt_str}")
-                    
-                st.markdown(f"**⭐ Aranan Seviye:** {', '.join(inv.get('levels', []))} &nbsp; | &nbsp; **🎾 Tür:** {inv.get('type')}", unsafe_allow_html=True)
-                if inv.get('note'): st.warning(f"📝 *Not: {inv.get('note')}*")
-                
-                render_popover_profile(inv.get('creator'), c_user, messages)
-
-                if s == "expired":
-                    st.button("Teklif Gönder", key=f"pub_exp_{inv.get('id')}", disabled=True, use_container_width=True)
-                else:
-                    if st.button("🎾 Teklif Gönder", key=f"pub_{inv.get('id')}", type="primary", use_container_width=True):
-                        st.session_state.show_toast = "Teklif göndermek için yukarıdan giriş yapmalısın! 🎾"
-                        st.session_state.show_login_form = True; st.rerun()
 
     st.markdown("---")
     with st.expander("Yönetici Paneli"):
@@ -832,31 +874,51 @@ def main_app():
     
     c_head2.write(f"👤 **{me.get('ad_soyad', 'Kullanıcı')}** ({me.get('level', '3.5')}) | ⭐ {my_rating_display}")
     
+    kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
+    ana_menu_secenekleri = ["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"]
+
     with c_head3:
         with st.popover(f"🔔 Bildirimler ({my_inbox_count})", use_container_width=True):
             if my_inbox_count == 0: st.info("Yeni bildiriminiz yok.")
             else:
                 for n in [m for m in messages if m.get('receiver') == st.session_state.current_user and m.get('status') == 'pending']:
                     if n.get('type') == 'admin_announcement':
-                        st.markdown(f"📢 **Yönetici Duyurusu:** {n.get('title')}")
+                        if st.button(f"📢 Yönetici Duyurusu: {n.get('title')}", key=f"btn_notif_{n['id']}", use_container_width=True):
+                            st.session_state.main_menu_secim = kontrol_sekme_adi
+                            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})"
+                            st.rerun()
                     else:
                         sender_name = users_db.get(n['sender'], {}).get('ad_soyad', 'Biri')
-                        st.markdown(f"🎾 **{sender_name}** ilanına katılmak istiyor!" if n['type'] == 'invite_request' else f"⚔️ **{sender_name}** özel maç teklif etti!")
-                st.caption("👉 Detaylar ve Onay için 'Tenis Ajandam' sekmesine gidin.")
+                        btn_text = f"🎾 {sender_name} ilanına katılmak istiyor!" if n['type'] == 'invite_request' else f"⚔️ {sender_name} özel maç teklif etti!"
+                        if st.button(btn_text, key=f"btn_notif_{n['id']}", use_container_width=True):
+                            st.session_state.main_menu_secim = kontrol_sekme_adi
+                            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})"
+                            st.rerun()
+                st.caption("👉 Bildirime tıklayarak doğrudan teklife gidebilirsiniz.")
         if st.button("🚪 Çıkış Yap", use_container_width=True): 
             st.session_state.logged_in = False
             if cookie_manager and cookie_manager.get("remember_user"): cookie_manager.delete("remember_user"); time.sleep(0.5)
             st.rerun()
 
-    kontrol_sekme_adi = f"🎾 Tenis Ajandam 🚨 ({my_inbox_count})" if my_inbox_count > 0 else "🎾 Tenis Ajandam"
-    ana_menu_secenekleri = ["☀️ Güncel İlanlar", "➕ İlan Oluştur", "👥 Üyeler", kontrol_sekme_adi, "⚖️ Değerlendirme", "⚙️ Profil & Ayarlar", "📍 Kort Rehberi", "📊 Seviye Rehberi"]
-    
+    # Dynamic Menu Routing based on State Updates
+    if st.session_state.get("main_menu_secim") and "Tenis Ajandam" in st.session_state.main_menu_secim:
+        st.session_state.main_menu_secim = kontrol_sekme_adi
+        
+    if "main_menu_secim" not in st.session_state or st.session_state.main_menu_secim not in ana_menu_secenekleri:
+        st.session_state.main_menu_secim = ana_menu_secenekleri[0]
+        
+    m_idx = ana_menu_secenekleri.index(st.session_state.main_menu_secim)
+
     st.markdown("""
     <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
         <span style="color: #39FF14; font-size: 1.15em; font-weight: bold;">MENÜ: Gitmek İstediğiniz Sayfayı Seçin</span>
     </div>
     """, unsafe_allow_html=True)
-    secilen_sayfa = st.selectbox("", ana_menu_secenekleri, label_visibility="collapsed")
+    secilen_sayfa = st.selectbox("", ana_menu_secenekleri, index=m_idx, key="menu_select_widget", label_visibility="collapsed")
+    if secilen_sayfa != st.session_state.main_menu_secim:
+        st.session_state.main_menu_secim = secilen_sayfa
+        st.rerun()
+        
     st.markdown("---")
 
     # --- SAYFA 0: İLAN HAVUZU ---
@@ -1087,12 +1149,25 @@ def main_app():
         inbox_label = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
         ajanda_secenekleri = [inbox_label, "📤 Gönderdiğim Teklifler", "📢 Yayındaki İlanlarım", "📅 Onaylanmış Maçlarım", "📜 Geçmiş & İptal Edilenler"]
         
+        # State Binding for Ajanda sub-menu
+        if st.session_state.get("ajanda_secim_state") and "Gelen Teklifler" in st.session_state.ajanda_secim_state:
+            st.session_state.ajanda_secim_state = inbox_label
+            
+        if "ajanda_secim_state" not in st.session_state or st.session_state.ajanda_secim_state not in ajanda_secenekleri:
+            st.session_state.ajanda_secim_state = ajanda_secenekleri[0]
+            
+        a_idx = ajanda_secenekleri.index(st.session_state.ajanda_secim_state)
+
         st.markdown("""
         <div style="background-color: #0b3d16; border-left: 5px solid #39FF14; padding: 10px; border-radius: 6px; margin-bottom: 5px;">
             <span style="color: #39FF14; font-size: 1.1em; font-weight: bold;">İŞLEM YAPMAK İSTEDİĞİNİZ BÖLÜMÜ SEÇİN</span>
         </div>
         """, unsafe_allow_html=True)
-        ajanda_secim = st.selectbox("", ajanda_secenekleri, label_visibility="collapsed")
+        ajanda_secim = st.selectbox("", ajanda_secenekleri, index=a_idx, key="ajanda_select_widget", label_visibility="collapsed")
+        if ajanda_secim != st.session_state.ajanda_secim_state:
+            st.session_state.ajanda_secim_state = ajanda_secim
+            st.rerun()
+            
         st.markdown("---")
 
         if ajanda_secim == ajanda_secenekleri[0]:
@@ -1425,8 +1500,21 @@ def main_app():
         st.warning("**6.0 (Ulusal Gururumuz)**\n\nBölgesel ve ulusal düzeyde turnuva oynayan, dereceleri olan oyuncular. Bu seviyeyle maç yapmak, bir amatör için tenis dersi almak gibidir.")
         st.error("**6.5 - 7.0 (Televizyonda İzlediklerimiz)**\n\nUluslararası arenada oynayan profesyoneller, Grand Slam oyuncuları ve dünya sıralamasındakiler.")
 
+    # --- MOBİL YÜZEN BUTONLARIN (FAB) UYGULANMASI ---
+    with st.container():
+        st.markdown('<div id="fab-right"></div>', unsafe_allow_html=True)
+        if st.button("➕ Yeni İlan", key="fab_right_btn"):
+            st.session_state.main_menu_secim = "➕ İlan Oluştur"
+            st.rerun()
+            
+    with st.container():
+        st.markdown('<div id="fab-left"></div>', unsafe_allow_html=True)
+        if st.button("🎾 Ajandam", key="fab_left_btn"):
+            st.session_state.main_menu_secim = kontrol_sekme_adi
+            st.session_state.ajanda_secim_state = f"📥 Gelen Teklifler ({my_inbox_count})" if my_inbox_count > 0 else "📥 Gelen Teklifler"
+            st.rerun()
+
 # --- UYGULAMA GİRİŞ NOKTASI ---
 if not st.session_state.logged_in: login_page()
 elif st.session_state.is_admin: admin_dashboard()
 else: main_app()
-
