@@ -474,6 +474,7 @@
         "court_custom": "",
         "fee_status": "Ücretsiz Kort / Abonelik",
         "fee_amount": "",
-        "status": "pending"
+        "status": "pending",
+        "is_read": true
     }
 ]
