@@ -485,6 +485,7 @@
         "sender": "hkazli72@hotmail.com",
         "receiver": "nedimemreakin@gmail.com",
         "status": "pending",
-        "timestamp": "2026-08-06 17:44:46.536502"
+        "timestamp": "2026-08-06 17:44:46.536502",
+        "is_read": true
     }
 ]
