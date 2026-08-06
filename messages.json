@@ -484,8 +484,9 @@
         "invite_id": "793cd44e-fffd-4358-83c2-ce8f0904c482",
         "sender": "hkazli72@hotmail.com",
         "receiver": "nedimemreakin@gmail.com",
-        "status": "pending",
+        "status": "accepted",
         "timestamp": "2026-08-06 17:44:46.536502",
-        "is_read": true
+        "is_read": true,
+        "calendar_link": "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Tenis+Ma%C3%A7%C4%B1&dates=20260806T200000%2F20260806T213000&location=Soyak+Siesta+1.+Etap&details=%C4%B0zmir+Tenis+Partner+%C3%BCzerinden+ayarland%C4%B1."
     }
 ]
