@@ -563,5 +563,34 @@
             "seviye": [],
             "davranis": []
         }
+    },
+    "nedimemreakin@gmail.com": {
+        "password_hash": "3cb3af03b6061e43a8be024dce45c9cf86cfb0e37792aeb3210e55b7b27bd383",
+        "ad_soyad": "Nedim",
+        "level": "4.0",
+        "city_registered": "İzmir",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        },
+        "login_token": "dfd7cb5736f2472da83b0dc6bb17a01c"
     }
 }
