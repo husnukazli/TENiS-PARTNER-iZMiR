@@ -592,5 +592,34 @@
             "davranis": []
         },
         "login_token": "dfd7cb5736f2472da83b0dc6bb17a01c"
+    },
+    "gedizkulac@gmail.com": {
+        "password_hash": "2c2f6992ea8d9209c703503186192929c01501e90a7c75aaa066034c763d7823",
+        "ad_soyad": "Gediz Kulaç",
+        "level": "5.0",
+        "city_registered": "İzmir",
+        "ilce": "Karşıyaka",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        },
+        "login_token": "803b573694a64dba890903764a5a92c6"
     }
 }
