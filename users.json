@@ -534,7 +534,8 @@
             "seviye": [],
             "davranis": []
         },
-        "style": "All-Rounder"
+        "style": "All-Rounder",
+        "login_token": "cf11c4495ba54bcdaa478663161f8c77"
     },
     "myuksel77@hotmail.com": {
         "password_hash": "bf4297fd401334710b9657f5ca16b676450c4f1c314bce3fcb2910d68aa3f16d",
