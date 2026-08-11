@@ -129,7 +129,8 @@
             "zaman": [],
             "seviye": [],
             "davranis": []
-        }
+        },
+        "login_token": "2272fb40c7eb43a297d9aa8b2df70902"
     },
     "ozemreozturk@gmail.com": {
         "password_hash": "727cc8624fb95cdd8376584ea4fd73f8644d0c3d2391b74cd8d95d72be6d3f5a",
