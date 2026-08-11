@@ -396,7 +396,8 @@
                 5
             ]
         },
-        "style": "All-Rounder"
+        "style": "All-Rounder",
+        "login_token": "fc3e1757c8754bd4ab8f522614d048ba"
     },
     "pskl.omerfarukmeric@gmail.com": {
         "password_hash": "72eeba0b478f4767d6101dd7dc9f7c0f75ea88844b119dd79d5eb32e083d122f",
