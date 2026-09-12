@@ -624,5 +624,34 @@
             "davranis": []
         },
         "login_token": "803b573694a64dba890903764a5a92c6"
+    },
+    "cbuyukuysal@gmail.com": {
+        "password_hash": "3f678976893d1d7f96e5fbb9250b76bc05406f6788da21cf3fbc06aa1adf4ac0",
+        "ad_soyad": "Çağatay Büyükuysal",
+        "level": "4.0",
+        "city_registered": "Zonguldak",
+        "ilce": "Merkez",
+        "suspended": false,
+        "frozen": false,
+        "delete_requested": false,
+        "is_bot": false,
+        "phone": "",
+        "contact_visibility": "eslesince",
+        "privacy": {
+            "ghost": false,
+            "show_rating": true
+        },
+        "radar": {
+            "active": false,
+            "courts": [],
+            "levels": [],
+            "types": []
+        },
+        "ratings": {
+            "zaman": [],
+            "seviye": [],
+            "davranis": []
+        },
+        "login_token": "fb707faa9956425f9b53647f6449352e"
     }
 }
